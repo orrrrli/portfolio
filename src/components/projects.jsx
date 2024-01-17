@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 const ProjectItem = ({ title, description, technologies, buttons,imgPath }) => {
     const renderTechnologies = () => {
       return technologies.map((tech, index) => {
-        const iconPath = `./src/components/icons/${tech.toLowerCase()}.svg`;
+        const iconPath = `/${tech.toLowerCase()}.svg`;
   
         return (
           <img
@@ -68,7 +68,7 @@ function Projects () {
             <div className="text-slate-800 dark:text-slate-200">
                 <ProjectItem title="Devine Transport Landing Page"
                 description="A landing page for a transportation company."
-                imgPath="/src/img/devine1.png"
+                imgPath="/devine1.png"
                 technologies={['remix','react','chakra-ui',]}
                 buttons={[
                     {label: 'Live', url: 'https://www.devinetransports.com/'},
@@ -77,7 +77,7 @@ function Projects () {
 
                 <ProjectItem title="Ventas360" 
                 description="A Full-Stack project to keep track of income/expenses, adaptable for any type of business."
-                imgPath="/src/img/controldeventas.png"
+                imgPath="controldeventas.png"
                 technologies={['vue','bootstrap','swagger','sql-server']}
                 buttons={[
                     {label: 'Backend', url: 'https://github.com/orrrrli/BackEndControlDeVentas'},

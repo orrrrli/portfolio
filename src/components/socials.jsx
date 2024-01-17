@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 const SocialButton = ({ label, url,socialIcon }) => {
     const renderSocialIcons = () => {
         return socialIcon.map((socialIcon, index) => {
-          const iconPath = `./src/components/icons/${socialIcon.toLowerCase()}.svg`;
+          const iconPath = `/${socialIcon.toLowerCase()}.svg`;
     
           return (
             <img

@@ -15,7 +15,7 @@ function Header() {
   return (
     <div className="grid grid-flow-col auto-cols-max mx-auto max-w-3xl px-5 mb-5 flex-col gap-2 border-b-2 border-slate-300 dark:border-slate-600">
       <div className="mx-auto max-w-3xl px-5 mb-5 dark:bg-slate-800">
-        <img className="rounded-full h-40 w-30" src="/src/img/profilepic.jpg" alt="Orlando Castaneda" />
+        <img className="rounded-full h-40 w-30" src="profilepic.jpg" alt="Orlando Castaneda" />
       </div>
       <div className="flex mx-auto max-w-3xl px-5 mb-5 flex-col gap-2 dark:bg-slate-800 place-self-center">
         <h1 className="font-bold text-4xl text-slate-800 dark:text-slate-200">Orlando Castaneda </h1>
