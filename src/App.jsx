@@ -10,7 +10,7 @@ function App() {
         <ChangeMode />
         <Header />
         <Experience />
-        <Projects />
+        <Projects/>
          <Socials />
         <Email/>
     </div>

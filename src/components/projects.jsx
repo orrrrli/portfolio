@@ -1,6 +1,7 @@
 import { FaLaptopCode } from "react-icons/fa6";
 import { IoMdLink } from "react-icons/io";
 import PropTypes from "prop-types";
+import { Tooltip } from 'react-tooltip';
 
 const ProjectItem = ({ title, description, technologies, buttons, imgPath }) => {
   const renderTechnologies = () => {
@@ -8,13 +9,20 @@ const ProjectItem = ({ title, description, technologies, buttons, imgPath }) => 
       const iconPath = `/${tech.toLowerCase()}.svg`;
 
       return (
-        <img
-          key={index}
-          src={iconPath}
-          alt={`${tech} icon`}
-          className="mr-2"
-          style={{ width: "34px", height: "34px" }}
-        />
+        <div key={tech} data-tooltip-id={`my-tooltip-${tech}`}>
+          <img
+            key={index}
+            src={iconPath}
+            alt={`${tech} icon`}
+            className="mr-2"
+            style={{ width: "34px", height: "34px" }}
+          />
+          <Tooltip id={`my-tooltip-${tech}`} className="dark:bg-gray-900">
+            <div >
+              <h2>{tech}</h2>
+            </div>
+          </Tooltip>
+        </div>
       );
     });
   };
@@ -68,7 +76,7 @@ function Projects() {
             title="Devine Transport Landing Page"
             description="A landing page for a transportation company."
             imgPath="/devine1.png"
-            technologies={["remix", "react", "chakra-ui"]}
+            technologies={["remix", "react", "chakra"]}
             buttons={[{ label: "Live", url: "https://www.devinetransports.com/" }]}
           />
 
@@ -76,7 +84,7 @@ function Projects() {
             title="Ventas360"
             description="A Full-Stack project to keep track of income/expenses, adaptable for any type of business."
             imgPath="controldeventas.png"
-            technologies={["vue", "bootstrap", "swagger", "sql-server"]}
+            technologies={["vue", "bootstrap", "swagger", "sql"]}
             buttons={[
               { label: "Backend", url: "https://github.com/orrrrli/BackEndControlDeVentas" },
               { label: "Frontend", url: "https://github.com/orrrrli/ControlDeVdivas" },
