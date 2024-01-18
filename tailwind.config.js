@@ -17,7 +17,7 @@ export default {
       '4': '4px',
       '6': '6px',
       '8': '8px',
-    }
+    },
   },
   plugins: [
   '@tailwindcss/forms'

@@ -11,7 +11,7 @@ function App() {
         <Header />
         <Experience />
         <Projects />
-        <Socials />
+         <Socials />
         <Email/>
     </div>
     
