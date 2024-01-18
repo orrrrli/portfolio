@@ -22,7 +22,7 @@ function Header() {
       </div>
       <div className="flex flex-col mx-auto md:mx-0 max-w-md md:max`-w-full md:ml-8 dark:bg-slate-800 md:order-2">
         <h1 className="font-bold text-4xl text-slate-800 dark:text-slate-200 mb-2">Orlando Castaneda</h1>
-        <h2 className="font-bold text-xl text-slate-800 dark:text-slate-200 mb-4">Software Engineer in the 7th grade. Constantly learning</h2>
+        <h2 className="font-bold text-xl text-slate-800 dark:text-slate-200 mb-4">In the 7th semester of Software Engineering. Constantly learning</h2>
         <div className="dark:bg-slate-800">
           <button
             className="flex font-semibold items-center px-4 py-2 rounded bg-slate-200 hover:bg-slate-400 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-900"
