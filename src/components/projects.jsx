@@ -73,6 +73,14 @@ function Projects() {
       <div>
         <div className="x-5 mb-5 dark:text-slate-300 text-slate-700"> {/* Este div me ayuda a modificar el full screen */}
           <ProjectItem
+            title="Medical Landing Page "
+            description="A page to show the services of a doctor and his information."
+            imgPath="/dr.png"
+            technologies={["react", "tailwind", "vite"]}
+            buttons={[{ label: "Live", url: "https://docramsesv.vercel.app/"
+            }]}
+          />
+          <ProjectItem
             title="Devine Transport Landing Page"
             description="A landing page for a transportation company."
             imgPath="/devine1.png"
