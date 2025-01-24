@@ -2,7 +2,7 @@ import { HiOutlineMail } from "react-icons/hi";
 import { IoSend } from "react-icons/io5";
 
 function Email() {
-  const email = "castaneda.kevin@uabc.edu.mx";
+  const email = "keorcasa@gmail.com";
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">

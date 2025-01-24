@@ -29,10 +29,19 @@ function Experience () {
                 <MdOutlineWork className="text-slate-700 dark:text-slate-400 mr-2" size={30}></MdOutlineWork><h1 className="font-bold text-2xl text-slate-800 dark:text-slate-200"
                 >Experience</h1>
             </div>
-            <div className="flex mx-auto max-w-3xl px-5 mb-5 flex-col text-slate-800 dark:text-slate-200">
+            <div className="flex mx-auto max-w-3xl px-5 mb-5 flex-col space-y-4 text-slate-800 dark:text-slate-200">
                 <ExperienceItem 
+                    title="Infotek - FullStack Developer"
+                    date="From March 2024 to Present"
+                    description="An Android application designed to streamline marketplace management processes. The project focuses on enabling efficient inventory tracking and robust product management."
+                    tasks={[
+                        "• Created and maintained RESTful APIs using ASP.NET Core 8 and Entity Framework, ensuring a scalable and secure backend architecture.",
+                        "• Developed interactive UI components using Kotlin and Jetpack Compose, enhancing the user experience with smooth interactions and a modern design.",
+                        "• Collaborated with stakeholders to analyze use cases and requirements, ensuring alignment between business objectives and the application mobile.",
+                    ]}></ExperienceItem>
+                    <ExperienceItem 
                     title="OmniTEK Dev - FrontEnd Landing Page"
-                    date="Junio 2023"
+                    date="From June 2023 to December 2023"
                     description="The project consisted of the design and development of a website with the objective of improving reach and communication with clients."
                     tasks={[
                         "• Design and development of reusable components with React for different sections of the application.",

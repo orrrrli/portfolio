@@ -73,6 +73,23 @@ function Projects() {
       <div>
         <div className="x-5 mb-5 dark:text-slate-300 text-slate-700"> {/* Este div me ayuda a modificar el full screen */}
           <ProjectItem
+            title="Services Finder"
+            description="A Full-Stack project to find services from freelancers in your area."
+            imgPath="/servicesfinder.png"
+            technologies={["react", "tailwind", "express", "mongodb"]}
+            buttons={[
+              { label: "Live", url:"https://service-finder-chi.vercel.app/" }]}
+          />
+          <ProjectItem
+            title="Appointment scheduling app"
+            description="A mobile app to schedule appointments with a doctor."
+            imgPath="/fastbooking.png"
+            technologies={["react", "tailwind", "csharp", "mysql"]}
+            buttons={[
+              { label: "FrontEnd", url: "https://github.com/Ericucho31/FastBooking" }
+            ]}
+          />
+          <ProjectItem
             title="Medical Landing Page "
             description="A page to show the services of a doctor and his information."
             imgPath="/dr.png"
@@ -92,10 +109,10 @@ function Projects() {
             title="Ventas360"
             description="A Full-Stack project to keep track of income/expenses, adaptable for any type of business."
             imgPath="controldeventas.png"
-            technologies={["vue", "bootstrap", "swagger", "sql"]}
+            technologies={["vue", "bootstrap", "swagger", "smss"]}
             buttons={[
               { label: "Backend", url: "https://github.com/orrrrli/BackEndControlDeVentas" },
-              { label: "Frontend", url: "https://github.com/orrrrli/ControlDeVdivas" },
+              { label: "Frontend", url: "https://github.com/orrrrli/ControlDeVentas" },
             ]}
           />
         </div>
