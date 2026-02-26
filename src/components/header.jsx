@@ -14,18 +14,22 @@ function Header() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row mx-auto max-w-3xl px-5 mb-5 items-center border-b-2 border-slate-300 dark:border-slate-600 py-4">
+    <div className="flex flex-col md:flex-row mx-auto max-w-3xl px-5 mb-10 items-center border-b border-slate-200 dark:border-slate-700 pb-8 pt-4">
       {/* Imagen arriba en dispositivos móviles (flex-col en dispositivos pequeños) */}
-      <div className="mx-auto mb-5 md:mb-0 w-32 h-30 md:w-48 md:h-38 overflow-hidden rounded-full md:order-1">
+      <div className="mx-auto mb-6 md:mb-0 w-36 h-36 md:w-48 md:h-48 overflow-hidden rounded-full border-4 border-slate-100 dark:border-slate-800 shadow-xl dark:shadow-blue-900/20 md:order-1 transition-transform duration-300 hover:scale-[1.02]">
         {/* Utiliza la clase 'object-cover' para hacer la imagen responsive */}
         <img className="w-full h-full object-cover" src={profilePic} alt="Orlando Castaneda" />
       </div>
-      <div className="flex flex-col mx-auto md:mx-0 max-w-md md:max`-w-full md:ml-8 dark:bg-slate-800 md:order-2">
-        <h1 className="font-bold text-4xl text-slate-800 dark:text-slate-200 mb-2">Orlando Castaneda</h1>
-        <h2 className="font-bold text-xl text-slate-800 dark:text-slate-200 mb-4">Software Engineer from Universidad Autónoma de Baja California. </h2>
-        <div className="dark:bg-slate-800">
+      <div className="flex flex-col mx-auto md:mx-0 max-w-md md:max-w-full md:ml-10 md:order-2">
+        <h1 className="font-extrabold tracking-tight text-4xl md:text-5xl text-slate-900 dark:text-white mb-3">
+          Orlando Castaneda
+        </h1>
+        <h2 className="font-medium leading-relaxed text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-6">
+          Software Engineer from Universidad Autónoma de Baja California.
+        </h2>
+        <div>
           <button
-            className="flex font-semibold items-center px-4 py-2 rounded bg-slate-200 hover:bg-slate-400 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-900"
+            className="flex font-semibold items-center px-6 py-2.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white shadow-md hover:shadow-lg transition-all duration-200"
             onClick={handleDownloadResume}
           >
             <BsFillFileEarmarkPersonFill className="mr-2" size={18} />
@@ -38,3 +42,4 @@ function Header() {
 }
 
 export default Header;
+
