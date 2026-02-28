@@ -25,7 +25,7 @@ function Header() {
           Orlando Castaneda
         </h1>
         <h2 className="font-medium leading-relaxed text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-6">
-          Software Engineer from Universidad Autónoma de Baja California.
+          Software Engineer from Universidad Autónoma de Baja California. | FullStack | .NET | React
         </h2>
         <div>
           <button

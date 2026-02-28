@@ -45,10 +45,10 @@ function Experience() {
           ]}></ExperienceItem>
         <ExperienceItem
           title="OmniTEK Dev - FrontEnd Landing Page"
-          date="June 2023 — December 2023"
+          date="February 2023 — August 2023"
           description="The project consisted of the design and development of a website with the objective of improving reach and communication with clients."
           tasks={[
-            "Design and development of reusable components with React for different sections of the application.",
+            "Design and development of reusable components following the Atomic Design methodology with React for different sections of the application.",
             "Integration of the Chakra UI framework into the project to build and style components.",
             "Using the Remix development framework to create modern React-based web applications.",
           ]}></ExperienceItem>
