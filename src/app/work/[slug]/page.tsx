@@ -15,7 +15,8 @@ import {
   Avatar,
   Line,
 } from "@once-ui-system/core";
-import { baseURL, about, person, work } from "@/resources";
+import { baseURL, about, person, work, getContent } from "@/resources";
+import { getLanguage } from "@/utils/language";
 import { formatDate } from "@/utils/formatDate";
 import { ScrollToHash, CustomMDX } from "@/components";
 import { Metadata } from "next";
@@ -67,6 +68,9 @@ export default async function Project({
     notFound();
   }
 
+  const lang = await getLanguage();
+  const { work } = getContent(lang);
+
   const avatars =
     post.metadata.team?.map((person) => ({
       src: person.avatar,
@@ -93,7 +97,7 @@ export default async function Project({
       />
       <Column maxWidth="s" gap="16" horizontal="center" align="center">
         <SmartLink href="/work">
-          <Text variant="label-strong-m">Projects</Text>
+          <Text variant="label-strong-m">{work.labels.backToProjects}</Text>
         </SmartLink>
         <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
           {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}

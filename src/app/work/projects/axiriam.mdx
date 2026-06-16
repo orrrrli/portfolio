@@ -14,7 +14,13 @@ link: ""
 
 ## Overview
 
-E-commerce platform built end-to-end for a retail client, currently handling 200+ orders per month in production.
+The client was a medical clothing brand with real organic reach — but no storefront. Sales were slipping through the cracks: potential buyers sending DMs, unanswered WhatsApp messages, no reliable way to convert interest into an order.
+
+The solution was a full e-commerce built around their actual workflow, not a generic template. The checkout handles Stripe payments with webhook-based confirmation, inventory reservation on order creation, and a background service that expires unpaid orders every 5 minutes to release held stock — so no item stays locked by an abandoned cart.
+
+The admin panel was the hardest part: designed from scratch around how the store team actually operates, not how a generic dashboard assumes they do. Order management, inventory control, and product uploads — all without needing a developer.
+
+Result: 200+ orders per month in production, and zero lost sales from missed messages.
 
 ## Key Features
 
@@ -28,3 +34,15 @@ E-commerce platform built end-to-end for a retail client, currently handling 200
 ## Tech Stack
 
 Next.js 15, TypeScript, Stripe, PostgreSQL, Prisma ORM, Resend, Cloudinary, Tailwind CSS
+
+## Rendering Strategy
+
+Not every route needs the same freshness guarantee. I mapped each route based on two questions: does the content change per user, and how often? Static pages like `/nosotros` hit CDN forever (SSG). The catalog uses ISR — pre-rendered, revalidated only when a payment or stock change fires `revalidateTag('catalog')`. Product pages are SSR because reviews and stock must be fresh per request. Cart and checkout are pure client-side (Zustand + SWR) because they depend on per-user state in localStorage. Admin routes skip all caching — RSC direct, role-checked on every hit.
+
+![Rendering strategy decision tree](/images/axiriam/rendering.png)
+
+## Cache Architecture
+
+Next.js stacks four cache layers. The Data Cache persists fetched JSON for 3600s. The Full Route Cache persists the rendered RSC Payload + HTML for 600s. The Request Memo deduplicates fetches within a single request. The Router Cache keeps the RSC Payload in client memory until a full refresh. During build, `/catalog` hits Postgres once and populates both persistent caches. On normal requests, the full page is served from Full Route Cache — zero database hits. When stock changes, `revalidateTag('catalog')` marks the cache as STALE and the next request re-fetches, re-renders, and repopulates. Getting this right was the difference between a platform that scaled and one that hammered the database on every visit.
+
+![Next.js four-layer cache architecture](/images/axiriam/cache.png)

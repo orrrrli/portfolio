@@ -17,6 +17,10 @@ interface ProjectCardProps {
   content: string;
   description: string;
   link: string;
+  labels: {
+    behindTheBuild: string;
+    viewProject: string;
+  };
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -26,6 +30,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   content,
   description,
   link,
+  labels,
 }) => {
   return (
     <Column fillWidth gap="m">
@@ -65,7 +70,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   style={{ margin: "0", width: "fit-content" }}
                   href={href}
                 >
-                  <Text variant="body-default-s">Behind the build</Text>
+                  <Text variant="body-default-s">{labels.behindTheBuild}</Text>
                 </SmartLink>
               )}
               {link && (
@@ -74,7 +79,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   style={{ margin: "0", width: "fit-content" }}
                   href={link}
                 >
-                  <Text variant="body-default-s">View project</Text>
+                  <Text variant="body-default-s">{labels.viewProject}</Text>
                 </SmartLink>
               )}
             </Flex>

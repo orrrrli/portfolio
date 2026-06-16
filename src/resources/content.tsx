@@ -262,6 +262,11 @@ const work: Work = {
   label: "Work",
   title: `Projects – ${person.name}`,
   description: `Software projects by ${person.name} — backends, full-stack products, and everything in between.`,
+  labels: {
+    behindTheBuild: "Behind the build",
+    viewProject: "View project",
+    backToProjects: "Projects",
+  },
 };
 
 const gallery: Gallery = {
@@ -452,6 +457,11 @@ export function getContent(lang: Language) {
         label: "Proyectos",
         title: `Proyectos – ${person.name}`,
         description: `Proyectos de desarrollo por ${person.name}`,
+        labels: {
+          behindTheBuild: "Detrás del proyecto",
+          viewProject: "Ver proyecto",
+          backToProjects: "Proyectos",
+        },
       },
       newsletter,
       social,

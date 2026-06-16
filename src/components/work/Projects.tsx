@@ -1,4 +1,6 @@
 import { getPosts } from "@/utils/utils";
+import { getLanguage } from "@/utils/language";
+import { getContent } from "@/resources";
 import { Column } from "@once-ui-system/core";
 import { ProjectCard } from "@/components";
 
@@ -7,7 +9,10 @@ interface ProjectsProps {
   exclude?: string[];
 }
 
-export function Projects({ range, exclude }: ProjectsProps) {
+export async function Projects({ range, exclude }: ProjectsProps) {
+  const lang = await getLanguage();
+  const { work } = getContent(lang);
+
   let allProjects = getPosts(["src", "app", "work", "projects"]);
 
   // Exclude by slug (exact match)
@@ -35,6 +40,7 @@ export function Projects({ range, exclude }: ProjectsProps) {
           description={post.metadata.summary}
           content={post.content}
           link={post.metadata.link || ""}
+          labels={work.labels}
         />
       ))}
     </Column>

@@ -1,10 +1,8 @@
 import { MDXRemote, MDXRemoteProps } from "next-mdx-remote/rsc";
 import React, { ReactNode } from "react";
-import { slugify as transliterate } from "transliteration";
 
 import {
   Heading,
-  HeadingLink,
   Text,
   InlineCode,
   CodeBlock,
@@ -77,24 +75,15 @@ function createImage({ alt, src, ...props }: MediaProps & { src: string }) {
   );
 }
 
-function slugify(str: string): string {
-  const strWithAnd = str.replace(/&/g, " and "); // Replace & with 'and'
-  return transliterate(strWithAnd, {
-    lowercase: true,
-    separator: "-", // Replace spaces with -
-  }).replace(/\-\-+/g, "-"); // Replace multiple - with single -
-}
-
 function createHeading(as: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") {
   const CustomHeading = ({
     children,
     ...props
-  }: Omit<React.ComponentProps<typeof HeadingLink>, "as" | "id">) => {
-    const slug = slugify(children as string);
+  }: Omit<React.ComponentProps<typeof Heading>, "as">) => {
     return (
-      <HeadingLink marginTop="24" marginBottom="12" as={as} id={slug} {...props}>
+      <Heading marginTop="24" marginBottom="12" as={as} {...props}>
         {children}
-      </HeadingLink>
+      </Heading>
     );
   };
 
