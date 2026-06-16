@@ -1,9 +1,12 @@
 import { Column, Heading, Meta, Schema } from "@once-ui-system/core";
 import { Mailchimp } from "@/components";
 import { Posts } from "@/components/blog/Posts";
-import { baseURL, blog, person, newsletter } from "@/resources";
+import { baseURL, getContent } from "@/resources";
+import { getLanguage } from "@/utils/language";
 
 export async function generateMetadata() {
+  const lang = await getLanguage();
+  const { blog } = getContent(lang);
   return Meta.generate({
     title: blog.title,
     description: blog.description,
@@ -13,7 +16,9 @@ export async function generateMetadata() {
   });
 }
 
-export default function Blog() {
+export default async function Blog() {
+  const lang = await getLanguage();
+  const { blog, person } = getContent(lang);
   return (
     <Column maxWidth="m" paddingTop="24">
       <Schema

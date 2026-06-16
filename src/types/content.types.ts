@@ -1,6 +1,8 @@
 import { IconName } from "@/resources/icons";
 import { zones } from "tzdata";
 
+export type Language = "en" | "es";
+
 /**
  * IANA time zone string (e.g., 'Asia/Calcutta', 'Europe/Vienna').
  * See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -25,6 +27,8 @@ export type Person = {
   email: string;
   /** IANA time zone location */
   location: IANATimeZone;
+  /** Display label for location (e.g. "Ensenada, Mexico") */
+  city?: string;
   /** Languages spoken */
   languages?: string[];
 };
@@ -177,6 +181,8 @@ export interface About extends BasePageConfig {
       name: string;
       /** Description of studies */
       description: React.ReactNode;
+      /** Optional link to certificate or institution page */
+      link?: string;
     }>;
   };
   /** Technical skills section */

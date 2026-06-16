@@ -7,6 +7,8 @@ import {
   HiEnvelope,
   HiCalendarDays,
   HiArrowRight,
+  HiChevronLeft,
+  HiChevronRight,
   HiOutlineEye,
   HiOutlineEyeSlash,
   HiOutlineDocument,
@@ -27,6 +29,11 @@ import {
   SiNextdotjs,
   SiFigma,
   SiSupabase,
+  SiDotnet,
+  SiTypescript,
+  SiReact,
+  SiPostgresql,
+  SiDocker,
 } from "react-icons/si";
 
 import { FaDiscord, FaGithub, FaLinkedin, FaX, FaThreads, FaInstagram, FaXTwitter, FaFacebook, FaPinterest, FaWhatsapp, FaReddit, FaTelegram, } from "react-icons/fa6";
@@ -34,6 +41,8 @@ import { FaDiscord, FaGithub, FaLinkedin, FaX, FaThreads, FaInstagram, FaXTwitte
 export const iconLibrary: Record<string, IconType> = {
   arrowUpRight: HiArrowUpRight,
   arrowRight: HiArrowRight,
+  chevronLeft: HiChevronLeft,
+  chevronRight: HiChevronRight,
   email: HiEnvelope,
   globe: HiOutlineGlobeAsiaAustralia,
   person: PiUserCircleDuotone,
@@ -58,6 +67,11 @@ export const iconLibrary: Record<string, IconType> = {
   nextjs: SiNextdotjs,
   supabase: SiSupabase,
   figma: SiFigma,
+  dotnet: SiDotnet,
+  typescript: SiTypescript,
+  react: SiReact,
+  postgresql: SiPostgresql,
+  docker: SiDocker,
   facebook: FaFacebook,
   pinterest: FaPinterest,
   whatsapp: FaWhatsapp,

@@ -12,12 +12,15 @@ import {
   Schema,
   Row,
 } from "@once-ui-system/core";
-import { baseURL, about, person, social } from "@/resources";
+import { baseURL, getContent } from "@/resources";
 import TableOfContents from "@/components/about/TableOfContents";
 import styles from "@/components/about/about.module.scss";
 import React from "react";
+import { getLanguage } from "@/utils/language";
 
 export async function generateMetadata() {
+  const lang = await getLanguage();
+  const { about } = getContent(lang);
   return Meta.generate({
     title: about.title,
     description: about.description,
@@ -27,7 +30,9 @@ export async function generateMetadata() {
   });
 }
 
-export default function About() {
+export default async function About() {
+  const lang = await getLanguage();
+  const { about, person, social } = getContent(lang);
   const structure = [
     {
       title: about.intro.title,
@@ -96,7 +101,7 @@ export default function About() {
             <Avatar src={person.avatar} size="xl" />
             <Row gap="8" vertical="center">
               <Icon onBackground="accent-weak" name="globe" />
-              {person.location}
+              {person.city ?? person.location}
             </Row>
             {person.languages && person.languages.length > 0 && (
               <Row wrap gap="8">
@@ -269,9 +274,25 @@ export default function About() {
               <Column fillWidth gap="l" marginBottom="40">
                 {about.studies.institutions.map((institution, index) => (
                   <Column key={`${institution.name}-${index}`} fillWidth gap="4">
-                    <Text id={institution.name} variant="heading-strong-l">
-                      {institution.name}
-                    </Text>
+                    {institution.link ? (
+                      <Row gap="4" vertical="center">
+                        <Text
+                          as="a"
+                          href={institution.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          id={institution.name}
+                          variant="heading-strong-l"
+                        >
+                          {institution.name}
+                        </Text>
+                        <Icon name="arrowUpRight" size="s" onBackground="neutral-weak" />
+                      </Row>
+                    ) : (
+                      <Text id={institution.name} variant="heading-strong-l">
+                        {institution.name}
+                      </Text>
+                    )}
                     <Text variant="heading-default-xs" onBackground="neutral-weak">
                       {institution.description}
                     </Text>

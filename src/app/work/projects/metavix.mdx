@@ -1,0 +1,29 @@
+---
+title: "Metavix – Medical Platform"
+publishedAt: "2025-03-01"
+summary: "REST API with Clean Architecture and CQRS/MediatR, JWT auth, doctor-patient linking, and AI-powered clinical insights via NVIDIA's API."
+images:
+  - "/images/projects/metavix.png"
+team:
+  - name: "Orlando Castañeda"
+    role: "Full Stack Developer"
+    avatar: "/images/avatar.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: ""
+---
+
+## Overview
+
+Medical platform in closed beta with 20 active users. Built to handle doctor-patient linking and clinical insights without relying on external AI providers — all inference runs on self-hosted infrastructure.
+
+## Key Features
+
+- **Clean Architecture + CQRS/MediatR** for a maintainable and testable backend
+- **JWT authentication** with role-based access for doctors and patients
+- **Doctor-patient linking flow** with invitation and approval system
+- **AI-powered clinical insights** via NVIDIA's API — patient data is pseudonymized before being sent, stripping all identifying information so only raw clinical data reaches the model
+- **Deployed on VPS + Nginx** with Docker for full infrastructure control
+
+## Tech Stack
+
+ASP.NET Core 9, C#, PostgreSQL, Entity Framework Core, Docker, VPS, Nginx

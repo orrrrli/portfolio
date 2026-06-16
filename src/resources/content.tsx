@@ -1,15 +1,16 @@
-import { About, Blog, Gallery, Home, Newsletter, Person, Social, Work } from "@/types";
+import { About, Blog, Gallery, Home, Language, Newsletter, Person, Social, Work } from "@/types";
 import { Line, Row, Text } from "@once-ui-system/core";
 
 const person: Person = {
-  firstName: "Selene",
-  lastName: "Yu",
-  name: `Selene Yu`,
-  role: "Design Engineer",
-  avatar: "/images/avatar.jpg",
-  email: "example@gmail.com",
-  location: "Asia/Jakarta", // Expecting the IANA time zone identifier, e.g., 'Europe/Vienna'
-  languages: ["English", "Bahasa"], // optional: Leave the array empty if you don't want to display languages
+  firstName: "Orlando",
+  lastName: "Castañeda",
+  name: `Orlando Castañeda`,
+  role: "Full Stack Developer",
+  avatar: "/images/avatar-og.jpg",
+  email: "keorcasa@gmail.com",
+  location: "America/Tijuana",
+  city: "Ensenada, Mexico",
+  languages: ["English", "Spanish"],
 };
 
 const newsletter: Newsletter = {
@@ -19,31 +20,16 @@ const newsletter: Newsletter = {
 };
 
 const social: Social = [
-  // Links are automatically displayed.
-  // Import new icons in /once-ui/icons.ts
-  // Set essentials: true for links you want to show on the about page
   {
     name: "GitHub",
     icon: "github",
-    link: "https://github.com/once-ui-system",
+    link: "https://github.com/orrrrli",
     essential: true,
   },
   {
     name: "LinkedIn",
     icon: "linkedin",
-    link: "https://www.linkedin.com/company/once-ui/",
-    essential: true,
-  },
-  {
-    name: "Instagram",
-    icon: "instagram",
-    link: "https://www.instagram.com/once_ui/",
-    essential: false,
-  },
-  {
-    name: "Threads",
-    icon: "threads",
-    link: "https://www.threads.com/@once_ui",
+    link: "https://www.linkedin.com/in/castasan-orlando/",
     essential: true,
   },
   {
@@ -58,26 +44,26 @@ const home: Home = {
   path: "/",
   image: "/images/og/home.jpg",
   label: "Home",
-  title: `${person.name}'s Portfolio`,
-  description: `Portfolio website showcasing my work as a ${person.role}`,
-  headline: <>Building bridges between design and code</>,
+  title: `${person.name} — Full Stack Developer`,
+  description: `Portfolio of Orlando Castañeda, a Full Stack Developer building backends with .NET and products with React and Next.js.`,
+  headline: <>Building reliable backends, bridging to the frontend.</>,
   featured: {
     display: true,
     title: (
       <Row gap="12" vertical="center">
-        <strong className="ml-4">Once UI</strong>{" "}
+        <strong className="ml-4">Rokev Dynamics</strong>{" "}
         <Line background="brand-alpha-strong" vert height="20" />
         <Text marginRight="4" onBackground="brand-medium">
-          Featured work
+          Featured initiative
         </Text>
       </Row>
     ),
-    href: "/work/building-once-ui-a-customizable-design-system",
+    href: "https://rokevdynamics.com/",
   },
   subline: (
     <>
-    I'm Selene, a design engineer at <Text as="span" size="xl" weight="strong">ONCE UI</Text>, where I craft intuitive <br /> user experiences. After hours, I build my own projects.
-</>
+      I&apos;m Orlando, a Full Stack Developer based in Ensenada. I build backends that last and frontends that feel right.
+    </>
   ),
 };
 
@@ -85,7 +71,7 @@ const about: About = {
   path: "/about",
   label: "About",
   title: `About – ${person.name}`,
-  description: `Meet ${person.name}, ${person.role} from ${person.location}`,
+  description: `Meet Orlando Castañeda, a Full Stack Developer based in Ensenada, Mexico building production systems with .NET and React.`,
   tableOfContent: {
     display: true,
     subItems: false,
@@ -94,60 +80,112 @@ const about: About = {
     display: true,
   },
   calendar: {
-    display: true,
-    link: "https://cal.com",
+    display: false,
+    link: "",
   },
   intro: {
     display: true,
     title: "Introduction",
     description: (
       <>
-        Selene is a Jakarta-based design engineer with a passion for transforming complex challenges
-        into simple, elegant design solutions. Her work spans digital interfaces, interactive
-        experiences, and the convergence of design and technology.
+        Full Stack Developer based in Ensenada, Mexico with 3+ years building production systems.
+        I specialize in backend development with ASP.NET Core and Clean Architecture, and ship
+        full-stack products end-to-end.
       </>
     ),
   },
   work: {
-    display: true, // set to false to hide this section
+    display: true,
     title: "Work Experience",
     experiences: [
       {
-        company: "FLY",
-        timeframe: "2022 - Present",
-        role: "Senior Design Engineer",
+        company: "Freelance – Backend & Full Stack",
+        timeframe: "Jan 2024 – Present",
+        role: "Independent Full Stack Developer",
         achievements: [
           <>
-            Redesigned the UI/UX for the FLY platform, resulting in a 20% increase in user
-            engagement and 30% faster load times.
+            E-commerce platform in production (200+ orders/month): end-to-end backend with Stripe
+            checkout, payment webhooks, inventory reservation, and a background service that
+            auto-expires unpaid orders. Stack: Next.js 15, TypeScript, Stripe, PostgreSQL, Prisma.
           </>,
           <>
-            Spearheaded the integration of AI tools into design workflows, enabling designers to
-            iterate 50% faster.
+            Medical platform (closed beta): REST API with Clean Architecture, CQRS/MediatR, JWT
+            auth, and a self-hosted open-source LLM (Google Gemma 3n) for clinical insights —
+            no patient data sent to third parties.
+          </>,
+          <>
+            Sports platform (production): Stripe payments, student enrollments, roster management,
+            and Google Sheets integration for admin reporting. Built solo, end-to-end.
           </>,
         ],
-        images: [
-          // optional: leave the array empty if you don't want to display images
-          {
-            src: "/images/projects/project-01/cover-01.jpg",
-            alt: "Once UI Project",
-            width: 16,
-            height: 9,
-          },
-        ],
+        images: [],
       },
       {
-        company: "Creativ3",
-        timeframe: "2018 - 2022",
-        role: "Lead Designer",
+        company: "Sistemas de Información Mozart",
+        timeframe: "Jun 2024 – Feb 2026",
+        role: "Software Engineer",
         achievements: [
           <>
-            Developed a design system that unified the brand across multiple platforms, improving
-            design consistency by 40%.
+            Built the full production ERP backend: 80+ REST endpoints with ASP.NET Core 8, C#,
+            Clean Architecture, and CQRS — the backbone of the company&apos;s internal system.
           </>,
           <>
-            Led a cross-functional team to launch a new product line, contributing to a 15% increase
-            in overall company revenue.
+            Engineered a scalable .NET 8 API applying CQRS with MediatR, the Error Mediator
+            pattern, and Minimal APIs with Carter for a clean, extensible backend structure.
+          </>,
+          <>
+            Shipped a role-based logging system used daily by the support team to diagnose errors
+            without escalating to development.
+          </>,
+          <>
+            Led the architecture and .NET backend integration for an Android app — a mobile
+            companion to the company&apos;s desktop ERP — applying Clean Architecture to let
+            warehouse staff run operations on the move instead of being tied to a desktop terminal.
+          </>,
+        ],
+        images: [],
+      },
+      {
+        company: "Sistemas de Información Mozart",
+        timeframe: "Feb 2024 – May 2024",
+        role: "Junior Software Engineer (Internship)",
+        achievements: [
+          <>
+            Built features for an internal accounting system using C#, Windows Forms, and
+            relational databases, implementing business logic for financial report generation
+            under senior guidance.
+          </>,
+          <>
+            Optimized data retrieval using LINQ projections — selecting only required fields and
+            avoiding unnecessary related-entity loads — to implement business logic for accurate,
+            well-structured financial reports.
+          </>,
+        ],
+        images: [],
+      },
+      {
+        company: "OmniTEK Dev",
+        timeframe: "Feb 2023 – Dec 2023",
+        role: "Junior Software Engineer",
+        achievements: [
+          <>
+            Developed responsive landing pages with lead capture forms using React, Remix, and
+            Tailwind CSS, applying Atomic Design to build a reusable component library that reduced
+            duplicated frontend code across projects.
+          </>,
+          <>
+            Translated Figma mockups into production-ready components, shortening design-to-code
+            iteration cycles in an Agile environment.
+          </>,
+          <>
+            Integrated a newsletter subscription feature by consuming a Node.js API, connecting
+            lead capture forms to an external email service and persisting subscriber data to a
+            database.
+          </>,
+          <>
+            Identified and fixed UX risks in production — including overlapping buttons blocking
+            key actions and destructive actions (delete) visually outweighing safer ones —
+            reducing the chance of accidental, irreversible user actions.
           </>,
         ],
         images: [],
@@ -155,78 +193,58 @@ const about: About = {
     ],
   },
   studies: {
-    display: true, // set to false to hide this section
-    title: "Studies",
+    display: true,
+    title: "Education",
     institutions: [
       {
-        name: "University of Jakarta",
-        description: <>Studied software engineering.</>,
+        name: "Universidad Autónoma de Baja California",
+        description: <>B.S. in Software Engineering & Emerging Technologies — 2019–2024.</>,
       },
       {
-        name: "Build the Future",
-        description: <>Studied online marketing and personal branding.</>,
+        name: "Meta Front-End Developer",
+        description: <>Professional certificate — Coursera / Meta, 2023.</>,
+        link: "https://coursera.org/share/970fc9983db283fff37e0b2b761e0e88",
+      },
+      {
+        name: "Google Cloud DevOps Engineer",
+        description: <>Preparing for Google Cloud Certification — Coursera / Google Cloud, 2023.</>,
+        link: "https://coursera.org/share/3ec32abb273169789f880e424ee9e3e3",
       },
     ],
   },
   technical: {
-    display: true, // set to false to hide this section
+    display: true,
     title: "Technical skills",
     skills: [
       {
-        title: "Figma",
+        title: "ASP.NET Core / C#",
         description: (
-          <>Able to prototype in Figma with Once UI with unnatural speed.</>
+          <>
+            Building production REST APIs with ASP.NET Core 8, Clean Architecture, CQRS/MediatR,
+            EF Core, and FluentValidation. Patterns I use on every backend.
+          </>
         ),
         tags: [
-          {
-            name: "Figma",
-            icon: "figma",
-          },
+          { name: ".NET", icon: "dotnet" },
+          { name: "PostgreSQL", icon: "postgresql" },
+          { name: "Docker", icon: "docker" },
         ],
-        // optional: leave the array empty if you don't want to display images
-        images: [
-          {
-            src: "/images/projects/project-01/cover-02.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-          {
-            src: "/images/projects/project-01/cover-03.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-        ],
+        images: [],
       },
       {
-        title: "Next.js",
+        title: "React / Next.js",
         description: (
-          <>Building next gen apps with Next.js + Once UI + Supabase.</>
+          <>
+            Shipping full-stack products with Next.js 15, TypeScript, Tailwind CSS, Prisma, and
+            Stripe. From checkout flows to admin panels.
+          </>
         ),
         tags: [
-          {
-            name: "JavaScript",
-            icon: "javascript",
-          },
-          {
-            name: "Next.js",
-            icon: "nextjs",
-          },
-          {
-            name: "Supabase",
-            icon: "supabase",
-          },
+          { name: "React", icon: "react" },
+          { name: "Next.js", icon: "nextjs" },
+          { name: "TypeScript", icon: "typescript" },
         ],
-        // optional: leave the array empty if you don't want to display images
-        images: [
-          {
-            src: "/images/projects/project-01/cover-04.jpg",
-            alt: "Project image",
-            width: 16,
-            height: 9,
-          },
-        ],
+        images: [],
       },
     ],
   },
@@ -234,20 +252,16 @@ const about: About = {
 
 const blog: Blog = {
   path: "/blog",
-  label: "Blog",
-  title: "Writing about design and tech...",
-  description: `Read what ${person.name} has been up to recently`,
-  // Create new blog posts by adding a new .mdx file to app/blog/posts
-  // All posts will be listed on the /blog route
+  label: "Build & Learn",
+  title: "Build & Learn",
+  description: "Things I'm building, exploring, and learning as a Full Stack Developer.",
 };
 
 const work: Work = {
   path: "/work",
   label: "Work",
   title: `Projects – ${person.name}`,
-  description: `Design and dev projects by ${person.name}`,
-  // Create new project pages by adding a new .mdx file to app/blog/posts
-  // All projects will be listed on the /home and /work routes
+  description: `Software projects by ${person.name} — backends, full-stack products, and everything in between.`,
 };
 
 const gallery: Gallery = {
@@ -300,5 +314,152 @@ const gallery: Gallery = {
     },
   ],
 };
+
+export function getContent(lang: Language) {
+  if (lang === "es") {
+    return {
+      person: {
+        ...person,
+        role: "Desarrollador Full Stack",
+      },
+      home: {
+        ...home,
+        label: "Inicio",
+        headline: <>Construyendo backends confiables, conectando con el frontend.</>,
+      },
+      about: {
+        ...about,
+        label: "Sobre mí",
+        intro: { ...about.intro, title: "Introducción" },
+        work: {
+          ...about.work,
+          title: "Experiencia",
+          experiences: [
+            {
+              company: "Freelance – Backend & Full Stack",
+              timeframe: "Ene 2024 – Presente",
+              role: "Desarrollador Full Stack Independiente",
+              achievements: [
+                <>
+                  Plataforma de e-commerce en producción (200+ órdenes/mes): backend completo con
+                  Stripe checkout, webhooks de pago, reserva de inventario y un servicio en segundo
+                  plano que expira órdenes no pagadas automáticamente. Stack: Next.js 15,
+                  TypeScript, Stripe, PostgreSQL, Prisma.
+                </>,
+                <>
+                  Plataforma médica (beta cerrada): API REST con Clean Architecture, CQRS/MediatR,
+                  autenticación JWT y un LLM de código abierto auto-hospedado (Google Gemma 3n)
+                  para insights clínicos — ningún dato de pacientes se envía a terceros.
+                </>,
+                <>
+                  Plataforma deportiva (producción): pagos con Stripe, inscripciones de alumnos,
+                  gestión de plantillas e integración con Google Sheets para reportes
+                  administrativos. Desarrollada de forma independiente, de principio a fin.
+                </>,
+              ],
+              images: [],
+            },
+            {
+              company: "Sistemas de Información Mozart",
+              timeframe: "Jun 2024 – Feb 2026",
+              role: "Ingeniero de Software",
+              achievements: [
+                <>
+                  Construí el backend completo del ERP en producción: más de 80 endpoints REST con
+                  ASP.NET Core 8, C#, Clean Architecture y CQRS — el núcleo del sistema interno
+                  de la empresa.
+                </>,
+                <>
+                  Diseñé una API escalable en .NET 8 aplicando CQRS con MediatR, el patrón Error
+                  Mediator y Minimal APIs con Carter para una estructura de backend limpia y
+                  extensible.
+                </>,
+                <>
+                  Implementé un sistema de logging basado en roles que el equipo de soporte usa
+                  diariamente para diagnosticar errores sin escalar a desarrollo.
+                </>,
+                <>
+                  Lideré la arquitectura e integración del backend .NET para una aplicación Android
+                  — una extensión móvil del ERP de escritorio de la empresa — aplicando Clean
+                  Architecture para que el personal de almacén pudiera operar en movimiento sin
+                  estar atado a una terminal de escritorio.
+                </>,
+              ],
+              images: [],
+            },
+            {
+              company: "Sistemas de Información Mozart",
+              timeframe: "Feb 2024 – May 2024",
+              role: "Ingeniero de Software Junior (Prácticas)",
+              achievements: [
+                <>
+                  Desarrollé funcionalidades para un sistema de contabilidad interno usando C#,
+                  Windows Forms y bases de datos relacionales, implementando lógica de negocio
+                  para la generación de reportes financieros bajo supervisión de ingenieros senior.
+                </>,
+                <>
+                  Optimicé la recuperación de datos usando proyecciones LINQ — seleccionando solo
+                  los campos necesarios y evitando cargas innecesarias de entidades relacionadas —
+                  para implementar lógica de negocio que genera reportes financieros precisos y
+                  bien estructurados.
+                </>,
+              ],
+              images: [],
+            },
+            {
+              company: "OmniTEK Dev",
+              timeframe: "Feb 2023 – Dic 2023",
+              role: "Ingeniero de Software Junior",
+              achievements: [
+                <>
+                  Desarrollé landing pages responsivas con formularios de captura de leads usando
+                  React, Remix y Tailwind CSS, aplicando Atomic Design para construir una librería
+                  de componentes reutilizables que redujo el código frontend duplicado entre
+                  proyectos.
+                </>,
+                <>
+                  Traduje mockups de Figma a componentes listos para producción, acortando los
+                  ciclos de iteración diseño-código en un entorno Agile.
+                </>,
+                <>
+                  Integré una funcionalidad de suscripción a newsletter consumiendo una API en
+                  Node.js, conectando formularios de captura de leads a un servicio de email
+                  externo y persistiendo datos de suscriptores en base de datos.
+                </>,
+                <>
+                  Identifiqué y corregí riesgos de UX en producción — incluyendo botones
+                  superpuestos que bloqueaban acciones clave y acciones destructivas (eliminar)
+                  con mayor peso visual que las más seguras — reduciendo la posibilidad de
+                  acciones accidentales e irreversibles por parte del usuario.
+                </>,
+              ],
+              images: [],
+            },
+          ],
+        },
+        studies: { ...about.studies, title: "Formación" },
+        technical: { ...about.technical, title: "Habilidades técnicas" },
+      },
+      blog: {
+        ...blog,
+        label: "Aprende & Construye",
+        title: "Aprende & Construye",
+        description:
+          "Cosas que estoy construyendo, explorando y aprendiendo como Full Stack Developer.",
+      },
+      work: {
+        ...work,
+        label: "Proyectos",
+        title: `Proyectos – ${person.name}`,
+        description: `Proyectos de desarrollo por ${person.name}`,
+      },
+      newsletter,
+      social,
+      gallery,
+    };
+  }
+
+  return { person, home, about, blog, work, newsletter, social, gallery };
+}
 
 export { person, social, newsletter, home, about, blog, work, gallery };
