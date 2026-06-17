@@ -1,7 +1,7 @@
 ---
 title: "Hospital Management System"
 publishedAt: "2024-06-01"
-summary: "Full backend for a hospital management ERP — REST endpoints, role-based logging system used by support teams in production, and documented business rules derived directly from department heads."
+summary: "Production backend for a hospital management ERP — 80+ REST endpoints with Clean Architecture, a role-based logging system that eliminated support escalations to development, and business rules documented directly from department heads."
 images:
   - "/images/projects/gestion-hospitalaria3.png"
 team:
@@ -10,19 +10,23 @@ team:
     avatar: "/images/avatar.jpg"
     linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
 link: ""
+stack:
+  - "ASP.NET Core"
+  - "C#"
+  - "Clean Architecture"
+  - "CQRS/MediatR"
+  - "Entity Framework Core"
+  - "PostgreSQL"
 ---
 
 ## Overview
 
-Enterprise backend for a hospital management system, built using Clean Architecture and CQRS. The entire REST API powers the ERP used by the hospital's departments in production.
+Production REST API powering a hospital management ERP — 80+ endpoints built with ASP.NET Core 8 and Clean Architecture, serving all hospital departments in active production use.
 
 ## Key Features
 
-- **REST endpoints** covering core hospital operations built with ASP.NET Core 8
-- **Role-based logging system** that lets support teams diagnose errors without escalating to development
-- **Business rule documentation** gathered directly from department heads before writing code
-- **API contracts coordinated** with a mobile team (Kotlin/Jetpack Compose) to allow parallel development
+- **Delivered** 80+ REST endpoints covering core hospital operations — ASP.NET Core 8 with Clean Architecture as the backbone of the production ERP
+- **Shipped** a role-based logging system used daily by support — eliminating error escalations to the development team
+- **Documented** business rules directly from department heads before writing code — preventing requirement drift and reducing mid-development rework
+- **Established** shared API contracts with the mobile team (Kotlin/Jetpack Compose) — enabling parallel development tracks and reducing integration delays
 
-## Tech Stack
-
-ASP.NET Core 8, C#, Clean Architecture, CQRS/MediatR, Entity Framework Core, PostgreSQL

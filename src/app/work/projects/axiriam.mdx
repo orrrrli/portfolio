@@ -1,7 +1,7 @@
 ---
 title: "Axiriam – E-Commerce Platform"
 publishedAt: "2025-02-01"
-summary: "Full-stack e-commerce platform with 200+ monthly orders. Multi-step checkout with Stripe, webhooks, inventory reservation, order expiration background service, and an admin panel for the store team."
+summary: "Full-stack e-commerce platform handling 200+ orders/month — Stripe checkout with webhook confirmation, inventory reservation with 5-minute auto-expiry on unpaid orders, and a custom admin panel built around the team's workflow."
 images:
   - "/images/projects/axiriam.png"
 team:
@@ -10,6 +10,15 @@ team:
     avatar: "/images/avatar.jpg"
     linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
 link: ""
+stack:
+  - "Next.js"
+  - "TypeScript"
+  - "Stripe"
+  - "PostgreSQL"
+  - "Prisma"
+  - "Resend"
+  - "Cloudinary"
+  - "Tailwind CSS"
 ---
 
 ## Overview
@@ -24,20 +33,16 @@ Result: 200+ orders per month in production, and zero lost sales from missed mes
 
 ## Key Features
 
-- **Multi-step checkout** with Stripe integration and webhook-based payment confirmation
-- **Inventory reservation** on order creation with automatic restoration on cancellation
-- **Background service** that expires unpaid orders every 5 minutes and releases reserved stock
-- **Admin panel** for the store team to manage products, orders, and inventory
-- **Email notifications** via Resend for order confirmation and shipping updates
-- **Image management** with Cloudinary for product media
-
-## Tech Stack
-
-Next.js 15, TypeScript, Stripe, PostgreSQL, Prisma ORM, Resend, Cloudinary, Tailwind CSS
+- **Built** multi-step checkout with Stripe — webhook-confirmed payments prevent inventory from releasing on unconfirmed transactions
+- **Reserved** inventory at order creation — automatically restored on cancellation, preventing overselling without a manual reconciliation step
+- **Deployed** a background service expiring unpaid orders every 5 minutes — releasing held stock to prevent abandoned carts from blocking available inventory indefinitely
+- **Designed** a custom admin panel around the team's actual workflow — product uploads, order management, and inventory control with no developer required
+- **Automated** order and shipping notifications via Resend — closing the communication gap that previously required customers to contact the team directly for order status
+- **Offloaded** product image storage and delivery to Cloudinary — CDN optimization and on-the-fly transformation with zero server-side processing
 
 ## Rendering Strategy
 
-Not every route needs the same freshness guarantee. I mapped each route based on two questions: does the content change per user, and how often? Static pages like `/nosotros` hit CDN forever (SSG). The catalog uses ISR — pre-rendered, revalidated only when a payment or stock change fires `revalidateTag('catalog')`. Product pages are SSR because reviews and stock must be fresh per request. Cart and checkout are pure client-side (Zustand + SWR) because they depend on per-user state in localStorage. Admin routes skip all caching — RSC direct, role-checked on every hit.
+Not every route needs the same freshness guarantee. Each route maps to two questions: does the content change per user, and how often? Static pages like `/nosotros` hit CDN forever (SSG). The catalog uses ISR — pre-rendered, revalidated only when a payment or stock change fires `revalidateTag('catalog')`. Product pages are SSR because reviews and stock must be fresh per request. Cart and checkout are pure client-side (Zustand + SWR) because they depend on per-user state in localStorage. Admin routes skip all caching — RSC direct, role-checked on every hit.
 
 ![Rendering strategy decision tree](/images/axiriam/rendering.png)
 

@@ -18,7 +18,7 @@ import {
 import { baseURL, about, person, work, getContent } from "@/resources";
 import { getLanguage } from "@/utils/language";
 import { formatDate } from "@/utils/formatDate";
-import { ScrollToHash, CustomMDX } from "@/components";
+import { ScrollToHash, CustomMDX, TechStack } from "@/components";
 import { Metadata } from "next";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
@@ -123,6 +123,9 @@ export default async function Project({
       </Row>
       {post.metadata.images.length > 0 && (
         <Media priority aspectRatio="16 / 9" radius="m" alt="image" src={post.metadata.images[0]} />
+      )}
+      {post.metadata.stack && post.metadata.stack.length > 0 && (
+        <TechStack stack={post.metadata.stack} />
       )}
       <Column style={{ margin: "auto" }} as="article" maxWidth="xs">
         <CustomMDX source={post.content} />

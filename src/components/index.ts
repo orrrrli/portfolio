@@ -10,3 +10,4 @@ export { ScrollToHash } from "@/components/ScrollToHash";
 export { ThemeToggle } from "@/components/ThemeToggle";
 export { LanguageToggle } from "@/components/LanguageToggle";
 export { CustomMDX } from "@/components/mdx";
+export { TechStack } from "@/components/TechStack";

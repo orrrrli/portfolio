@@ -1,7 +1,7 @@
 ---
 title: "Metavix – Medical Platform"
 publishedAt: "2025-03-01"
-summary: "Medical platform for diabetes patients. REST API with Clean Architecture and CQRS/MediatR, Google OAuth, doctor identity verification via SEP + Didit KYC, and AI-powered clinical insights via NVIDIA's API."
+summary: "Production REST API for a diabetes care platform — 2-stage doctor verification (SEP registry + Didit KYC), role-based auth, and NVIDIA-powered clinical insights; 20 active users in closed beta."
 images:
   - "/images/projects/metavix.png"
 team:
@@ -10,6 +10,14 @@ team:
     avatar: "/images/avatar.jpg"
     linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
 link: ""
+stack:
+  - "ASP.NET Core"
+  - "C#"
+  - "PostgreSQL"
+  - "Entity Framework Core"
+  - "Docker"
+  - "Nginx"
+  - "NVIDIA"
 ---
 
 ## Overview
@@ -22,21 +30,17 @@ Currently in closed beta with 20 active users.
 
 ## Key Features
 
-- **Clean Architecture + CQRS/MediatR** for a maintainable and testable backend
-- **Google OAuth** with role-based JWT auth for doctors and patients
-- **Doctor-patient linking flow** with invitation and approval system
-- **Doctor identity verification** — cédula profesional validation via SEP + full KYC with Didit (liveness, face match, IP)
-- **AI-powered clinical insights** via NVIDIA's API — patient data is pseudonymized before being sent, stripping all identifying information so only raw clinical data reaches the model
-- **Portable health reports** patients can bring to any doctor
-- **Deployed on VPS + Nginx** with Docker for full infrastructure control
-
-## Tech Stack
-
-ASP.NET Core 9, C#, PostgreSQL, Entity Framework Core, Docker, VPS, Nginx
+- **Architected** backend with Clean Architecture and CQRS/MediatR — each use case isolated in its own handler, independently testable without the web framework
+- **Eliminated** password management with Google OAuth — role-based JWT enforces strict data scope isolation between doctor and patient accounts
+- **Enforced** explicit patient consent via invitation-based doctor-patient linking — no practitioner accesses records without approval
+- **Blocked** unverified practitioners with 2-stage verification: automated cédula lookup against Mexico's SEP registry (instant rejection on mismatch) + Didit KYC — liveness check, document scan, face match
+- **Integrated** NVIDIA's API for clinical insights — mandatory pre-transmission pseudonymization strips all patient identifiers before any data leaves the platform
+- **Generated** exportable health reports from patient logs — usable at any clinic without a platform account
+- **Containerized** the full stack with Docker behind Nginx on a self-managed VPS — zero dependency on managed cloud services, full control over data residency
 
 ## Doctor Verification
 
-A medical platform has one critical trust requirement: you can't let anyone register as a doctor. We built a two-stage verification flow. First, the backend scrapes Mexico's SEP professional registry to validate the cédula profesional — if it doesn't exist or doesn't match, the request is rejected immediately with a 403. If valid, we initiate a full KYC session with Didit: biometric liveness check, document scan, face match, and IP analysis. The webhook response is HMAC-verified before the doctor's status is updated. A doctor cannot access any patient data until both stages pass.
+A medical platform has one critical trust requirement: you can't let anyone register as a doctor. The platform enforces a two-stage verification flow. First, the backend scrapes Mexico's SEP professional registry to validate the cédula profesional — if it doesn't exist or doesn't match, the request is rejected immediately with a 403. If valid, we initiate a full KYC session with Didit: biometric liveness check, document scan, face match, and IP analysis. The webhook response is HMAC-verified before the doctor's status is updated. A doctor cannot access any patient data until both stages pass.
 
 ![Doctor verification sequence flow](/images/metavix/identity-doctor.png)
 
