@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+.next
+.env
+.env.*
+!.env.example
+.vscode
+.windsurf
+.DS_Store
+*.log
+docs
+README.md
+LICENSE
