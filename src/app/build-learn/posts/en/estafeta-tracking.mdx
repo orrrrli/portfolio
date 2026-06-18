@@ -1,0 +1,83 @@
+---
+title: "I Built the Tracking API a Major Mexican Carrier Never Did"
+publishedAt: "2026-06-18"
+summary: "Mexico's most popular red delivery carrier moves millions of packages a day. They have no public tracking API. So I built one, and here's how."
+tag: "Backend"
+---
+
+## The Problem Nobody Talks About
+
+If you've ever built an e-commerce platform in Mexico, you've hit this wall.
+
+Your client ships with the country's largest red delivery carrier. Their customers want to know where their package is. So you open the carrier's developer portal and look for a tracking API.
+
+There isn't one.
+
+What you find instead is a website form: a plain HTML input that spits out a status table. No JSON, no webhooks, no authentication tokens. Just HTML you have to parse to get a single status string.
+
+Every agency that ships product in Mexico has quietly solved this in the worst possible way: a brittle scraper that breaks every time the carrier updates their markup. I've seen it done with Puppeteer, with `cheerio`, with curl piped through `grep`. I've done it myself. It works until it doesn't, and when it breaks, your client is the one getting calls at midnight.
+
+This is a solved problem in every other country. It shouldn't be a problem here.
+
+## What I Actually Found
+
+The carrier's tracking page is a server-rendered form. When you submit a tracking number, it posts to an internal endpoint and returns HTML. That much is obvious from the DevTools Network tab.
+
+What's less obvious is that buried in that same request chain, there's a secondary JSON endpoint the web app calls to populate a status timeline. It's not documented. It's not versioned. But it's there, it returns clean JSON, and it's been stable for long enough to be worth betting on.
+
+I wrote a thin wrapper around it.
+
+The wrapper does three things:
+- Accepts a tracking number as a path parameter
+- Forwards the request to the carrier's internal endpoint with the right headers
+- Returns normalized JSON regardless of what the underlying response looks like
+
+That's it. No database, no queue, no auth layer. Just a clean REST surface over something that was already there.
+
+## The Endpoint
+
+```
+GET https://lab.orlando.codes/api/v1/tracking/:number
+```
+
+Pass any Estafeta tracking number as the `:number` path parameter. The response is JSON.
+
+A valid tracking number returns the current status, location, and event timeline. An invalid or unknown number returns a description telling you nothing was found, which is itself useful: it means the network is working and the number is the problem, not your integration.
+
+Try it below. Replace the value in the **Path** tab with a real tracking number:
+
+<APIPlayground
+  url="https://lab.orlando.codes/api/v1/tracking/:number"
+  initialPath={[{ key: "number", value: "1234567890" }]}
+/>
+
+## Why This Matters
+
+A tracking API sounds trivial. It isn't.
+
+When you have one, you can:
+
+- Send proactive shipping updates over WhatsApp or SMS without polling a website
+- Store status history in your own database for dispute resolution
+- Build a customer-facing tracking page that matches your brand, not the carrier's
+- Alert your ops team the moment a package gets stuck
+
+None of those things are possible when your only option is scraping HTML. All of them become straightforward with a JSON endpoint.
+
+## What This Isn't
+
+This is not an official integration. The carrier hasn't blessed this endpoint. It could change.
+
+It runs on my personal lab server: it's a proof of concept and a learning exercise, not a production SLA. If you're building something serious on top of it, you should monitor the endpoint and have a fallback strategy.
+
+What it is is a working demonstration that the underlying data exists and is accessible. If demand is there, the next step is a proper hosted version with rate limiting, caching, and a proper changelog.
+
+## What I Learned
+
+The hardest part wasn't the HTTP wrapper. It was figuring out the right request shape: the carrier's internal endpoint is picky about headers and expects specific form fields in a specific order. Getting that right meant reading network traces carefully and testing edge cases that the website doesn't surface.
+
+The second hardest part was normalization. The raw response has inconsistencies depending on whether a package has been scanned, is in transit, or has been delivered. Writing a transformer that handles all three states cleanly took more iterations than I expected.
+
+The wrapper itself is about 80 lines. The normalization layer is another 60. The whole thing runs on a small VPS with no external dependencies except the carrier's endpoint.
+
+Sometimes the right solution isn't complex. It just requires someone to sit down and do the work.

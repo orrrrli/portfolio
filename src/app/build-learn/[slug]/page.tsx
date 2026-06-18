@@ -12,18 +12,16 @@ import {
   SmartLink,
   Avatar,
   Media,
-  Line,
 } from "@once-ui-system/core";
-import { baseURL, about, blog, person } from "@/resources";
+import { baseURL, getContent } from "@/resources";
+import { getLanguage } from "@/utils/language";
 import { formatDate } from "@/utils/formatDate";
 import { getPosts } from "@/utils/utils";
 import { Metadata } from "next";
 import React from "react";
-import { Posts } from "@/components/blog/Posts";
-import { ShareSection } from "@/components/blog/ShareSection";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const posts = getPosts(["src", "app", "blog", "posts"]);
+  const posts = getPosts(["src", "app", "build-learn", "posts"], "en");
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -34,12 +32,14 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string | string[] }>;
 }): Promise<Metadata> {
+  const lang = await getLanguage();
+  const { blog } = getContent(lang);
   const routeParams = await params;
   const slugPath = Array.isArray(routeParams.slug)
     ? routeParams.slug.join("/")
     : routeParams.slug || "";
 
-  const posts = getPosts(["src", "app", "blog", "posts"]);
+  const posts = getPosts(["src", "app", "build-learn", "posts"], lang);
   let post = posts.find((post) => post.slug === slugPath);
 
   if (!post) return {};
@@ -54,12 +54,14 @@ export async function generateMetadata({
 }
 
 export default async function Blog({ params }: { params: Promise<{ slug: string | string[] }> }) {
+  const lang = await getLanguage();
+  const { blog, person, about } = getContent(lang);
   const routeParams = await params;
   const slugPath = Array.isArray(routeParams.slug)
     ? routeParams.slug.join("/")
     : routeParams.slug || "";
 
-  let post = getPosts(["src", "app", "blog", "posts"]).find((post) => post.slug === slugPath);
+  let post = getPosts(["src", "app", "build-learn", "posts"], lang).find((post) => post.slug === slugPath);
 
   if (!post) {
     notFound();
@@ -94,11 +96,11 @@ export default async function Blog({ params }: { params: Promise<{ slug: string 
             }}
           />
           <Column maxWidth="s" gap="16" horizontal="center" align="center">
-            <SmartLink href="/blog">
-              <Text variant="label-strong-m">Blog</Text>
+            <SmartLink href="/build-learn">
+              <Text variant="label-strong-m">{blog.labels.backLink}</Text>
             </SmartLink>
             <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
-              {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}
+              {post.metadata.publishedAt && formatDate(post.metadata.publishedAt, false, lang)}
             </Text>
             <Heading variant="display-strong-m">{post.metadata.title}</Heading>
             {post.metadata.subtitle && (
@@ -137,18 +139,6 @@ export default async function Blog({ params }: { params: Promise<{ slug: string 
             <CustomMDX source={post.content} />
           </Column>
           
-          <ShareSection 
-            title={post.metadata.title} 
-            url={`${baseURL}${blog.path}/${post.slug}`} 
-          />
-
-          <Column fillWidth gap="40" horizontal="center" marginTop="40">
-            <Line maxWidth="40" />
-            <Text as="h2" id="recent-posts" variant="heading-strong-xl" marginBottom="24">
-              Recent posts
-            </Text>
-            <Posts exclude={[post.slug]} range={[1, 2]} columns="2" thumbnail direction="column" />
-          </Column>
           <ScrollToHash />
         </Column>
       </Row>

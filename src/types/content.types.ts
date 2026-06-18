@@ -221,7 +221,12 @@ export interface About extends BasePageConfig {
  * Blog page configuration.
  * @description Configuration for the Blog page, including metadata and navigation label.
  */
-export interface Blog extends BasePageConfig {}
+export interface Blog extends BasePageConfig {
+  labels: {
+    backLink: string;
+    recentPosts: string;
+  };
+}
 
 /**
  * Work/projects page configuration.
@@ -232,6 +237,8 @@ export interface Work extends BasePageConfig {
     behindTheBuild: string;
     viewProject: string;
     backToProjects: string;
+    selectedWork: string;
+    readCaseStudy: string;
   };
 }
 

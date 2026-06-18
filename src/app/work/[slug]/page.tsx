@@ -22,7 +22,7 @@ import { ScrollToHash, CustomMDX, TechStack } from "@/components";
 import { Metadata } from "next";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  const posts = getPosts(["src", "app", "work", "projects"]);
+  const posts = getPosts(["src", "app", "work", "projects"], "en");
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -38,7 +38,8 @@ export async function generateMetadata({
     ? routeParams.slug.join("/")
     : routeParams.slug || "";
 
-  const posts = getPosts(["src", "app", "work", "projects"]);
+  const lang = await getLanguage();
+  const posts = getPosts(["src", "app", "work", "projects"], lang);
   let post = posts.find((post) => post.slug === slugPath);
 
   if (!post) return {};
@@ -62,13 +63,12 @@ export default async function Project({
     ? routeParams.slug.join("/")
     : routeParams.slug || "";
 
-  let post = getPosts(["src", "app", "work", "projects"]).find((post) => post.slug === slugPath);
+  const lang = await getLanguage();
+  let post = getPosts(["src", "app", "work", "projects"], lang).find((post) => post.slug === slugPath);
 
   if (!post) {
     notFound();
   }
-
-  const lang = await getLanguage();
   const { work } = getContent(lang);
 
   const avatars =
@@ -100,7 +100,7 @@ export default async function Project({
           <Text variant="label-strong-m">{work.labels.backToProjects}</Text>
         </SmartLink>
         <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
-          {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}
+          {post.metadata.publishedAt && formatDate(post.metadata.publishedAt, false, lang)}
         </Text>
         <Heading variant="display-strong-m">{post.metadata.title}</Heading>
       </Column>

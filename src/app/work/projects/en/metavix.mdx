@@ -1,0 +1,51 @@
+---
+title: "Metavix – Medical Platform"
+publishedAt: "2025-03-01"
+summary: "Production REST API for a diabetes care platform. 2-stage doctor verification (SEP registry + Didit KYC), role-based auth, and an AI layer that helps patients understand their data without replacing the doctor. 20 active users in closed beta."
+images:
+  - "/images/projects/metavix.png"
+team:
+  - name: "Orlando Castañeda"
+    role: "Full Stack Developer"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: ""
+stack:
+  - "ASP.NET Core"
+  - "C#"
+  - "PostgreSQL"
+  - "Entity Framework Core"
+  - "Docker"
+  - "Nginx"
+  - "NVIDIA"
+---
+
+## Overview
+
+Diabetes patients log health data multiple times a day: blood glucose readings, insulin doses, meals, scattered across notebooks, WhatsApp messages, and PDFs. Metavix brings that into one place. Patients log their daily records from any device, doctors connect and evaluate remotely, and an AI model powered by NVIDIA's API helps patients understand their own data. It doesn't replace the doctor, it prepares them for a better consultation. That's why the AI is explicitly informative, not diagnostic — clinical decisions remain with the treating physician.
+
+The hardest parts weren't the data model. They were trust problems: building a UI that works for patients of all ages and digital literacy levels, encrypting sensitive medical data end-to-end, and ensuring every doctor on the platform holds a valid professional license before they can access a single patient record.
+
+Currently in closed beta with 20 active users.
+
+## Key Features
+
+- **Architected** backend with Clean Architecture and CQRS/MediatR: each use case isolated in its own handler, independently testable without the web framework
+- **Eliminated** password management with Google OAuth: role-based JWT enforces strict data scope isolation between doctor and patient accounts
+- **Enforced** explicit patient consent via invitation-based doctor-patient linking: no practitioner accesses records without approval
+- **Blocked** unverified practitioners with 2-stage verification: automated cédula lookup against Mexico's SEP registry (instant rejection on mismatch) + Didit KYC for liveness check, document scan, and face match
+- **Integrated** NVIDIA's API for clinical insights: mandatory pre-transmission pseudonymization strips all patient identifiers before any data leaves the platform
+- **Generated** exportable health reports from patient logs, usable at any clinic without a platform account
+- **Containerized** the full stack with Docker behind Nginx on a self-managed VPS: zero dependency on managed cloud services, full control over data residency
+
+## Doctor Verification
+
+A medical platform has one critical trust requirement: you can't let anyone register as a doctor. The platform enforces a two-stage verification flow. First, the backend scrapes Mexico's SEP professional registry to validate the cédula profesional. If it doesn't exist or doesn't match, the request is rejected immediately with a 403. If valid, we initiate a full KYC session with Didit: biometric liveness check, document scan, face match, and IP analysis. The webhook response is HMAC-verified before the doctor's status is updated. A doctor cannot access any patient data until both stages pass.
+
+![Doctor verification sequence flow](/images/metavix/identity-doctor.png)
+
+## Authentication
+
+Patients and doctors sign in with Google OAuth, with no passwords and no email verification flows. The backend uses ASP.NET Core's `AddGoogle()` middleware: it generates and validates the anti-CSRF state token automatically, exchanges the authorization code for an access_token with Google, then upserts the user and issues a JWT. The frontend never handles OAuth credentials directly.
+
+![OAuth Google authentication flow](/images/metavix/image.png)

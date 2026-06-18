@@ -8,14 +8,15 @@ interface PostProps {
   post: any;
   thumbnail: boolean;
   direction?: "row" | "column";
+  lang?: string;
 }
 
-export default function Post({ post, thumbnail, direction }: PostProps) {
+export default function Post({ post, thumbnail, direction, lang = "en" }: PostProps) {
   return (
     <Card
       fillWidth
       key={post.slug}
-      href={`/blog/${post.slug}`}
+      href={`/build-learn/${post.slug}`}
       transition="micro-medium"
       direction={direction}
       border="transparent"
@@ -45,7 +46,7 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
               <Text variant="label-default-s">{person.name}</Text>
             </Row>
             <Text variant="body-default-xs" onBackground="neutral-weak">
-              {formatDate(post.metadata.publishedAt, false)}
+              {formatDate(post.metadata.publishedAt, false, lang)}
             </Text>
           </Row>
           <Text variant="heading-strong-l" wrap="balance">

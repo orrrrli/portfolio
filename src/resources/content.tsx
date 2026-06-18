@@ -248,10 +248,14 @@ const about: About = {
 };
 
 const blog: Blog = {
-  path: "/blog",
+  path: "/build-learn",
   label: "Build & Learn",
   title: "Build & Learn",
   description: "Things I'm building, exploring, and learning as a Full Stack Developer.",
+  labels: {
+    backLink: "Build & Learn",
+    recentPosts: "Recent posts",
+  },
 };
 
 const work: Work = {
@@ -263,6 +267,8 @@ const work: Work = {
     behindTheBuild: "Behind the build",
     viewProject: "View project",
     backToProjects: "Projects",
+    selectedWork: "Selected Work",
+    readCaseStudy: "Read case study",
   },
 };
 
@@ -444,6 +450,10 @@ export function getContent(lang: Language) {
         title: "Aprende & Construye",
         description:
           "Cosas que estoy construyendo, explorando y aprendiendo como Full Stack Developer.",
+        labels: {
+          backLink: "Aprende & Construye",
+          recentPosts: "Publicaciones recientes",
+        },
       },
       work: {
         ...work,
@@ -454,6 +464,8 @@ export function getContent(lang: Language) {
           behindTheBuild: "Detrás del proyecto",
           viewProject: "Ver proyecto",
           backToProjects: "Proyectos",
+          selectedWork: "Proyectos destacados",
+          readCaseStudy: "Ver caso de estudio",
         },
       },
       newsletter,

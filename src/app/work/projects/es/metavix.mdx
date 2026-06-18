@@ -1,0 +1,51 @@
+---
+title: "Metavix – Plataforma Médica"
+publishedAt: "2025-03-01"
+summary: "API REST en producción para una plataforma de atención a diabetes. Verificación de médicos en 2 etapas (registro SEP + KYC Didit), autenticación por roles y una capa de IA que ayuda a los pacientes a entender sus datos sin reemplazar al médico. 20 usuarios activos en beta cerrada."
+images:
+  - "/images/projects/metavix.png"
+team:
+  - name: "Orlando Castañeda"
+    role: "Desarrollador Full Stack"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: ""
+stack:
+  - "ASP.NET Core"
+  - "C#"
+  - "PostgreSQL"
+  - "Entity Framework Core"
+  - "Docker"
+  - "Nginx"
+  - "NVIDIA"
+---
+
+## Descripción general
+
+Los pacientes con diabetes registran datos de salud varias veces al día: lecturas de glucosa, dosis de insulina, comidas, dispersos entre libretas, mensajes de WhatsApp y PDFs. Metavix centraliza todo eso. Los pacientes registran sus datos diarios desde cualquier dispositivo, los médicos se conectan y evalúan de forma remota, y un modelo de IA impulsado por la API de NVIDIA ayuda a los pacientes a entender sus propios datos. No reemplaza al médico, sino que los prepara mejor para la consulta. Por eso la IA es explícitamente informativa, no diagnóstica — las decisiones clínicas siguen siendo del médico tratante.
+
+Las partes más difíciles no fueron el modelo de datos. Fueron problemas de confianza: construir una interfaz que funcione para pacientes de todas las edades y niveles de alfabetización digital, cifrar datos médicos sensibles de extremo a extremo, y garantizar que cada médico en la plataforma tenga una cédula profesional válida antes de acceder a cualquier expediente.
+
+Actualmente en beta cerrada con 20 usuarios activos.
+
+## Características principales
+
+- **Arquitectura** backend con Clean Architecture y CQRS/MediatR: cada caso de uso aislado en su propio handler, testeable de forma independiente sin el framework web
+- **Eliminación** de la gestión de contraseñas con Google OAuth: JWT por roles impone aislamiento estricto de datos entre cuentas de médicos y pacientes
+- **Consentimiento** explícito del paciente mediante vinculación médico-paciente por invitación: ningún médico accede a expedientes sin aprobación
+- **Bloqueo** de profesionales no verificados con verificación en 2 etapas: consulta automatizada de cédula profesional en el registro SEP de México (rechazo inmediato si no coincide) + KYC con Didit para verificación de vida, escaneo de documento y comparación facial
+- **Integración** de la API de NVIDIA para insights clínicos: seudonimización obligatoria antes de la transmisión elimina todos los identificadores del paciente antes de que cualquier dato salga de la plataforma
+- **Generación** de reportes de salud exportables desde los registros del paciente, utilizables en cualquier clínica sin necesidad de una cuenta en la plataforma
+- **Contenedorización** del stack completo con Docker detrás de Nginx en un VPS autogestionado: sin dependencia de servicios cloud administrados, control total sobre la residencia de los datos
+
+## Verificación de médicos
+
+Una plataforma médica tiene un requisito de confianza crítico: no puedes dejar que cualquiera se registre como médico. La plataforma impone un flujo de verificación en dos etapas. Primero, el backend consulta el registro de cédulas profesionales del SEP para validar la cédula. Si no existe o no coincide, la solicitud se rechaza de inmediato con un 403. Si es válida, se inicia una sesión completa de KYC con Didit: verificación biométrica de vida, escaneo de documento, comparación facial y análisis de IP. La respuesta del webhook es verificada con HMAC antes de actualizar el estatus del médico. Un médico no puede acceder a datos de pacientes hasta que ambas etapas pasen.
+
+![Flujo de verificación de identidad del médico](/images/metavix/identity-doctor.png)
+
+## Autenticación
+
+Pacientes y médicos inician sesión con Google OAuth, sin contraseñas y sin flujos de verificación por correo. El backend usa el middleware `AddGoogle()` de ASP.NET Core: genera y valida el token CSRF de estado automáticamente, intercambia el código de autorización por un access_token con Google y luego crea o actualiza el usuario y emite un JWT. El frontend nunca maneja credenciales OAuth directamente.
+
+![Flujo de autenticación con Google OAuth](/images/metavix/image.png)

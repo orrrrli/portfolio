@@ -1,5 +1,6 @@
 import { MDXRemote, MDXRemoteProps } from "next-mdx-remote/rsc";
 import React, { ReactNode } from "react";
+import { APIPlayground } from "@/components/blog/APIPlayground";
 
 import {
   Heading,
@@ -191,6 +192,7 @@ const components = {
   Icon,
   Media,
   SmartLink,
+  APIPlayground,
 };
 
 type CustomMDXProps = MDXRemoteProps & {

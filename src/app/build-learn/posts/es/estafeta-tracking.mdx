@@ -1,0 +1,83 @@
+---
+title: "Construí el API de Rastreo que un Carrier Mexicano Nunca Hizo"
+publishedAt: "2026-06-18"
+summary: "El carrier de entregas rojo más popular de México mueve millones de paquetes al día. No tienen una API pública de rastreo. Así que la construí yo, y así fue como lo hice."
+tag: "Backend"
+---
+
+## El Problema del que Nadie Habla
+
+Si alguna vez has construido una plataforma de e-commerce en México, ya te topaste con este muro.
+
+Tu cliente envía con el carrier rojo más grande del país. Sus clientes quieren saber dónde está su paquete. Abres el portal de desarrolladores del carrier y buscas una API de rastreo.
+
+No existe.
+
+Lo que encuentras en su lugar es un formulario web: un input HTML simple que devuelve una tabla de estatus. Sin JSON, sin webhooks, sin tokens de autenticación. Solo HTML que tienes que parsear para obtener una sola cadena de estatus.
+
+Cada agencia que envía producto en México ha resuelto esto en silencio de la peor manera posible: un scraper frágil que se rompe cada vez que el carrier actualiza su markup. Lo he visto hecho con Puppeteer, con `cheerio`, con curl pasado por `grep`. Yo mismo lo he hecho. Funciona hasta que no funciona, y cuando se rompe, es tu cliente quien recibe las llamadas a medianoche.
+
+Este es un problema resuelto en todos los demás países. No debería ser un problema aquí.
+
+## Lo que Encontré
+
+La página de rastreo del carrier es un formulario renderizado del lado del servidor. Cuando envías un número de rastreo, hace un POST a un endpoint interno y devuelve HTML. Eso es obvio desde la pestaña Network de DevTools.
+
+Lo que no es tan obvio es que, enterrado en esa misma cadena de solicitudes, hay un endpoint JSON secundario que la aplicación web llama para poblar un timeline de estatus. No está documentado. No tiene versión. Pero está ahí, devuelve JSON limpio, y ha sido estable el tiempo suficiente como para apostarle.
+
+Escribí un wrapper delgado alrededor de él.
+
+El wrapper hace tres cosas:
+- Acepta un número de rastreo como parámetro de ruta
+- Reenvía la solicitud al endpoint interno del carrier con los headers correctos
+- Devuelve JSON normalizado sin importar cómo se vea la respuesta subyacente
+
+Eso es todo. Sin base de datos, sin cola, sin capa de auth. Solo una superficie REST limpia sobre algo que ya existía.
+
+## El Endpoint
+
+```
+GET https://lab.orlando.codes/api/v1/tracking/:number
+```
+
+Pasa cualquier número de rastreo de Estafeta como parámetro `:number`. La respuesta es JSON.
+
+Un número de rastreo válido devuelve el estatus actual, ubicación y timeline de eventos. Un número inválido o desconocido devuelve una descripción indicando que no se encontró nada, lo cual en sí es útil: significa que la red funciona y el número es el problema, no tu integración.
+
+Pruébalo aquí. Reemplaza el valor en la pestaña **Path** con un número de rastreo real:
+
+<APIPlayground
+  url="https://lab.orlando.codes/api/v1/tracking/:number"
+  initialPath={[{ key: "number", value: "1234567890" }]}
+/>
+
+## Por Qué Importa
+
+Una API de rastreo suena trivial. No lo es.
+
+Cuando tienes una, puedes:
+
+- Enviar actualizaciones proactivas de envío por WhatsApp o SMS sin hacer polling a un sitio web
+- Almacenar el historial de estatus en tu propia base de datos para resolución de disputas
+- Construir una página de rastreo para el cliente que coincida con tu marca, no con la del carrier
+- Alertar a tu equipo de operaciones en el momento en que un paquete se quede detenido
+
+Nada de eso es posible cuando tu única opción es scraping de HTML. Todo se vuelve directo con un endpoint JSON.
+
+## Lo que Esto No Es
+
+Esta no es una integración oficial. El carrier no ha aprobado este endpoint. Podría cambiar.
+
+Corre en mi servidor personal de laboratorio: es una prueba de concepto y un ejercicio de aprendizaje, no tiene un SLA de producción. Si estás construyendo algo serio sobre esto, deberías monitorear el endpoint y tener una estrategia de respaldo.
+
+Lo que sí es, es una demostración funcional de que los datos subyacentes existen y son accesibles. Si hay demanda, el siguiente paso es una versión hospedada apropiadamente con rate limiting, caché y un changelog formal.
+
+## Lo que Aprendí
+
+La parte más difícil no fue el wrapper HTTP. Fue descifrar la forma correcta de la solicitud: el endpoint interno del carrier es exigente con los headers y espera campos de formulario específicos en un orden específico. Hacer eso bien implicó leer trazas de red con cuidado y probar casos borde que el sitio web no expone.
+
+La segunda parte más difícil fue la normalización. La respuesta cruda tiene inconsistencias dependiendo de si un paquete ha sido escaneado, está en tránsito o ha sido entregado. Escribir un transformador que maneje los tres estados limpiamente tomó más iteraciones de las esperadas.
+
+El wrapper en sí son unas 80 líneas. La capa de normalización son otras 60. Todo corre en un VPS pequeño sin dependencias externas excepto el endpoint del carrier.
+
+A veces la solución correcta no es compleja. Solo requiere que alguien se siente y haga el trabajo.

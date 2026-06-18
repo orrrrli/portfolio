@@ -13,7 +13,7 @@ export async function Projects({ range, exclude }: ProjectsProps) {
   const lang = await getLanguage();
   const { work } = getContent(lang);
 
-  let allProjects = getPosts(["src", "app", "work", "projects"]);
+  let allProjects = getPosts(["src", "app", "work", "projects"], lang);
 
   // Exclude by slug (exact match)
   if (exclude && exclude.length > 0) {

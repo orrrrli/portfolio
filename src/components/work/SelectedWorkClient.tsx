@@ -15,9 +15,10 @@ interface ProjectData {
 
 interface SelectedWorkClientProps {
   projects: ProjectData[];
+  readCaseStudyLabel: string;
 }
 
-export function SelectedWorkClient({ projects }: SelectedWorkClientProps): React.ReactElement {
+export function SelectedWorkClient({ projects, readCaseStudyLabel }: SelectedWorkClientProps): React.ReactElement {
   const [activeIndex, setActiveIndex] = useState(0);
   const [fading, setFading] = useState(false);
 
@@ -137,7 +138,7 @@ export function SelectedWorkClient({ projects }: SelectedWorkClientProps): React
           {current.metadata.summary}
         </Text>
         <Button href={`/work/${current.slug}`} variant="secondary" size="m" arrowIcon>
-          Read case study
+          {readCaseStudyLabel}
         </Button>
       </Column>
     </Column>
