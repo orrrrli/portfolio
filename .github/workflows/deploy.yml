@@ -57,7 +57,7 @@ jobs:
           script: |
             set -e
             echo "${{ secrets.GH_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            cd /opt/portfolio
+            cd /home/rokev-dynamics/portfolio
             git pull https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git main
             docker compose pull
             docker compose up -d
