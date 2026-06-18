@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { routes } from "@/resources";
-import { Flex, Spinner } from "@once-ui-system/core";
 import NotFound from "@/app/not-found";
 
 interface RouteGuardProps {
@@ -30,23 +29,12 @@ const checkRouteEnabled = (pathname: string | null): boolean => {
 
 const RouteGuard = ({ children }: RouteGuardProps): React.ReactNode => {
   const pathname = usePathname();
-  const [isRouteEnabled, setIsRouteEnabled] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setIsRouteEnabled(checkRouteEnabled(pathname));
-    setLoading(false);
-  }, [pathname]);
-
-  if (loading) {
-    return (
-      <Flex fillWidth paddingY="128" horizontal="center">
-        <Spinner />
-      </Flex>
-    );
+  if (pathname === null) {
+    return <>{children}</>;
   }
 
-  if (!isRouteEnabled) {
+  if (!checkRouteEnabled(pathname)) {
     return <NotFound />;
   }
 
