@@ -1,40 +1,33 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Button,
   Column,
-  IconButton,
   Input,
   Row,
-  SegmentedControl,
   Spinner,
   Tag,
   Text,
 } from '@once-ui-system/core'
-import type { APIConfig, APIResponse, Parameter } from '@/types/playground.types'
-import { buildCleanConfig, executeFetch, parseCurlCommand, titleCase } from '@/utils/playground'
-
-type TabType = 'path' | 'query' | 'headers'
+import type { APIConfig, APIResponse } from '@/types/playground.types'
+import { buildCleanConfig, executeFetch } from '@/utils/playground'
 
 interface APIPlaygroundProps {
   url?: string
-  initialHeaders?: { key: string; value: string }[]
   initialPath?: { key: string; value: string }[]
 }
 
 export function APIPlayground({
   url = '',
-  initialHeaders = [],
   initialPath = [],
 }: APIPlaygroundProps) {
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabType>('path')
   const [response, setResponse] = useState<APIResponse | null>(null)
   const [config, setConfig] = useState<APIConfig>(() => ({
     url,
     method: 'GET',
-    headers: initialHeaders.map((h) => ({ ...h, id: crypto.randomUUID() })),
+    headers: [],
     query: [],
     path: initialPath.map((p) => ({ ...p, id: crypto.randomUUID() })),
     body: [],
@@ -44,41 +37,11 @@ export function APIPlayground({
     setConfig((prev) => ({ ...prev, url: value }))
   }
 
-  const handleCurlParse = useCallback((curlCommand: string) => {
-    try {
-      const parsed = parseCurlCommand(curlCommand)
-      setConfig((prev) => ({ ...prev, ...parsed, method: 'GET' } as APIConfig))
-    } catch {
-      // ignore malformed curl
-    }
-  }, [])
-
-  useEffect(() => {
-    if (config.url?.trim().toLowerCase().startsWith('curl ')) {
-      handleCurlParse(config.url)
-    }
-  }, [config.url, handleCurlParse])
-
-  const getTabItems = (): Parameter[] => {
-    if (activeTab === 'headers') return config.headers
-    if (activeTab === 'query') return config.query
-    return config.path
-  }
-
-  const setTabItems = (items: Parameter[]) => {
-    setConfig((prev) => ({ ...prev, [activeTab]: items }))
-  }
-
-  const addItem = () => {
-    setTabItems([...getTabItems(), { id: crypto.randomUUID(), key: '', value: '' }])
-  }
-
-  const removeItem = (id: string) => {
-    setTabItems(getTabItems().filter((p) => p.id !== id))
-  }
-
-  const updateItem = (id: string, field: 'key' | 'value', value: string) => {
-    setTabItems(getTabItems().map((p) => (p.id === id ? { ...p, [field]: value } : p)))
+  const updatePathValue = (id: string, value: string) => {
+    setConfig((prev) => ({
+      ...prev,
+      path: prev.path.map((p) => (p.id === id ? { ...p, value } : p)),
+    }))
   }
 
   const handleTest = async () => {
@@ -94,12 +57,6 @@ export function APIPlayground({
       setLoading(false)
     }
   }
-
-  const tabs = [
-    { value: 'path', label: 'Path' },
-    { value: 'query', label: 'Query' },
-    { value: 'headers', label: 'Headers' },
-  ]
 
   return (
     <Column
@@ -117,60 +74,35 @@ export function APIPlayground({
         <Input
           id="api-url"
           style={{ flex: 1 }}
-          placeholder="Enter URL or paste a cURL command"
+          placeholder="Enter URL"
           value={config.url}
           onChange={(e) => updateUrl(e.target.value)}
         />
       </Row>
 
-      {/* Tabs */}
-      <SegmentedControl
-        buttons={tabs}
-        selected={activeTab}
-        onToggle={(val) => setActiveTab(val as TabType)}
-      />
-
-      {/* Parameter list */}
-      <Column gap="8" fillWidth style={{ minHeight: 64 }}>
-        {getTabItems().map((param) => (
-          <Row key={param.id} fillWidth gap="8" vertical="center">
-            <Input
-              id={`${param.id}-key`}
-              placeholder="Key"
-              value={param.key}
-              disabled={activeTab === 'path'}
-              onChange={(e) => updateItem(param.id, 'key', e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <Input
-              id={`${param.id}-value`}
-              placeholder="Value"
-              value={param.value}
-              onChange={(e) => updateItem(param.id, 'value', e.target.value)}
-              style={{ flex: 1 }}
-            />
-            {activeTab !== 'path' && (
-              <IconButton
-                icon="close"
-                variant="ghost"
-                size="m"
-                tooltip="Remove"
-                onClick={() => removeItem(param.id)}
+      {/* Path parameters */}
+      {config.path.length > 0 && (
+        <Column gap="8" fillWidth>
+          <Text variant="label-strong-s" onBackground="neutral-weak">Path</Text>
+          {config.path.map((param) => (
+            <Row key={param.id} fillWidth gap="8" vertical="center">
+              <Input
+                id={`${param.id}-key`}
+                value={param.key}
+                disabled
+                style={{ flex: 1 }}
               />
-            )}
-          </Row>
-        ))}
-        {activeTab !== 'path' && (
-          <Button
-            variant="tertiary"
-            size="s"
-            prefixIcon="plus"
-            label={`Add ${titleCase(activeTab)}`}
-            onClick={addItem}
-            style={{ alignSelf: 'flex-start', marginTop: 4 }}
-          />
-        )}
-      </Column>
+              <Input
+                id={`${param.id}-value`}
+                placeholder="Value"
+                value={param.value}
+                onChange={(e) => updatePathValue(param.id, e.target.value)}
+                style={{ flex: 1 }}
+              />
+            </Row>
+          ))}
+        </Column>
+      )}
 
       {/* Send button */}
       <Row fillWidth horizontal="end" gap="12" paddingTop="8" borderTop="neutral-alpha-weak">
