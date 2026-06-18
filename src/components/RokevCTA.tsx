@@ -2,7 +2,12 @@ import { mailchimp } from "@/resources";
 import { Button, Heading, Text, Background, Column } from "@once-ui-system/core";
 import { opacity, SpacingToken } from "@once-ui-system/core";
 
-export const RokevCTA: React.FC = () => {
+interface RokevCTAProps {
+  description: string;
+  buttonLabel: string;
+}
+
+export const RokevCTA: React.FC<RokevCTAProps> = ({ description, buttonLabel }) => {
   return (
     <Column
       overflow="hidden"
@@ -61,8 +66,7 @@ export const RokevCTA: React.FC = () => {
         <Column horizontal="center" gap="s">
           <Heading variant="display-strong-xs">Rokev Dynamics</Heading>
           <Text wrap="balance" variant="body-default-l" onBackground="neutral-weak" align="center">
-            My software development venture — we help businesses ship reliable, production-ready
-            products.
+            {description}
           </Text>
         </Column>
         <Button
@@ -71,7 +75,7 @@ export const RokevCTA: React.FC = () => {
           size="m"
           suffixIcon="arrowRight"
         >
-          Visit Rokev Dynamics
+          {buttonLabel}
         </Button>
       </Column>
     </Column>

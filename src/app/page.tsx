@@ -29,7 +29,7 @@ export async function generateMetadata() {
 
 export default async function Home() {
   const lang = await getLanguage();
-  const { home, about, person } = getContent(lang);
+  const { home, about, person, rokevCTA } = getContent(lang);
   return (
     <Column maxWidth="m" gap="xl" paddingY="12" horizontal="center">
       <Schema
@@ -104,7 +104,7 @@ export default async function Home() {
         </Column>
       </Column>
       <SelectedWork />
-      <RokevCTA />
+      <RokevCTA description={rokevCTA.description} buttonLabel={rokevCTA.buttonLabel} />
     </Column>
   );
 }

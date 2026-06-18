@@ -471,10 +471,29 @@ export function getContent(lang: Language) {
       newsletter,
       social,
       gallery,
+      rokevCTA: {
+        description:
+          "Mi empresa de desarrollo de software — ayudamos a negocios a lanzar productos confiables y listos para producción.",
+        buttonLabel: "Visitar Rokev Dynamics",
+      },
     };
   }
 
-  return { person, home, about, blog, work, newsletter, social, gallery };
+  return {
+    person,
+    home,
+    about,
+    blog,
+    work,
+    newsletter,
+    social,
+    gallery,
+    rokevCTA: {
+      description:
+        "My software development venture — we help businesses ship reliable, production-ready products.",
+      buttonLabel: "Visit Rokev Dynamics",
+    },
+  };
 }
 
 export { person, social, newsletter, home, about, blog, work, gallery };
