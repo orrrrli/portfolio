@@ -24,6 +24,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=build --chown=nextjs:nodejs /app/src ./src
 COPY --from=build /app/next.config.mjs ./next.config.mjs
 
 USER nextjs
