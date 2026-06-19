@@ -126,8 +126,9 @@ const about: About = {
         role: "Software Engineer",
         achievements: [
           <>
-            Built the full ERP backend — 80+ REST endpoints with ASP.NET Core 8 and Clean
-            Architecture, powering every department&apos;s core operations in production.
+            Built 80+ REST endpoints with ASP.NET Core 8, C#, and Entity Framework Core under
+            Clean Architecture and CQRS — the backend for the company&apos;s ERP system (core
+            modules).
           </>,
           <>
             Designed the .NET 8 API architecture with CQRS/MediatR and Minimal APIs with Carter —
@@ -379,9 +380,9 @@ export function getContent(lang: Language) {
               role: "Ingeniero de Software",
               achievements: [
                 <>
-                  Construí el backend completo del ERP — más de 80 endpoints REST con ASP.NET
-                  Core 8 y Clean Architecture, que alimentan las operaciones centrales de todos
-                  los departamentos en producción.
+                  Desarrollé más de 80 endpoints REST con ASP.NET Core 8, C# y Entity Framework
+                  Core bajo Clean Architecture y CQRS — el backend del sistema ERP de la empresa
+                  (módulos core).
                 </>,
                 <>
                   Diseñé la arquitectura de la API en .NET 8 con CQRS/MediatR y Minimal APIs con
