@@ -1,4 +1,4 @@
-import { Column, Heading, Meta, Schema } from "@once-ui-system/core";
+import { Column, Heading, Meta, Schema, Text } from "@once-ui-system/core";
 import { Posts } from "@/components/blog/Posts";
 import { baseURL, getContent } from "@/resources";
 import { getLanguage } from "@/utils/language";
@@ -33,9 +33,19 @@ export default async function Blog() {
           image: `${baseURL}${person.avatar}`,
         }}
       />
-      <Heading marginBottom="l" variant="heading-strong-xl" marginLeft="24">
+      <Heading marginBottom="s" variant="heading-strong-xl" marginLeft="24">
         {blog.title}
       </Heading>
+      {blog.intro && (
+        <Text
+          variant="body-default-l"
+          onBackground="neutral-weak"
+          marginBottom="l"
+          paddingX="24"
+        >
+          {blog.intro}
+        </Text>
+      )}
       <Posts thumbnail />
     </Column>
   );

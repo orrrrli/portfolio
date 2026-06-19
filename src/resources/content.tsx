@@ -142,6 +142,14 @@ const about: About = {
             enabling warehouse staff to run operations on mobile, eliminating fixed-terminal
             dependency.
           </>,
+          <>
+            Implemented cursor-based pagination for a data-heavy module loading 5,000+ records —
+            cut load time from 10–12 minutes down to 4–5 minutes.
+          </>,
+          <>
+            Researched and built a proof-of-concept for Azure migration (App Service, Blob Storage,
+            Azure SQL) to support an infrastructure decision backed by real data.
+          </>,
         ],
         images: [],
       },
@@ -168,21 +176,18 @@ const about: About = {
         role: "Junior Software Engineer",
         achievements: [
           <>
-            Built responsive landing pages with React and Remix — Atomic Design component library
-            cut duplicated frontend code across multiple client projects.
+            Built a full Warehouse Management System (WMS) solo from scratch — React + TypeScript
+            frontend, 20+ Node.js/Express endpoints, PostgreSQL, Docker and CI/CD with GitHub
+            Actions, replacing a manual process that cost the client 10+ hrs/week.
           </>,
           <>
-            Converted Figma mockups into production-ready React components — shortening
-            design-to-code iteration cycles.
+            Integrated real-time shipment tracking with Estafeta — no public API existed, so the
+            integration was built as an isolated scraping service so changes on Estafeta&apos;s
+            side wouldn&apos;t affect the rest of the system.
           </>,
           <>
-            Integrated newsletter subscriptions via a Node.js API — connecting lead capture forms
-            to an email service with persistent subscriber storage.
-          </>,
-          <>
-            Resolved critical UX risks in production — overlapping buttons blocking key actions
-            and destructive controls outweighing safer alternatives — preventing accidental,
-            irreversible user actions.
+            Built reusable React components adopted across all client projects, reducing duplicated
+            frontend work.
           </>,
         ],
         images: [],
@@ -252,6 +257,7 @@ const blog: Blog = {
   label: "Build & Learn",
   title: "Build & Learn",
   description: "Things I'm building, exploring, and learning as a Full Stack Developer.",
+  intro: "Things I build to actually understand how each piece works.",
   labels: {
     backLink: "Build & Learn",
     recentPosts: "Recent posts",
@@ -391,6 +397,15 @@ export function getContent(lang: Language) {
                   — Clean Architecture que permite al personal de almacén operar en mobile,
                   eliminando la dependencia de terminales fijas.
                 </>,
+                <>
+                  Implementé paginación basada en cursor para un módulo con más de 5,000 registros
+                  — redujo el tiempo de carga de 10–12 minutos a 4–5 minutos.
+                </>,
+                <>
+                  Investigué y construí una prueba de concepto para migración a Azure (App Service,
+                  Blob Storage, Azure SQL) para respaldar una decisión de infraestructura con datos
+                  reales.
+                </>,
               ],
               images: [],
             },
@@ -418,23 +433,19 @@ export function getContent(lang: Language) {
               role: "Ingeniero de Software Junior",
               achievements: [
                 <>
-                  Construí landing pages responsivas con React y Remix — librería de componentes
-                  con Atomic Design que redujo el código frontend duplicado entre múltiples
-                  proyectos de clientes.
+                  Construí un Sistema de Gestión de Almacén (WMS) completo de forma independiente
+                  — frontend en React + TypeScript, más de 20 endpoints con Node.js/Express,
+                  PostgreSQL, Docker y CI/CD con GitHub Actions, reemplazando un proceso manual que
+                  costaba al cliente más de 10 hrs/semana.
                 </>,
                 <>
-                  Convertí mockups de Figma en componentes React listos para producción —
-                  acortando los ciclos de iteración diseño-código.
+                  Integré seguimiento de envíos en tiempo real con Estafeta — al no existir API
+                  pública, la integración se construyó como un servicio de scraping aislado para
+                  que los cambios en Estafeta no afectaran el resto del sistema.
                 </>,
                 <>
-                  Integré suscripciones a newsletter vía una API Node.js — conectando formularios
-                  de captura a un servicio de email externo con almacenamiento persistente de
-                  suscriptores.
-                </>,
-                <>
-                  Resolví riesgos críticos de UX en producción — botones superpuestos bloqueando
-                  acciones clave y controles destructivos con mayor peso visual que los seguros —
-                  previniendo acciones accidentales e irreversibles del usuario.
+                  Construí componentes React reutilizables adoptados en todos los proyectos de
+                  clientes, reduciendo el trabajo frontend duplicado.
                 </>,
               ],
               images: [],
@@ -450,6 +461,7 @@ export function getContent(lang: Language) {
         title: "Aprende & Construye",
         description:
           "Cosas que estoy construyendo, explorando y aprendiendo como Full Stack Developer.",
+        intro: "Cosas que construyo para entender de verdad cómo funciona cada pieza.",
         labels: {
           backLink: "Aprende & Construye",
           recentPosts: "Publicaciones recientes",
