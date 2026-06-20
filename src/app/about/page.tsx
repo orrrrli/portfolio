@@ -199,6 +199,16 @@ export default async function About() {
                 )}
               </Row>
             )}
+            <Row className={styles.blockAlign} paddingTop="8" fitWidth>
+              <Button
+                href="/cv.pdf"
+                prefixIcon="download"
+                label={lang === "es" ? "Descargar CV" : "Download CV"}
+                size="m"
+                variant="primary"
+                target="_blank"
+              />
+            </Row>
           </Column>
 
           {about.intro.display && (
