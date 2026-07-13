@@ -52,7 +52,7 @@ export default async function Home() {
           alignItems: "center",
           justifyContent: "flex-start",
           minHeight: "100vh",
-          padding: "clamp(6rem, 12vh, 10rem) 0 3rem",
+          padding: "clamp(6rem, 12vh, 10rem) 0 0",
         }}
       >
         <div
@@ -106,7 +106,13 @@ export default async function Home() {
           </RevealFx>
         </div>
       </div>
-      <Column maxWidth="m" fillWidth gap="xl" paddingY="12" horizontal="center">
+      <Column
+        maxWidth="m"
+        gap="xl"
+        paddingBottom="12"
+        horizontal="center"
+        style={{ marginInline: "auto" }}
+      >
         <SelectedWork />
         <RokevCTA description={rokevCTA.description} buttonLabel={rokevCTA.buttonLabel} />
       </Column>
