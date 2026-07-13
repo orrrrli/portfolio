@@ -112,6 +112,60 @@ export interface Home extends BasePageConfig {
 }
 
 /**
+ * A single work experience entry.
+ * @description Used inside About.work.experiences. Achievements are grouped by sub-section (e.g. "Backend", "Android") to mirror the CV.
+ */
+export type Experience = {
+  /** Company name */
+  company: string;
+  /** Timeframe of employment */
+  timeframe: string;
+  /** Role or job title */
+  role: string;
+  /** Optional secondary line below the role (e.g. freelance framing) */
+  subtitle?: React.ReactNode;
+  /** Grouped achievements within this experience */
+  sections: Array<ExperienceSection>;
+  /** Images related to the experience */
+  images?: Array<{
+    /** Image source path */
+    src: string;
+    /** Image alt text */
+    alt: string;
+    /** Image width ratio */
+    width: number;
+    /** Image height ratio */
+    height: number;
+  }>;
+};
+
+/**
+ * A sub-section within a work experience (e.g. "Backend (.NET)" or a project like "Axiriam Shop").
+ * @description Renders as a sub-heading. May contain a flat achievements list, or nested subsections (e.g. Frontend / Backend within a project).
+ */
+export type ExperienceSection = {
+  /** Sub-section title (e.g. "Backend (.NET)", "Axiriam Shop (E-commerce platform, Beta)") */
+  title: string;
+  /** Bulleted achievements within this sub-section. Mutually exclusive with subsections — use one or the other. */
+  achievements?: React.ReactNode[];
+  /**
+   * Nested sub-headings within this section (e.g. "Frontend", "Backend" inside an Axiriam Shop project).
+   * When present, renders one sub-heading per entry with its own bullet list. Mutually exclusive with achievements.
+   */
+  subsections?: Array<ExperienceSubsection>;
+};
+
+/**
+ * A nested sub-heading inside an ExperienceSection (e.g. "Frontend (Next.js / React)" within an "Axiriam Shop" project).
+ */
+export type ExperienceSubsection = {
+  /** Sub-heading title */
+  title: string;
+  /** Bulleted achievements within this sub-heading */
+  achievements: React.ReactNode[];
+};
+
+/**
  * About page configuration.
  * @description Configuration for the About page, including sections for table of contents, avatar, calendar, introduction, work experience, studies, and technical skills.
  */
@@ -151,27 +205,7 @@ export interface About extends BasePageConfig {
     /** Title for the work experience section */
     title: string;
     /** List of work experiences */
-    experiences: Array<{
-      /** Company name */
-      company: string;
-      /** Timeframe of employment */
-      timeframe: string;
-      /** Role or job title */
-      role: string;
-      /** Achievements at the company */
-      achievements: React.ReactNode[];
-      /** Images related to the experience */
-      images?: Array<{
-        /** Image source path */
-        src: string;
-        /** Image alt text */
-        alt: string;
-        /** Image width ratio */
-        width: number;
-        /** Image height ratio */
-        height: number;
-      }>;
-    }>;
+    experiences: Array<Experience>;
   };
   /** Studies/education section */
   studies: {

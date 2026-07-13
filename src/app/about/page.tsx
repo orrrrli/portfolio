@@ -18,6 +18,9 @@ import styles from "@/components/about/about.module.scss";
 import React from "react";
 import { getLanguage } from "@/utils/language";
 
+const slug = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 export async function generateMetadata() {
   const lang = await getLanguage();
   const { about } = getContent(lang);
@@ -42,7 +45,9 @@ export default async function About() {
     {
       title: about.work.title,
       display: about.work.display,
-      items: about.work.experiences.map((experience) => experience.company),
+      items: about.work.experiences.map(
+        (experience) => `${experience.company} – ${experience.role}`,
+      ),
     },
     {
       title: about.studies.title,
@@ -226,7 +231,11 @@ export default async function About() {
                 {about.work.experiences.map((experience, index) => (
                   <Column key={`${experience.company}-${experience.role}-${index}`} fillWidth>
                     <Row fillWidth horizontal="between" vertical="end" marginBottom="4">
-                      <Text id={experience.company} variant="heading-strong-l">
+                      <Text
+                        as="h3"
+                        id={`${slug(experience.company)}-${slug(experience.role)}`}
+                        variant="heading-strong-l"
+                      >
                         {experience.company}
                       </Text>
                       <Text variant="heading-default-xs" onBackground="neutral-weak">
@@ -236,18 +245,78 @@ export default async function About() {
                     <Text variant="body-default-s" onBackground="brand-weak" marginBottom="m">
                       {experience.role}
                     </Text>
-                    <Column as="ul" gap="16">
-                      {experience.achievements.map(
-                        (achievement: React.ReactNode, index: number) => (
+                    <Column fillWidth gap="l">
+                      {experience.sections.map((section, sIdx) => {
+                        const sec = section as {
+                          title: string;
+                          achievements?: React.ReactNode[];
+                          subsections?: Array<{
+                            title: string;
+                            achievements: React.ReactNode[];
+                          }>;
+                        };
+                        return (
+                        <Column
+                          key={`${experience.company}-${sIdx}`}
+                          fillWidth
+                          gap="12"
+                        >
                           <Text
-                            as="li"
-                            variant="body-default-m"
-                            key={`${experience.company}-${index}`}
+                            as="h4"
+                            variant="heading-strong-s"
+                            onBackground="neutral-medium"
                           >
-                            {achievement}
+                            {sec.title}
                           </Text>
-                        ),
-                      )}
+                          {sec.subsections ? (
+                            <Column fillWidth gap="12">
+                              {sec.subsections.map((subsection, ssIdx) => (
+                                <Column
+                                  key={`${experience.company}-${sIdx}-${ssIdx}`}
+                                  fillWidth
+                                  gap="8"
+                                >
+                                  <Text
+                                    as="h5"
+                                    variant="heading-default-m"
+                                    onBackground="neutral-weak"
+                                  >
+                                    {subsection.title}
+                                  </Text>
+                                  <Column as="ul" gap="12">
+                                    {subsection.achievements.map(
+                                      (achievement: React.ReactNode, aIdx: number) => (
+                                        <Text
+                                          as="li"
+                                          variant="body-default-m"
+                                          key={`${experience.company}-${sIdx}-${ssIdx}-${aIdx}`}
+                                        >
+                                          {achievement}
+                                        </Text>
+                                      ),
+                                    )}
+                                  </Column>
+                                </Column>
+                              ))}
+                            </Column>
+                          ) : (
+                            <Column as="ul" gap="12">
+                              {(sec.achievements ?? []).map(
+                                (achievement: React.ReactNode, aIdx: number) => (
+                                  <Text
+                                    as="li"
+                                    variant="body-default-m"
+                                    key={`${experience.company}-${sIdx}-${aIdx}`}
+                                  >
+                                    {achievement}
+                                  </Text>
+                                ),
+                              )}
+                            </Column>
+                          )}
+                        </Column>
+                        );
+                      })}
                     </Column>
                     {experience.images && experience.images.length > 0 && (
                       <Row fillWidth paddingTop="m" paddingLeft="40" gap="12" wrap>
