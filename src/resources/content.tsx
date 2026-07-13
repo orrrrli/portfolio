@@ -46,9 +46,9 @@ const home: Home = {
   label: "Home",
   title: `${person.name} — Full Stack Developer`,
   description: `Portfolio of Orlando Castañeda, a Full Stack Developer building backends with .NET and products with React and Next.js.`,
-  headline: <>Building reliable backends, bridging to the frontend.</>,
+  headline: <>Building reliable backends and seamless frontend experiences</>,
   featured: {
-    display: true,
+    display: false,
     title: (
       <Row gap="12" vertical="center">
         <strong className="ml-4">Rokev Dynamics</strong>{" "}
@@ -62,9 +62,20 @@ const home: Home = {
   },
   subline: (
     <>
-      Full Stack Developer based in Ensenada — building backends that last and frontends that feel right.
+      Full Stack Developer based in Ensenada
+      <br />
+      Designing reliable systems and intuitive user experiences.
     </>
   ),
+  stack: [
+    "ASP.NET Core",
+    "C#",
+    "React",
+    "Next.js",
+    "TypeScript",
+    "PostgreSQL",
+    "Docker",
+  ],
 };
 
 const about: About = {
@@ -340,7 +351,23 @@ export function getContent(lang: Language) {
       home: {
         ...home,
         label: "Inicio",
-        headline: <>Construyendo backends confiables, conectando con el frontend.</>,
+        headline: <>Desarrollando backends<br />confiables y creando<br />experiencias fluidas en frontend.</>,
+        subline: (
+          <>
+            Desarrollador Full Stack en Ensenada
+            <br />
+            Creando sistemas confiables y experiencias de usuario intuitivas.
+          </>
+        ),
+        stack: [
+          "ASP.NET Core",
+          "C#",
+          "React",
+          "Next.js",
+          "TypeScript",
+          "PostgreSQL",
+          "Docker",
+        ],
       },
       about: {
         ...about,

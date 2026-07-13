@@ -105,6 +105,8 @@ export interface Home extends BasePageConfig {
   };
   /** The sub text which appears below the headline */
   subline: React.ReactNode;
+  /** Tech badges shown below the subline */
+  stack?: string[];
 }
 
 /**

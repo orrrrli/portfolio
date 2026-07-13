@@ -5,13 +5,13 @@ import {
   Avatar,
   RevealFx,
   Column,
-  Badge,
   Row,
   Schema,
   Meta,
 } from "@once-ui-system/core";
 import { baseURL, getContent } from "@/resources";
 import { RokevCTA } from "@/components";
+import { TechStack } from "@/components/TechStack";
 import { SelectedWork } from "@/components/work/SelectedWork";
 import { getLanguage } from "@/utils/language";
 
@@ -31,7 +31,7 @@ export default async function Home() {
   const lang = await getLanguage();
   const { home, about, person, rokevCTA } = getContent(lang);
   return (
-    <Column maxWidth="m" gap="xl" paddingY="12" horizontal="center">
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
       <Schema
         as="webPage"
         baseURL={baseURL}
@@ -45,29 +45,18 @@ export default async function Home() {
           image: `${baseURL}${person.avatar}`,
         }}
       />
-      <Column fillWidth horizontal="center" gap="m">
-        <Column maxWidth="s" horizontal="center" align="center">
-          {home.featured.display && (
-            <RevealFx
-              fillWidth
-              horizontal="center"
-              paddingTop="16"
-              paddingBottom="32"
-              paddingLeft="12"
-            >
-              <Badge
-                background="brand-alpha-weak"
-                paddingX="12"
-                paddingY="4"
-                onBackground="neutral-strong"
-                textVariant="label-default-s"
-                arrow={false}
-                href={home.featured.href}
-              >
-                <Row paddingY="2">{home.featured.title}</Row>
-              </Badge>
-            </RevealFx>
-          )}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          padding: "var(--static-space-12, 3rem) 0",
+          gap: "var(--static-space-m, 1rem)",
+        }}
+      >
+        <div style={{ maxWidth: 768, width: "100%", textAlign: "center" }}>
           <RevealFx translateY="4" fillWidth horizontal="center" paddingBottom="16">
             <Heading wrap="balance" variant="display-strong-l">
               {home.headline}
@@ -78,6 +67,11 @@ export default async function Home() {
               {home.subline}
             </Text>
           </RevealFx>
+          {home.stack && home.stack.length > 0 && (
+            <RevealFx translateY="8" delay={0.3} fillWidth horizontal="center" paddingBottom="32">
+              <TechStack stack={home.stack} />
+            </RevealFx>
+          )}
           <RevealFx paddingTop="12" delay={0.4} horizontal="center" paddingLeft="12">
             <Button
               id="about"
@@ -101,10 +95,12 @@ export default async function Home() {
               </Row>
             </Button>
           </RevealFx>
-        </Column>
+        </div>
+      </div>
+      <Column maxWidth="m" fillWidth gap="xl" paddingY="12" horizontal="center">
+        <SelectedWork />
+        <RokevCTA description={rokevCTA.description} buttonLabel={rokevCTA.buttonLabel} />
       </Column>
-      <SelectedWork />
-      <RokevCTA description={rokevCTA.description} buttonLabel={rokevCTA.buttonLabel} />
-    </Column>
+    </div>
   );
 }

@@ -126,7 +126,7 @@ interface TechStackProps {
 
 export function TechStack({ stack }: TechStackProps): React.ReactElement {
   return (
-    <Flex wrap gap="8">
+    <Flex wrap gap="8" horizontal="center">
       {stack.map((tech) => {
         const siIcon = SI_MAP[tech];
         const CustomIcon = CUSTOM_MAP[tech];
