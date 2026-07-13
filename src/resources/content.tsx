@@ -76,6 +76,7 @@ const home: Home = {
     "PostgreSQL",
     "Docker",
   ],
+  ctaAbout: "View my background",
 };
 
 const about: About = {
@@ -368,6 +369,7 @@ export function getContent(lang: Language) {
           "PostgreSQL",
           "Docker",
         ],
+        ctaAbout: "Ver mi trayectoria",
       },
       about: {
         ...about,

@@ -50,35 +50,44 @@ export default async function Home() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "flex-start",
           minHeight: "100vh",
-          padding: "var(--static-space-12, 3rem) 0",
-          gap: "var(--static-space-m, 1rem)",
+          padding: "clamp(6rem, 12vh, 10rem) 0 3rem",
         }}
       >
-        <div style={{ maxWidth: 768, width: "100%", textAlign: "center" }}>
-          <RevealFx translateY="4" fillWidth horizontal="center" paddingBottom="16">
+        <div
+          style={{
+            maxWidth: 768,
+            width: "100%",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "2rem",
+          }}
+        >
+          <RevealFx translateY="4" fillWidth horizontal="center">
             <Heading wrap="balance" variant="display-strong-l">
               {home.headline}
             </Heading>
           </RevealFx>
-          <RevealFx translateY="8" delay={0.2} fillWidth horizontal="center" paddingBottom="32">
+          <RevealFx translateY="8" delay={0.2} fillWidth horizontal="center">
             <Text wrap="balance" onBackground="neutral-weak" variant="heading-default-xl">
               {home.subline}
             </Text>
           </RevealFx>
           {home.stack && home.stack.length > 0 && (
-            <RevealFx translateY="8" delay={0.3} fillWidth horizontal="center" paddingBottom="32">
+            <RevealFx translateY="8" delay={0.3} fillWidth horizontal="center">
               <TechStack stack={home.stack} />
             </RevealFx>
           )}
-          <RevealFx paddingTop="12" delay={0.4} horizontal="center" paddingLeft="12">
+          <RevealFx delay={0.4} horizontal="center" paddingLeft="12">
             <Button
               id="about"
               data-border="rounded"
               href={about.path}
               variant="secondary"
-              size="m"
+              size="l"
               weight="default"
               arrowIcon
             >
@@ -91,7 +100,7 @@ export default async function Home() {
                     size="m"
                   />
                 )}
-                {about.title}
+                {home.ctaAbout ?? about.title}
               </Row>
             </Button>
           </RevealFx>

@@ -107,6 +107,8 @@ export interface Home extends BasePageConfig {
   subline: React.ReactNode;
   /** Tech badges shown below the subline */
   stack?: string[];
+  /** Label of the CTA button that links to the about page */
+  ctaAbout?: string;
 }
 
 /**
