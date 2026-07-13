@@ -100,15 +100,15 @@ const effects: EffectsConfig = {
     radius: 100,
   },
   gradient: {
-    display: false,
+    display: true,
     opacity: 100,
     x: 50,
     y: 60,
     width: 100,
-    height: 50,
+    height: 80,
     tilt: 0,
     colorStart: "accent-background-strong",
-    colorEnd: "page-background",
+    colorEnd: "static-transparent",
   },
   dots: {
     display: true,
