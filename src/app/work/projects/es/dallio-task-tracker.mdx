@@ -1,0 +1,96 @@
+---
+title: "Dallio Task Tracker – Take-Home Full-Stack"
+publishedAt: "2026-07-13"
+summary: "Take-home full-stack para Dallio. API en .NET 9 con módulos Carter sobre Clean Architecture, frontend en React 19 + Vite + TanStack Query, desplegado en un VPS personal con un solo `docker compose up`."
+images:
+  - "/images/projects/dallio-task-tracker.png"
+team:
+  - name: "Orlando Castañeda"
+    role: "Desarrollador Full Stack"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: "https://tasks.orlando.codes/"
+stack:
+  - ".NET 9"
+  - "ASP.NET Core"
+  - "Carter"
+  - "PostgreSQL"
+  - "EF Core"
+  - "MediatR"
+  - "Mapster"
+  - "FluentValidation"
+  - "JWT"
+  - "React 19"
+  - "TypeScript"
+  - "Vite"
+  - "TanStack Query"
+  - "Zod"
+  - "openapi-ts"
+  - "Docker Compose"
+  - "GitHub Actions"
+---
+
+## Descripción general
+
+Una prueba técnica para Dallio, entregada como un solo producto full-stack: un gestor de tareas donde los usuarios pueden crear, asignar y mover work items a lo largo de un ciclo de vida de estados, con una API de backend y una webapp responsiva que la consume. El reto no era enviar un producto, sino demostrar dominio en diseño de API REST y Clean Architecture — por eso el foco del build fueron los límites entre capas, el contrato entre frontend y backend, y una historia de despliegue que pruebe que todo el sistema corre end-to-end en una máquina nueva.
+
+El repo está estructurado como dos servicios (`TaskTrackerAPI/` y `TaskTrackerApp/`) que no comparten nada en tiempo de ejecución — el único vínculo entre ellos es un spec de OpenAPI, que el frontend consume a través de tipos generados. Ambos servicios corren en un VPS personal detrás de un solo `docker compose up`, con GitHub Actions construyendo imágenes y desplegando en cada merge a `main`.
+
+<Row gap="m" wrap marginTop="l">
+  <Button
+    href="https://tasks.orlando.codes/"
+    variant="secondary"
+    suffixIcon="arrowUpRightFromSquare"
+    size="m"
+  >
+    Demo en vivo
+  </Button>
+  <Button
+    href="https://github.com/orrrrli/task-tracker"
+    variant="secondary"
+    suffixIcon="arrowUpRightFromSquare"
+    size="m"
+  >
+    Código en GitHub
+  </Button>
+</Row>
+
+## Características principales
+
+- **Modelé** la API como módulos Carter sobre Minimal APIs: sin controllers, cada ruta es un endpoint autocontenido con su propio handler, validator y contrato de request/response, registrado a través de un único `CarterModule` por área funcional
+- **Dividí** el backend con Clean Architecture — Domain (entidades, cero dependencias), Application (handlers CQRS, validators, interfaces), Infrastructure (EF Core, seguridad), API (módulos Carter, manejo de excepciones, config de Mapster) y Contracts (DTOs públicos) — de modo que las reglas de negocio nunca se filtren a los route handlers
+- **Conecté** el frontend a la API con `openapi-ts`: los tipos y un cliente fetch tipado se generan desde el spec OpenAPI del backend, por lo que el cliente no puede divergir del contrato del servidor
+- **Validé** de extremo a extremo con FluentValidation en el backend y Zod en el frontend, compartiendo la misma forma a través de los tipos generados — la entrada inválida se rechaza en ambas capas
+- **Entregué** `docker compose up` como único paso de setup: API, frontend y Postgres arrancan juntos, con health checks y orden de dependencias definidos en el archivo compose
+- **Desplegué** en un VPS personal vía GitHub Actions en cada merge a `main` — build, test, push de imágenes y avance de la stack sin un paso manual
+- **Protegí** la API con autenticación JWT bearer, hashing de contraseñas con BCrypt, tipos `ErrorOr` para respuestas de error consistentes en todos los endpoints, y un rate limiter de ventana fija (60 req/min por IP)
+- **Restringí** la visibilidad de tareas a nivel de handler: un usuario solo ve tareas que creó o le fueron asignadas — no es solo un filtro de UI, sino un filtro real en la query del handler de lectura
+
+## Arquitectura
+
+Las decisiones interesantes viven en la división de capas, no en el conjunto de funcionalidades. Domain es un proyecto de C# puro con cero dependencias de NuGet — solo entidades y enums. Application depende de Domain y de MediatR, FluentValidation y ErrorOr; aquí viven los handlers CQRS y los validators. Infrastructure implementa las interfaces declaradas en Application: `AppDbContext`, configuraciones de EF Core, repositorios y las primitivas de seguridad (emisión de JWT, hashing con BCrypt). API depende de Application e Infrastructure, nunca de Domain directamente, y registra los módulos Carter junto con la configuración transversal de Mapster. Contracts es un proyecto independiente que contiene los DTOs públicos que viajan por la red — ningún tipo de negocio se filtra más allá de este límite.
+
+```csharp
+// Patrón de módulo Carter: cada área funcional es un módulo
+public class TasksModule : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/tasks").RequireAuthorization();
+
+        group.MapGet("/",     ListTasks.Handler);
+        group.MapPost("/",    CreateTask.Handler);
+        group.MapGet("/{id}", GetTask.Handler);
+        group.MapPut("/{id}", UpdateTask.Handler);
+        group.MapDelete("/{id}", DeleteTask.Handler);
+    }
+}
+```
+
+Cada handler es un método estático que toma el request, llama a MediatR para despachar el comando o query correspondiente, y mapea el resultado a una respuesta. La validación corre a través de un pipeline behavior de MediatR, por lo que los handlers nunca invocan validators directamente.
+
+## Despliegue
+
+Toda la stack — API, app de React y Postgres — está definida en un único `docker-compose.yml`. La imagen de la API corre migraciones al arrancar y expone un endpoint `GET /health` que devuelve `{ "status": "Healthy" }` para el health check de compose. El frontend es un build de Vite servido por un pequeño servidor estático en la misma imagen. GitHub Actions ejecuta `dotnet test` y `npm test` en cada push, y luego en el merge a `main` construye ambas imágenes, las sube al registro y se conecta por SSH al VPS para hacer pull y avanzar la stack.
+
+El resultado: de un checkout nuevo a una app corriendo en una URL pública son dos comandos — `git clone` y `docker compose up`. Sin Postgres local, sin migraciones manuales, sin archivo de entorno más allá de `.env`.

@@ -1,0 +1,96 @@
+---
+title: "Dallio Task Tracker – Full-Stack Take-Home"
+publishedAt: "2026-07-13"
+summary: "Full-stack take-home for Dallio. .NET 9 API with Carter modules on top of Clean Architecture, React 19 + Vite + TanStack Query frontend, deployed to a personal VPS via a single `docker compose up`."
+images:
+  - "/images/projects/dallio-task-tracker.png"
+team:
+  - name: "Orlando Castañeda"
+    role: "Full Stack Developer"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: "https://tasks.orlando.codes/"
+stack:
+  - ".NET 9"
+  - "ASP.NET Core"
+  - "Carter"
+  - "PostgreSQL"
+  - "EF Core"
+  - "MediatR"
+  - "Mapster"
+  - "FluentValidation"
+  - "JWT"
+  - "React 19"
+  - "TypeScript"
+  - "Vite"
+  - "TanStack Query"
+  - "Zod"
+  - "openapi-ts"
+  - "Docker Compose"
+  - "GitHub Actions"
+---
+
+## Overview
+
+A take-home assignment for Dallio, built as a single full-stack deliverable: a task tracker where users can create, assign, and move work items through a lifecycle of states, with a backend API and a responsive web app that talks to it. The brief was about demonstrating mastery in REST API design and Clean Architecture, not in shipping a product — so the focus of the build was the layer boundaries, the contract between frontend and backend, and a deployment story that proves the whole thing runs end-to-end on a fresh machine.
+
+The repo is structured as two services (`TaskTrackerAPI/` and `TaskTrackerApp/`) that share nothing at runtime — the only link between them is an OpenAPI spec, which the frontend consumes through generated types. Both services run on a personal VPS behind a single `docker compose up`, with GitHub Actions building images and deploying on every merge to `main`.
+
+<Row gap="m" wrap marginTop="l">
+  <Button
+    href="https://tasks.orlando.codes/"
+    variant="secondary"
+    suffixIcon="arrowUpRightFromSquare"
+    size="m"
+  >
+    Live demo
+  </Button>
+  <Button
+    href="https://github.com/orrrrli/task-tracker"
+    variant="secondary"
+    suffixIcon="arrowUpRightFromSquare"
+    size="m"
+  >
+    Source on GitHub
+  </Button>
+</Row>
+
+## Key Features
+
+- **Modeled** the API as Carter modules on top of Minimal APIs: no controllers, each route is a self-contained endpoint with its own handler, validator, and request/response contract, registered through a single `CarterModule` per feature area
+- **Layered** the backend with Clean Architecture — Domain (entities, zero dependencies), Application (CQRS handlers, validators, interfaces), Infrastructure (EF Core, security), API (Carter modules, exception handling, Mapster config), and Contracts (public DTOs) — so business rules never leak into route handlers
+- **Wired** the frontend to the API through `openapi-ts`: types and a typed fetch client are generated from the backend's OpenAPI spec, so the client cannot drift from the server contract
+- **Validated** end-to-end with FluentValidation on the backend and Zod on the frontend, sharing the same shape via the generated types — invalid input is rejected at both layers
+- **Shipped** `docker compose up` as the only setup step: API, frontend, and Postgres come up together, with health checks and dependency ordering defined in the compose file
+- **Deployed** to a personal VPS via GitHub Actions on every merge to `main` — build, test, push images, and roll the stack forward without a manual step
+- **Protected** the API with JWT bearer auth, BCrypt password hashing, ErrorOr result types for consistent error responses across every endpoint, and a fixed-window rate limiter (60 req/min per IP)
+- **Restricted** task visibility at the handler level: a user only sees tasks they created or were assigned to — not just a UI filter, but a real query filter in the read handler
+
+## Architecture
+
+The interesting decisions live in the layer split, not the feature set. Domain is a pure C# project with zero NuGet dependencies — entities and enums only. Application depends on Domain and on MediatR, FluentValidation, and ErrorOr; this is where the CQRS handlers and validators live. Infrastructure implements the interfaces declared in Application: `AppDbContext`, EF Core configurations, repositories, and the security primitives (JWT issuance, BCrypt hashing). API depends on Application and Infrastructure, never on Domain directly, and registers the Carter modules plus the cross-cutting Mapster config. Contracts is a standalone project holding the public DTOs that travel over the wire — no business types leak past this boundary.
+
+```csharp
+// Carter module pattern: each feature area is one module
+public class TasksModule : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/tasks").RequireAuthorization();
+
+        group.MapGet("/",     ListTasks.Handler);
+        group.MapPost("/",    CreateTask.Handler);
+        group.MapGet("/{id}", GetTask.Handler);
+        group.MapPut("/{id}", UpdateTask.Handler);
+        group.MapDelete("/{id}", DeleteTask.Handler);
+    }
+}
+```
+
+Each handler is a static method that takes the request, calls MediatR to dispatch the corresponding command or query, and maps the result to a response. Validation runs through a MediatR pipeline behavior, so handlers never call validators directly.
+
+## Deployment
+
+The whole stack — API, React app, and Postgres — is defined in a single `docker-compose.yml`. The API image runs migrations on startup and exposes a `GET /health` endpoint that returns `{ "status": "Healthy" }` for the compose health check. The frontend is a Vite build served by a tiny static server in the same image. GitHub Actions runs `dotnet test` and `npm test` on every push, then on merge to `main` builds both images, pushes them to the registry, and SSHes into the VPS to pull and roll the stack forward.
+
+The result: a fresh checkout to a running app on a public URL is two commands — `git clone` and `docker compose up`. No local Postgres, no manual migrations, no environment file beyond `.env`.
