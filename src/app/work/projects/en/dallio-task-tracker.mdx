@@ -89,8 +89,56 @@ public class TasksModule : ICarterModule
 
 Each handler is a static method that takes the request, calls MediatR to dispatch the corresponding command or query, and maps the result to a response. Validation runs through a MediatR pipeline behavior, so handlers never call validators directly.
 
+The diagram below maps the full picture: on the left, the lifecycle of a single `GET /tasks` request as it travels down the middleware pipeline, through the MediatR validation behavior, into the query handler, and back out mapped to a `TaskResponse`. In the center, the four Clean Architecture layers — Domain, Application, Infrastructure, and API — with the dependency arrows always pointing inward toward Domain. On the right, the domain model (`User` and `TaskItem` with their relationships and delete behaviors) and the infrastructure primitives that back it.
+
+<Column fillWidth gap="8" marginTop="16" marginBottom="24" horizontal="center">
+  <Media
+    enlarge
+    radius="m"
+    border="neutral-alpha-medium"
+    sizes="(max-width: 960px) 100vw, 960px"
+    alt="Clean Architecture (4 layers) for the Task Tracker API: request flow through the middleware pipeline and MediatR, the Domain, Application, Infrastructure and API layers with inward-pointing dependencies, the User and TaskItem domain model, and the technology stack"
+    src="/images/projects/dallio-clean-architecture.png"
+  />
+  <Text variant="body-default-xs" onBackground="neutral-weak" align="center">
+    Clean Architecture — request flow, the four layers, and the domain model
+  </Text>
+</Column>
+
 ## Deployment
 
-The whole stack — API, React app, and Postgres — is defined in a single `docker-compose.yml`. The API image runs migrations on startup and exposes a `GET /health` endpoint that returns `{ "status": "Healthy" }` for the compose health check. The frontend is a Vite build served by a tiny static server in the same image. GitHub Actions runs `dotnet test` and `npm test` on every push, then on merge to `main` builds both images, pushes them to the registry, and SSHes into the VPS to pull and roll the stack forward.
+The whole stack — API, React app, and Postgres — is defined in a single `docker-compose.yml`. The API image runs migrations on startup and exposes a `GET /health` endpoint that returns `{ "status": "Healthy" }` for the compose health check. The frontend is a Vite build served by a tiny static server in the same image.
+
+At runtime, traffic enters through Cloudflare (DNS, CDN, WAF, and SSL termination), reaches Nginx on the VPS acting as a reverse proxy, and is routed by path: `/` goes to the frontend container (Vite, host port 3009 → container 80) and `/api/*` goes to the backend container (.NET, host port 8081 → container 8080). The diagram traces a request end-to-end through both routes and back.
+
+<Column fillWidth gap="8" marginTop="16" marginBottom="24" horizontal="center">
+  <Media
+    enlarge
+    radius="m"
+    border="neutral-alpha-medium"
+    sizes="(max-width: 960px) 100vw, 960px"
+    alt="Network architecture: Internet to Cloudflare to Nginx reverse proxy on the VPS, routing / to the Vite frontend container and /api/* to the .NET backend container, with the host-to-container port mappings"
+    src="/images/projects/dallio-network-architecture.png"
+  />
+  <Text variant="body-default-xs" onBackground="neutral-weak" align="center">
+    Network path — Cloudflare → Nginx → Docker containers, routed by path
+  </Text>
+</Column>
+
+Deployment is fully automated. GitHub Actions runs `dotnet test` and `npm test` on every push; on merge to `main`, path-filtered workflows build the API and frontend images, push them to GHCR (`ghcr.io`), and the VPS pulls the new images and rolls the stack forward — no manual step. Postgres runs on the VPS host and is reached from the API container via `host.docker.internal`.
+
+<Column fillWidth gap="8" marginTop="16" marginBottom="24" horizontal="center">
+  <Media
+    enlarge
+    radius="m"
+    border="neutral-alpha-medium"
+    sizes="(max-width: 960px) 100vw, 960px"
+    alt="CI/CD pipeline: git push to main triggers GitHub Actions to build and push the API and frontend images to GHCR, which the personal VPS pulls behind Nginx, with PostgreSQL running on the host"
+    src="/images/projects/dallio-cicd-pipeline.png"
+  />
+  <Text variant="body-default-xs" onBackground="neutral-weak" align="center">
+    CI/CD — push to main builds images, pushes to GHCR, and the VPS pulls
+  </Text>
+</Column>
 
 The result: a fresh checkout to a running app on a public URL is two commands — `git clone` and `docker compose up`. No local Postgres, no manual migrations, no environment file beyond `.env`.
