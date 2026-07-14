@@ -32,9 +32,9 @@ stack:
 
 ## Descripción general
 
-Una prueba técnica para Dallio, entregada como un solo producto full-stack: un gestor de tareas donde los usuarios pueden crear, asignar y mover work items a lo largo de un ciclo de vida de estados, con una API de backend y una webapp responsiva que la consume. El reto no era enviar un producto, sino demostrar dominio en diseño de API REST y Clean Architecture — por eso el foco del build fueron los límites entre capas, el contrato entre frontend y backend, y una historia de despliegue que pruebe que todo el sistema corre end-to-end en una máquina nueva.
+Una prueba técnica para Dallio, entregada como un solo producto full-stack: un gestor de tareas donde los usuarios pueden crear, asignar y mover work items a lo largo de un ciclo de vida de estados, con una API de backend y una webapp responsiva que la consume. El reto no era enviar un producto, sino demostrar dominio en diseño de API REST y Clean Architecture. Por eso el foco del build fueron los límites entre capas, el contrato entre frontend y backend, y una historia de despliegue que pruebe que todo el sistema corre end-to-end en una máquina nueva.
 
-El repo está estructurado como dos servicios (`TaskTrackerAPI/` y `TaskTrackerApp/`) que no comparten nada en tiempo de ejecución — el único vínculo entre ellos es un spec de OpenAPI, que el frontend consume a través de tipos generados. Ambos servicios corren en un VPS personal detrás de un solo `docker compose up`, con GitHub Actions construyendo imágenes y desplegando en cada merge a `main`.
+El repo está estructurado como dos servicios (`TaskTrackerAPI/` y `TaskTrackerApp/`) que no comparten nada en tiempo de ejecución. El único vínculo entre ellos es un spec de OpenAPI, que el frontend consume a través de tipos generados. Ambos servicios corren en un VPS personal detrás de un solo `docker compose up`, con GitHub Actions construyendo imágenes y desplegando en cada merge a `main`.
 
 <Row gap="m" wrap marginTop="l">
   <Button
@@ -58,17 +58,17 @@ El repo está estructurado como dos servicios (`TaskTrackerAPI/` y `TaskTrackerA
 ## Características principales
 
 - **Modelé** la API como módulos Carter sobre Minimal APIs: sin controllers, cada ruta es un endpoint autocontenido con su propio handler, validator y contrato de request/response, registrado a través de un único `CarterModule` por área funcional
-- **Dividí** el backend con Clean Architecture — Domain (entidades, cero dependencias), Application (handlers CQRS, validators, interfaces), Infrastructure (EF Core, seguridad), API (módulos Carter, manejo de excepciones, config de Mapster) y Contracts (DTOs públicos) — de modo que las reglas de negocio nunca se filtren a los route handlers
+- **Dividí** el backend con Clean Architecture en Domain (entidades, cero dependencias), Application (handlers CQRS, validators, interfaces), Infrastructure (EF Core, seguridad), API (módulos Carter, manejo de excepciones, config de Mapster) y Contracts (DTOs públicos), de modo que las reglas de negocio nunca se filtren a los route handlers
 - **Conecté** el frontend a la API con `openapi-ts`: los tipos y un cliente fetch tipado se generan desde el spec OpenAPI del backend, por lo que el cliente no puede divergir del contrato del servidor
-- **Validé** de extremo a extremo con FluentValidation en el backend y Zod en el frontend, compartiendo la misma forma a través de los tipos generados — la entrada inválida se rechaza en ambas capas
+- **Validé** de extremo a extremo con FluentValidation en el backend y Zod en el frontend, compartiendo la misma forma a través de los tipos generados, así la entrada inválida se rechaza en ambas capas
 - **Entregué** `docker compose up` como único paso de setup: API, frontend y Postgres arrancan juntos, con health checks y orden de dependencias definidos en el archivo compose
-- **Desplegué** en un VPS personal vía GitHub Actions en cada merge a `main` — build, test, push de imágenes y avance de la stack sin un paso manual
+- **Desplegué** en un VPS personal vía GitHub Actions en cada merge a `main`: build, test, push de imágenes y avance de la stack sin un paso manual
 - **Protegí** la API con autenticación JWT bearer, hashing de contraseñas con BCrypt, tipos `ErrorOr` para respuestas de error consistentes en todos los endpoints, y un rate limiter de ventana fija (60 req/min por IP)
-- **Restringí** la visibilidad de tareas a nivel de handler: un usuario solo ve tareas que creó o le fueron asignadas — no es solo un filtro de UI, sino un filtro real en la query del handler de lectura
+- **Restringí** la visibilidad de tareas a nivel de handler: un usuario solo ve tareas que creó o le fueron asignadas, no es solo un filtro de UI sino un filtro real en la query del handler de lectura
 
 ## Arquitectura
 
-Las decisiones interesantes viven en la división de capas, no en el conjunto de funcionalidades. Domain es un proyecto de C# puro con cero dependencias de NuGet — solo entidades y enums. Application depende de Domain y de MediatR, FluentValidation y ErrorOr; aquí viven los handlers CQRS y los validators. Infrastructure implementa las interfaces declaradas en Application: `AppDbContext`, configuraciones de EF Core, repositorios y las primitivas de seguridad (emisión de JWT, hashing con BCrypt). API depende de Application e Infrastructure, nunca de Domain directamente, y registra los módulos Carter junto con la configuración transversal de Mapster. Contracts es un proyecto independiente que contiene los DTOs públicos que viajan por la red — ningún tipo de negocio se filtra más allá de este límite.
+Las decisiones interesantes viven en la división de capas, no en el conjunto de funcionalidades. Domain es un proyecto de C# puro con cero dependencias de NuGet: solo entidades y enums. Application depende de Domain y de MediatR, FluentValidation y ErrorOr; aquí viven los handlers CQRS y los validators. Infrastructure implementa las interfaces declaradas en Application: `AppDbContext`, configuraciones de EF Core, repositorios y las primitivas de seguridad (emisión de JWT, hashing con BCrypt). API depende de Application e Infrastructure, nunca de Domain directamente, y registra los módulos Carter junto con la configuración transversal de Mapster. Contracts es un proyecto independiente que contiene los DTOs públicos que viajan por la red, y ningún tipo de negocio se filtra más allá de este límite.
 
 ```csharp
 // Patrón de módulo Carter: cada área funcional es un módulo
@@ -89,7 +89,7 @@ public class TasksModule : ICarterModule
 
 Cada handler es un método estático que toma el request, llama a MediatR para despachar el comando o query correspondiente, y mapea el resultado a una respuesta. La validación corre a través de un pipeline behavior de MediatR, por lo que los handlers nunca invocan validators directamente.
 
-El diagrama de abajo mapea el panorama completo: a la izquierda, el ciclo de vida de una sola request `GET /tasks` mientras baja por el middleware pipeline, atraviesa el ValidationBehavior de MediatR, entra al query handler y sale mapeada a un `TaskResponse`. Al centro, las cuatro capas de Clean Architecture — Domain, Application, Infrastructure y API — con las flechas de dependencia siempre apuntando hacia adentro, hacia Domain. A la derecha, el modelo de dominio (`User` y `TaskItem` con sus relaciones y delete behaviors) y las primitivas de infraestructura que lo respaldan.
+El diagrama de abajo mapea el panorama completo: a la izquierda, el ciclo de vida de una sola request `GET /tasks` mientras baja por el middleware pipeline, atraviesa el ValidationBehavior de MediatR, entra al query handler y sale mapeada a un `TaskResponse`. Al centro, las cuatro capas de Clean Architecture (Domain, Application, Infrastructure y API), con las flechas de dependencia siempre apuntando hacia adentro, hacia Domain. A la derecha, el modelo de dominio (`User` y `TaskItem` con sus relaciones y delete behaviors) y las primitivas de infraestructura que lo respaldan.
 
 <Column fillWidth gap="8" marginTop="16" marginBottom="24" horizontal="center">
   <Media
@@ -101,13 +101,13 @@ El diagrama de abajo mapea el panorama completo: a la izquierda, el ciclo de vid
     src="/images/projects/dallio-clean-architecture.png"
   />
   <Text variant="body-default-xs" onBackground="neutral-weak" align="center">
-    Clean Architecture — flujo de una request, las cuatro capas y el modelo de dominio
+    Clean Architecture: flujo de una request, las cuatro capas y el modelo de dominio
   </Text>
 </Column>
 
 ## Despliegue
 
-Toda la stack — API, app de React y Postgres — está definida en un único `docker-compose.yml`. La imagen de la API corre migraciones al arrancar y expone un endpoint `GET /health` que devuelve `{ "status": "Healthy" }` para el health check de compose. El frontend es un build de Vite servido por un pequeño servidor estático en la misma imagen.
+Toda la stack (API, app de React y Postgres) está definida en un único `docker-compose.yml`. La imagen de la API corre migraciones al arrancar y expone un endpoint `GET /health` que devuelve `{ "status": "Healthy" }` para el health check de compose. El frontend es un build de Vite servido por un pequeño servidor estático en la misma imagen.
 
 En tiempo de ejecución, el tráfico entra por Cloudflare (DNS, CDN, WAF y terminación SSL), llega a Nginx en el VPS actuando como reverse proxy, y se enruta por ruta: `/` va al contenedor del frontend (Vite, puerto host 3009 → contenedor 80) y `/api/*` va al contenedor del backend (.NET, puerto host 8081 → contenedor 8080). El diagrama traza una request de extremo a extremo por ambas rutas y de vuelta.
 
@@ -121,11 +121,11 @@ En tiempo de ejecución, el tráfico entra por Cloudflare (DNS, CDN, WAF y termi
     src="/images/projects/dallio-network-architecture.png"
   />
   <Text variant="body-default-xs" onBackground="neutral-weak" align="center">
-    Camino de red — Cloudflare → Nginx → contenedores Docker, enrutado por ruta
+    Camino de red: Cloudflare a Nginx a contenedores Docker, enrutado por ruta
   </Text>
 </Column>
 
-El despliegue está totalmente automatizado. GitHub Actions ejecuta `dotnet test` y `npm test` en cada push; en el merge a `main`, workflows con path filtering construyen las imágenes de API y frontend, las suben a GHCR (`ghcr.io`), y el VPS hace pull de las nuevas imágenes y avanza la stack — sin paso manual. Postgres corre en el host del VPS y se alcanza desde el contenedor de la API vía `host.docker.internal`.
+El despliegue está totalmente automatizado. GitHub Actions ejecuta `dotnet test` y `npm test` en cada push; en el merge a `main`, workflows con path filtering construyen las imágenes de API y frontend, las suben a GHCR (`ghcr.io`), y el VPS hace pull de las nuevas imágenes y avanza la stack sin paso manual. Postgres corre en el host del VPS y se alcanza desde el contenedor de la API vía `host.docker.internal`.
 
 <Column fillWidth gap="8" marginTop="16" marginBottom="24" horizontal="center">
   <Media
@@ -137,8 +137,8 @@ El despliegue está totalmente automatizado. GitHub Actions ejecuta `dotnet test
     src="/images/projects/dallio-cicd-pipeline.png"
   />
   <Text variant="body-default-xs" onBackground="neutral-weak" align="center">
-    CI/CD — el push a main construye imágenes, las sube a GHCR y el VPS hace pull
+    CI/CD: el push a main construye imágenes, las sube a GHCR y el VPS hace pull
   </Text>
 </Column>
 
-El resultado: de un checkout nuevo a una app corriendo en una URL pública son dos comandos — `git clone` y `docker compose up`. Sin Postgres local, sin migraciones manuales, sin archivo de entorno más allá de `.env`.
+El resultado: de un checkout nuevo a una app corriendo en una URL pública son dos comandos, `git clone` y `docker compose up`. Sin Postgres local, sin migraciones manuales, sin archivo de entorno más allá de `.env`.
