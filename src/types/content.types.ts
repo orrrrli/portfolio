@@ -146,7 +146,7 @@ export type Experience = {
 export type ExperienceSection = {
   /** Sub-section title (e.g. "Backend (.NET)", "Axiriam Shop (E-commerce platform, Beta)") */
   title: string;
-  /** Bulleted achievements within this sub-section. Mutually exclusive with subsections — use one or the other. */
+  /** Bulleted achievements within this sub-section. Mutually exclusive with subsections; use one or the other. */
   achievements?: React.ReactNode[];
   /**
    * Nested sub-headings within this section (e.g. "Frontend", "Backend" inside an Axiriam Shop project).

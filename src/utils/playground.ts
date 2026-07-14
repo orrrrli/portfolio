@@ -43,7 +43,7 @@ export function parseCurlCommand(curl: string): Partial<APIConfig> {
       }))
       if (result.method === 'GET') result.method = 'POST'
     } catch {
-      // non-JSON body — ignore
+      // non-JSON body, ignore
     }
   }
 

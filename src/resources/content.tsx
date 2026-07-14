@@ -44,7 +44,7 @@ const home: Home = {
   path: "/",
   image: "/images/og/home.jpg",
   label: "Home",
-  title: `${person.name} — Full Stack Developer`,
+  title: `${person.name}, Full Stack Developer`,
   description: `Portfolio of Orlando Castañeda, a Full Stack Developer building backends with .NET and products with React and Next.js.`,
   headline: <>Building reliable backends and seamless frontend experiences</>,
   featured: {
@@ -100,7 +100,7 @@ const about: About = {
     title: "Introduction",
     description: (
       <>
-        Full Stack Developer based in Ensenada, Mexico — 3+ years building production systems
+        Full Stack Developer based in Ensenada, Mexico, with 3+ years building production systems
         with ASP.NET Core and Clean Architecture, shipping full-stack products end-to-end.
       </>
     ),
@@ -258,7 +258,7 @@ const about: About = {
         images: [],
       },
       {
-        company: "Freelance — Full-Stack Development",
+        company: "Freelance · Full-Stack Development",
         timeframe: "2024 – Present",
         role: "Current Projects · Parallel to full-time employment",
         sections: [
@@ -367,7 +367,7 @@ const about: About = {
                     using xUnit, NSubstitute, and Testcontainers for real-database validation.
                   </>,
                   <>
-                    AI-powered clinical insights via third-party API integration — pending
+                    AI-powered clinical insights via third-party API integration, pending
                     implementation.
                   </>,
                 ],
@@ -409,16 +409,16 @@ const about: About = {
     institutions: [
       {
         name: "Universidad Autónoma de Baja California",
-        description: <>B.S. in Software Engineering & Emerging Technologies — 2019–2024.</>,
+        description: <>B.S. in Software Engineering & Emerging Technologies, 2019–2024.</>,
       },
       {
         name: "Meta Front-End Developer",
-        description: <>Professional certificate — Coursera / Meta, 2023.</>,
+        description: <>Professional certificate, Coursera / Meta, 2023.</>,
         link: "https://coursera.org/share/970fc9983db283fff37e0b2b761e0e88",
       },
       {
         name: "Google Cloud DevOps Engineer",
-        description: <>Preparing for Google Cloud Certification — Coursera / Google Cloud, 2023.</>,
+        description: <>Preparing for Google Cloud Certification, Coursera / Google Cloud, 2023.</>,
         link: "https://coursera.org/share/3ec32abb273169789f880e424ee9e3e3",
       },
     ],
@@ -477,7 +477,7 @@ const work: Work = {
   path: "/work",
   label: "Work",
   title: `Projects – ${person.name}`,
-  description: `Software projects by ${person.name} — backends, full-stack products, and everything in between.`,
+  description: `Software projects by ${person.name}: backends, full-stack products, and everything in between.`,
   labels: {
     behindTheBuild: "Behind the build",
     viewProject: "View project",
@@ -734,7 +734,7 @@ export function getContent(lang: Language) {
               images: [],
             },
             {
-              company: "Freelance — Full-Stack Development",
+              company: "Freelance · Full-Stack Development",
               timeframe: "2024 – Presente",
               role: "Proyectos actuales · En paralelo al empleo de tiempo completo",
               sections: [
@@ -851,7 +851,7 @@ export function getContent(lang: Language) {
                         </>,
                         <>
                           Insights clínicos potenciados por IA vía integración con API de
-                          terceros — pendiente de implementación.
+                          terceros, pendiente de implementación.
                         </>,
                       ],
                     },
@@ -920,7 +920,7 @@ export function getContent(lang: Language) {
       gallery,
       rokevCTA: {
         description:
-          "Mi empresa de desarrollo de software — ayudamos a negocios a lanzar productos confiables y listos para producción.",
+          "Mi empresa de desarrollo de software, donde ayudamos a negocios a lanzar productos confiables y listos para producción.",
         buttonLabel: "Visitar Rokev Dynamics",
       },
     };
@@ -937,7 +937,7 @@ export function getContent(lang: Language) {
     gallery,
     rokevCTA: {
       description:
-        "My software development venture — we help businesses ship reliable, production-ready products.",
+        "My software development venture, where we help businesses ship reliable, production-ready products.",
       buttonLabel: "Visit Rokev Dynamics",
     },
   };
