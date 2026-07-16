@@ -118,7 +118,7 @@ const about: About = {
             title: "Backend (.NET)",
             achievements: [
               <>
-                Architected and implemented 80+ RESTful API endpoints using ASP.NET Core 8, C#,
+                Architected and implemented 100+ RESTful API endpoints using ASP.NET Core 8, C#,
                 and Entity Framework Core, following Clean Architecture and CQRS principles.
               </>,
               <>
@@ -584,7 +584,7 @@ export function getContent(lang: Language) {
                   title: "Backend (.NET)",
                   achievements: [
                     <>
-                      Arquitecturé e implementé más de 80 endpoints RESTful usando ASP.NET Core 8,
+                      Arquitecturé e implementé más de 100 endpoints RESTful usando ASP.NET Core 8,
                       C# y Entity Framework Core, siguiendo Clean Architecture y principios CQRS.
                     </>,
                     <>
