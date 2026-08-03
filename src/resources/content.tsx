@@ -584,7 +584,7 @@ export function getContent(lang: Language) {
                   title: "Backend (.NET)",
                   achievements: [
                     <>
-                      Arquitecturé e implementé más de 100 endpoints RESTful usando ASP.NET Core 8,
+                      Definí la arquitectura e implementé más de 100 endpoints RESTful usando ASP.NET Core 8,
                       C# y Entity Framework Core, siguiendo Clean Architecture y principios CQRS.
                     </>,
                     <>
@@ -635,8 +635,7 @@ export function getContent(lang: Language) {
                     <>
                       Implementé un rol de soporte con acceso a logs directamente en el
                       dispositivo, permitiendo al equipo de soporte diagnosticar incidencias
-                      del lado del cliente en los dispositivos del cliente sin acceso al
-                      servidor.
+                      del lado del cliente sin acceso al servidor.
                     </>,
                   ],
                 },
@@ -687,7 +686,7 @@ export function getContent(lang: Language) {
             },
             {
               company: "OmniTEK Dev",
-              timeframe: "Feb 2023 – Dic 2023",
+              timeframe: "Feb 2023 – Dec 2023",
               role: "Desarrollador Web",
               sections: [
                 {
@@ -820,10 +819,10 @@ export function getContent(lang: Language) {
                       title: "Backend (ASP.NET Core 9 / C#)",
                       achievements: [
                         <>
-                          Arquitecturé un backend con Clean Architecture y CQRS usando ASP.NET
+                          Definí la arquitectura de un backend con Clean Architecture y CQRS usando ASP.NET
                           Core 9, C#, EF Core y MediatR, exponiendo más de 50 endpoints a través
-                          de Minimal APIs con Carter y manejo de errores orientado a
-                          ferrocarriles (ErrorOr&lt;T&gt;) en lugar de excepciones para la lógica
+                          de Minimal APIs con Carter y manejo de errores estilo railway-oriented
+                          (ErrorOr&lt;T&gt;) en lugar de excepciones para la lógica
                           de negocio.
                         </>,
                         <>
@@ -840,7 +839,7 @@ export function getContent(lang: Language) {
                         </>,
                         <>
                           Construí un sistema de trazabilidad de peticiones basado en Correlation
-                          IDs usando Serilog con sink a PostgreSQL, con acceso a logs gated por
+                          IDs usando Serilog con sink a PostgreSQL, con acceso a logs restringido por
                           rol para soporte, aplicando una política estricta de cero PHI en logs
                           en todo el código.
                         </>,
