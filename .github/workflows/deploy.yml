@@ -34,7 +34,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GH_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build Docker image
         run: |
@@ -56,7 +56,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            echo "${{ secrets.GH_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             cd /home/rokev-dynamics/portfolio
             git pull origin main  # read-only deploy key via core.sshCommand on the VPS checkout
             docker compose pull
