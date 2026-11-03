@@ -1,0 +1,88 @@
+name: Deploy Portfolio
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-portfolio
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/portfolio
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
+
+      - name: Push Docker image to GHCR
+        run: |
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
+
+      # The server checkout pulls with its own read-only deploy key (core.sshCommand),
+      # so no token goes into the git remote URL.
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.5
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GH_TOKEN,ACTOR
+          script: |
+            set -e
+            echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+            cd /home/rokev-dynamics/portfolio
+            git pull --ff-only
+            docker compose pull
+            docker compose up -d
+            docker logout ghcr.io
+            docker image prune -f
+
+      # Healthcheck needs a few seconds after `up -d`; poll instead of a single read.
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            for i in $(seq 1 30); do
+              status=$(docker inspect --format='{{.State.Health.Status}}' portfolio)
+              [ "$status" = "healthy" ] && echo "healthy" && exit 0
+              sleep 1
+            done
+            echo "portfolio not healthy: $status"
+            exit 1
