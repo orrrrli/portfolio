@@ -5,9 +5,10 @@ on:
     branches:
       - main
 
+# Queue deploys instead of cancelling: a cancel mid `compose up` can leave the site down.
 concurrency:
   group: deploy-portfolio
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -35,11 +36,12 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      # The job's own short-lived token; needs this repo granted access to the GHCR package.
       - name: Log in to GitHub Container Registry
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTOR: ${{ github.actor }}
-        run: echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
 
       - name: Build Docker image
         run: docker build -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" .
@@ -49,37 +51,31 @@ jobs:
           docker push "$IMAGE:latest"
           docker push "$IMAGE:${{ github.sha }}"
 
-      # The server checkout pulls with its own read-only deploy key (core.sshCommand),
-      # so no token goes into the git remote URL.
+      # The GHCR package is public, so the server pulls without credentials.
+      # The checkout pulls with its own read-only deploy key (core.sshCommand): no token in the remote URL.
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.2.5
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          ACTOR: ${{ github.actor }}
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: GH_TOKEN,ACTOR
           script: |
             set -e
-            echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
             cd /home/rokev-dynamics/portfolio
             git pull --ff-only
             docker compose pull
             docker compose up -d
-            docker logout ghcr.io
             docker image prune -f
 
-      # Healthcheck needs a few seconds after `up -d`; poll instead of a single read.
+      # First healthcheck can take up to 30s on Docker engines older than 25; poll for 60s.
       - name: Verify deployment
-        uses: appleboy/ssh-action@v1.2.5
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            for i in $(seq 1 30); do
+            for i in $(seq 1 60); do
               status=$(docker inspect --format='{{.State.Health.Status}}' portfolio)
               [ "$status" = "healthy" ] && echo "healthy" && exit 0
               sleep 1
