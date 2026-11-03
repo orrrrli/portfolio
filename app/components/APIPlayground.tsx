@@ -79,6 +79,11 @@ export function APIPlayground({ url: initialUrl = "", initialPath = [] }: Props)
         </div>
       )}
 
+      {/* Always mounted so screen readers announce the result when it changes. */}
+      <p className="sr-only" aria-live="polite">
+        {loading ? "Sending…" : response ? `Response ${response.status ?? response.error ?? ""}` : ""}
+      </p>
+
       <div className="pg-actions">
         <button type="button" className="pg-send mono" disabled={!canSend} onClick={handleSend}>
           {loading ? "Sending…" : "Send Request"}
@@ -92,7 +97,7 @@ export function APIPlayground({ url: initialUrl = "", initialPath = [] }: Props)
         </div>
 
         {response && (
-          <div className="pg-panel" aria-live="polite">
+          <div className="pg-panel">
             <p className="pg-label mono">
               Response
               {response.status !== undefined && (

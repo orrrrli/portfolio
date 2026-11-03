@@ -1,14 +1,11 @@
 import type { MetaDescriptor } from "react-router";
-import { getContent } from ".";
+import { getContent, localizedPath } from ".";
 import type { Lang } from "./types";
 
 export const SITE_URL = "https://orlando.codes";
 
-/** `path` is language-neutral ("/" or "/work/axiriam"); ES gets the "/es" prefix. */
-export const localizedUrl = (lang: Lang, path: string) => {
-  if (lang === "en") return SITE_URL + path;
-  return SITE_URL + (path === "/" ? "/es" : `/es${path}`);
-};
+/** `path` is language-neutral ("/" or "/work/axiriam"). */
+export const localizedUrl = (lang: Lang, path: string) => SITE_URL + localizedPath(lang, path);
 
 type SeoInput = {
   lang: Lang;

@@ -24,7 +24,9 @@ export function loader({ request }: Route.LoaderArgs) {
     .join("");
 
   // Newest post date keeps the output deterministic between builds.
-  const lastBuild = posts[0] ? new Date(posts[0].frontmatter.publishedAt).toUTCString() : "";
+  const lastBuild = posts[0]
+    ? `\n    <lastBuildDate>${new Date(posts[0].frontmatter.publishedAt).toUTCString()}</lastBuildDate>`
+    : "";
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -32,8 +34,7 @@ export function loader({ request }: Route.LoaderArgs) {
     <title>${escapeXml(blog.title)}</title>
     <link>${localizedUrl(lang, "/")}</link>
     <description>${escapeXml(blog.description)}</description>
-    <language>${lang}</language>
-    <lastBuildDate>${lastBuild}</lastBuildDate>
+    <language>${lang}</language>${lastBuild}
     <atom:link href="${localizedUrl(lang, "/rss.xml")}" rel="self" type="application/rss+xml" />
     <managingEditor>${person.email} (${escapeXml(person.name)})</managingEditor>${items}
   </channel>

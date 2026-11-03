@@ -29,34 +29,35 @@ export const meta: Route.MetaFunction = ({ location, params }) => {
 
 export default function EntryPage() {
   const { slug } = useParams();
-  const { lang, pathname, prefix, home, work, blog } = useContent();
+  const { lang, pathname, homePath, home, work, blog } = useContent();
   const kind = kindFromPath(pathname);
   const entry = findEntry(kind, lang, slug);
 
   const isWork = kind === "work";
   const back = isWork
-    ? { href: `${prefix}/#projects`, label: work.labels.backToProjects }
-    : { href: `${prefix}/`, label: blog.labels.backLink };
+    ? { href: `${homePath}#projects`, label: work.labels.backToProjects }
+    : { href: homePath, label: blog.labels.backLink };
+  const backLink = (
+    <a href={back.href} className="back mono">
+      ← {back.label}
+    </a>
+  );
 
   if (!entry) {
     return (
       <main id="top" className="container entry">
-        <a href={back.href} className="back mono">
-          ← {back.label}
-        </a>
+        {backLink}
         <h1>404</h1>
       </main>
     );
   }
 
-  const { title, summary, publishedAt, images, stack, link, tag } = entry.frontmatter;
+  const { title, summary, publishedAt, images, stack, link, tag, coverCaption } = entry.frontmatter;
   const { Content } = entry;
 
   return (
     <main id="top" className="container entry">
-      <a href={back.href} className="back mono">
-        ← {back.label}
-      </a>
+      {backLink}
 
       <header className="entry-head">
         <p className="label mono">{isWork ? home.sections.projects : blog.label}</p>
@@ -82,7 +83,12 @@ export default function EntryPage() {
         )}
       </header>
 
-      {images?.[0] && <img className="cover" src={images[0]} alt={title} />}
+      {images?.[0] && (
+        <figure className="cover-figure">
+          <img className="cover" src={images[0]} alt={title} />
+          {coverCaption && <figcaption>{coverCaption}</figcaption>}
+        </figure>
+      )}
 
       <article className="prose">
         <Content components={{ APIPlayground }} />

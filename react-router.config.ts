@@ -1,5 +1,5 @@
 import type { Config } from "@react-router/dev/config";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 
 const KINDS = ["work", "build-learn"];
 const LANGS = [
@@ -7,10 +7,13 @@ const LANGS = [
   { dir: "es", prefix: "/es" },
 ];
 
+// Git drops empty folders, so a kind/lang folder may not exist.
+const mdxFiles = (dir: URL) => (existsSync(dir) ? readdirSync(dir) : []);
+
 // One prerendered page per MDX file: app/content/<kind>/<lang>/<slug>.mdx
 const entryPaths = KINDS.flatMap((kind) =>
   LANGS.flatMap(({ dir, prefix }) =>
-    readdirSync(new URL(`./app/content/${kind}/${dir}`, import.meta.url))
+    mdxFiles(new URL(`./app/content/${kind}/${dir}`, import.meta.url))
       .filter((file) => file.endsWith(".mdx"))
       .map((file) => `${prefix}/${kind}/${file.replace(/\.mdx$/, "")}`),
   ),

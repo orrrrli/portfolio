@@ -12,6 +12,8 @@ export type Frontmatter = {
   link?: string;
   stack?: string[];
   tag?: string;
+  /** Shown under the cover image */
+  coverCaption?: string;
 };
 
 export type Entry = {
@@ -29,7 +31,7 @@ const modules = import.meta.glob<{ default: MDXContent; frontmatter: Frontmatter
   { eager: true },
 );
 
-const entries: Entry[] = Object.entries(modules)
+export const entries: Entry[] = Object.entries(modules)
   .map(([path, mod]) => {
     // path looks like "./work/en/axiriam.mdx"
     const [, kind, lang, file] = path.split("/");

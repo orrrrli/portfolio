@@ -1,36 +1,37 @@
-import { findEntry, listEntries, type Kind } from "../content/mdx";
+import { entries } from "../content/mdx";
 import { localizedUrl } from "../content/seo";
 import type { Lang } from "../content/types";
 
 type Page = { path: string; langs: Lang[]; lastmod?: string };
 
-const KINDS: Kind[] = ["work", "build-learn"];
-
+// Groups every MDX entry by kind/slug so ES-only or EN-only pages still get listed.
 function pages(): Page[] {
-  const entries = KINDS.flatMap((kind) =>
-    listEntries(kind, "en").map(({ slug, frontmatter }) => ({
-      path: `/${kind}/${slug}`,
-      langs: findEntry(kind, "es", slug) ? (["en", "es"] as Lang[]) : (["en"] as Lang[]),
-      lastmod: frontmatter.publishedAt,
-    })),
-  );
-  return [{ path: "/", langs: ["en", "es"] }, ...entries];
+  const byPath = new Map<string, Page>();
+  for (const { kind, slug, lang, frontmatter } of entries) {
+    const path = `/${kind}/${slug}`;
+    const page = byPath.get(path) ?? { path, langs: [], lastmod: frontmatter.publishedAt };
+    page.langs.push(lang);
+    byPath.set(path, page);
+  }
+  return [{ path: "/", langs: ["en", "es"] }, ...byPath.values()];
+}
+
+function alternates({ path, langs }: Page) {
+  if (langs.length < 2) return "";
+  const links = langs.map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${localizedUrl(l, path)}" />`);
+  const fallback = langs.includes("en") ? "en" : langs[0];
+  links.push(`<xhtml:link rel="alternate" hreflang="x-default" href="${localizedUrl(fallback, path)}" />`);
+  return links.map((l) => `\n    ${l}`).join("");
 }
 
 export function loader() {
   const urls = pages()
-    .flatMap(({ path, langs, lastmod }) =>
-      langs.map((lang) => {
-        const alternates =
-          langs.length > 1
-            ? langs
-                .map((l) => `\n    <xhtml:link rel="alternate" hreflang="${l}" href="${localizedUrl(l, path)}" />`)
-                .join("")
-            : "";
-        return `  <url>
-    <loc>${localizedUrl(lang, path)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}${alternates}
-  </url>`;
-      }),
+    .flatMap((page) =>
+      page.langs.map(
+        (lang) => `  <url>
+    <loc>${localizedUrl(lang, page.path)}</loc>${page.lastmod ? `\n    <lastmod>${page.lastmod}</lastmod>` : ""}${alternates(page)}
+  </url>`,
+      ),
     )
     .join("\n");
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation } from "react-router";
-import { langFromPath, useContent } from "./content";
+import { langFromPath, localizedPath, useContent } from "./content";
 import type { SectionId } from "./content/types";
 import type { Route } from "./+types/root";
 import "./styles/tokens.css";
@@ -40,14 +40,28 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
+// Unmatched URLs (old /about, /work, typos) land here instead of React Router's bare default.
+export function ErrorBoundary() {
+  const { homePath, person } = useContent();
+  return (
+    <main id="top" className="container entry">
+      <title>{`404 – ${person.name}`}</title>
+      <meta name="robots" content="noindex" />
+      <a href={homePath} className="back mono">
+        ← ~/orlando
+      </a>
+      <h1>404</h1>
+    </main>
+  );
+}
+
 export default function App() {
-  const { lang, pathname, prefix, person, home } = useContent();
-  const homePath = prefix || "/";
-  const isHome = pathname === homePath || pathname === `${prefix}/`;
+  const { lang, neutralPath, homePath, person, home } = useContent();
+  const isHome = neutralPath === "/";
   // On the home page anchors stay in-page; elsewhere they jump back to the home.
-  const anchor = (id: string) => (isHome ? `#${id}` : `${prefix}/#${id}`);
-  const enPath = pathname.replace(/^\/es(?=\/|$)/, "") || "/";
-  const esPath = enPath === "/" ? "/es" : `/es${enPath}`;
+  const anchor = (id: string) => (isHome ? `#${id}` : `${homePath}#${id}`);
+  const enPath = localizedPath("en", neutralPath);
+  const esPath = localizedPath("es", neutralPath);
 
   return (
     <>
@@ -77,7 +91,8 @@ export default function App() {
       <Outlet />
 
       <footer className="container footer mono muted">
-        <span>
+        {/* Year is baked at build time; the client may disagree after Jan 1. */}
+        <span suppressHydrationWarning>
           © {new Date().getFullYear()} {person.name}
         </span>
         <a href="#top">↑ {home.backToTop}</a>
