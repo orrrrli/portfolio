@@ -53,18 +53,26 @@ jobs:
 
       # The GHCR package is public, so the server pulls without credentials.
       # The checkout pulls with its own read-only deploy key (core.sshCommand): no token in the remote URL.
+      # fingerprint pins the VPS host key: a spoofed server fails the deploy instead of receiving it.
+      # Runs the exact commit and image of this run; old sha tags are removed so they don't pile up on disk.
       - name: Deploy to VPS
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          fingerprint: ${{ secrets.VPS_FINGERPRINT }}
           script: |
             set -e
             cd /home/rokev-dynamics/portfolio
-            git pull --ff-only
-            docker compose pull
+            git fetch origin main
+            git reset --hard ${{ github.sha }}
+            export IMAGE_TAG=${{ github.sha }}
+            docker compose pull --quiet
             docker compose up -d
+            docker images --format '{{.Repository}}:{{.Tag}}' \
+              | grep '^${{ env.IMAGE }}:' | grep -v -e ':${{ github.sha }}$' -e ':latest$' \
+              | xargs -r docker rmi
             docker image prune -f
 
       # First healthcheck can take up to 30s on Docker engines older than 25; poll for 60s.
@@ -74,6 +82,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          fingerprint: ${{ secrets.VPS_FINGERPRINT }}
           script: |
             for i in $(seq 1 60); do
               status=$(docker inspect --format='{{.State.Health.Status}}' portfolio)
