@@ -1,0 +1,7 @@
+services:
+  portfolio:
+    image: ghcr.io/orrrrli/portfolio:latest
+    container_name: portfolio
+    ports:
+      - "127.0.0.1:3006:3006"
+    restart: unless-stopped
