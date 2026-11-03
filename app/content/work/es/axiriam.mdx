@@ -1,0 +1,53 @@
+---
+title: "Axiriam – Plataforma de E-Commerce"
+publishedAt: "2025-02-01"
+summary: "Plataforma de e-commerce full-stack con 200+ órdenes/mes. Checkout con Stripe confirmado por webhooks, reserva de inventario con expiración automática a los 5 minutos en órdenes no pagadas y un panel de administración personalizado al flujo del equipo."
+images:
+  - "/images/projects/axiriam.png"
+team:
+  - name: "Orlando Castañeda"
+    role: "Desarrollador Full Stack"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: ""
+stack:
+  - "Next.js"
+  - "TypeScript"
+  - "Stripe"
+  - "PostgreSQL"
+  - "Prisma"
+  - "Resend"
+  - "Cloudinary"
+  - "Tailwind CSS"
+---
+
+## Descripción general
+
+El cliente era una marca de ropa médica con alcance orgánico real pero sin tienda en línea. Las ventas se perdían entre los canales: potenciales compradores enviando DMs, mensajes de WhatsApp sin respuesta, sin forma confiable de convertir el interés en una orden.
+
+La solución fue un e-commerce completo construido alrededor de su flujo de trabajo real, no una plantilla genérica. El checkout maneja pagos con Stripe con confirmación por webhooks, reserva de inventario al crear la orden, y un servicio en segundo plano que expira órdenes no pagadas cada 5 minutos para liberar el stock retenido, así ningún artículo queda bloqueado por un carrito abandonado.
+
+El panel de administración fue la parte más difícil: diseñado desde cero alrededor de cómo opera realmente el equipo de la tienda, no de cómo un dashboard genérico asume que lo hace. Gestión de órdenes, control de inventario y subida de productos, todo sin necesitar a un desarrollador.
+
+Resultado: 200+ órdenes por mes en producción, y cero ventas perdidas por mensajes sin responder.
+
+## Características principales
+
+- **Checkout** multi-paso con Stripe: pagos confirmados por webhook evitan que el inventario se libere en transacciones no confirmadas
+- **Reserva** de inventario al crear la orden: restaurada automáticamente al cancelar, previniendo sobreventas sin reconciliación manual
+- **Servicio** en segundo plano que expira órdenes no pagadas cada 5 minutos, liberando stock retenido para evitar que carritos abandonados bloqueen el inventario disponible indefinidamente
+- **Panel** de administración personalizado al flujo real del equipo: subida de productos, gestión de órdenes y control de inventario sin necesitar a un desarrollador
+- **Notificaciones** automáticas de orden y envío vía Resend, cerrando la brecha de comunicación que antes obligaba a los clientes a contactar al equipo directamente para saber el estado de su pedido
+- **Almacenamiento** de imágenes de productos y entrega delegados a Cloudinary: optimización CDN y transformación al vuelo sin procesamiento del lado del servidor
+
+## Estrategia de renderizado
+
+No todas las rutas necesitan la misma garantía de frescura. Cada ruta responde dos preguntas: ¿el contenido cambia por usuario y con qué frecuencia? Las páginas estáticas como `/nosotros` se sirven desde CDN para siempre (SSG). El catálogo usa ISR: pre-renderizado, revalidado solo cuando un pago o cambio de stock dispara `revalidateTag('catalog')`. Las páginas de producto son SSR porque las reseñas y el stock deben estar frescos por solicitud. El carrito y el checkout son puramente del lado del cliente (Zustand + SWR) porque dependen del estado por usuario en localStorage. Las rutas de admin omiten todo caché: RSC directo, verificación de rol en cada solicitud.
+
+![Árbol de decisión de estrategia de renderizado](/images/axiriam/rendering.png)
+
+## Arquitectura de caché
+
+Next.js apila cuatro capas de caché. El Data Cache persiste el JSON obtenido por 3600s. El Full Route Cache persiste el RSC Payload + HTML renderizado por 600s. El Request Memo deduplica las solicitudes dentro de una misma petición. El Router Cache mantiene el RSC Payload en memoria del cliente hasta un refresco completo. Durante el build, `/catalog` consulta Postgres una vez y llena ambos cachés persistentes. En solicitudes normales, la página completa se sirve desde el Full Route Cache con cero consultas a la base de datos. Cuando el stock cambia, `revalidateTag('catalog')` marca el caché como STALE y la siguiente solicitud re-consulta, re-renderiza y repuebla. Hacer esto bien fue la diferencia entre una plataforma que escala y una que golpea la base de datos en cada visita.
+
+![Arquitectura de cuatro capas de caché de Next.js](/images/axiriam/cache.png)

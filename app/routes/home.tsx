@@ -1,12 +1,11 @@
-import { useLocation } from "react-router";
-import { getContent } from "../content";
-import type { ExperienceSection, SectionId } from "../content/types";
+import { Link } from "react-router";
+import { useContent } from "../content";
+import { listEntries } from "../content/mdx";
+import type { ExperienceSection } from "../content/types";
 import "../styles/home.css";
 import type { Route } from "./+types/home";
 
 export const meta: Route.MetaFunction = () => [{ title: "Orlando Castañeda" }];
-
-const SECTIONS: SectionId[] = ["profile", "experience", "projects", "stack", "contact"];
 
 function Achievements({ items }: { items: string[] }) {
   return (
@@ -42,34 +41,11 @@ function Section({ section }: { section: ExperienceSection }) {
 }
 
 export default function Home() {
-  const isEs = useLocation().pathname.startsWith("/es");
-  const { person, social, home, about, work } = getContent(isEs ? "es" : "en");
+  const { lang, prefix, person, social, home, about, work, blog } = useContent();
+  const projects = listEntries("work", lang);
+  const posts = listEntries("build-learn", lang);
 
   return (
-    <>
-      <header className="site-header">
-        <nav className="container nav">
-          <a href="#top" className="mono brand">
-            ~/orlando
-          </a>
-          <ul className="nav-links mono">
-            {SECTIONS.map((id) => (
-              <li key={id}>
-                <a href={`#${id}`}>{home.sections[id]}</a>
-              </li>
-            ))}
-          </ul>
-          <div className="lang mono">
-            <a href="/" aria-current={isEs ? undefined : "page"} hrefLang="en">
-              EN
-            </a>
-            <a href="/es" aria-current={isEs ? "page" : undefined} hrefLang="es">
-              ES
-            </a>
-          </div>
-        </nav>
-      </header>
-
       <main id="top">
         <section className="container hero">
           <div>
@@ -147,7 +123,43 @@ export default function Home() {
         <section id="projects" className="container block">
           <p className="label mono">{home.sections.projects}</p>
           <h2>{work.labels.selectedWork}</h2>
-          {/* Project cards land in phase 3, sourced from the MDX frontmatter. */}
+          <ul className="cards projects">
+            {projects.map(({ slug, frontmatter }) => (
+              <li key={slug} className="card project">
+                <h3>
+                  <Link to={`${prefix}/work/${slug}`}>{frontmatter.title}</Link>
+                </h3>
+                <p className="muted">{frontmatter.summary}</p>
+                {frontmatter.stack && (
+                  <ul className="chips mono">
+                    {frontmatter.stack.map((tech) => (
+                      <li key={tech}>{tech}</li>
+                    ))}
+                  </ul>
+                )}
+                <Link to={`${prefix}/work/${slug}`} className="card-cta mono">
+                  {work.labels.readCaseStudy} →
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <h3 className="sub-title">{blog.title}</h3>
+          <p className="muted">{blog.intro}</p>
+          <ul className="cards projects">
+            {posts.map(({ slug, frontmatter }) => (
+              <li key={slug} className="card project">
+                <p className="timeframe mono">
+                  {frontmatter.publishedAt}
+                  {frontmatter.tag && ` · ${frontmatter.tag}`}
+                </p>
+                <h3>
+                  <Link to={`${prefix}/build-learn/${slug}`}>{frontmatter.title}</Link>
+                </h3>
+                <p className="muted">{frontmatter.summary}</p>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section id="stack" className="block">
@@ -198,13 +210,5 @@ export default function Home() {
           </ul>
         </section>
       </main>
-
-      <footer className="container footer mono muted">
-        <span>
-          © {new Date().getFullYear()} {person.name}
-        </span>
-        <a href="#top">↑ {home.backToTop}</a>
-      </footer>
-    </>
   );
 }

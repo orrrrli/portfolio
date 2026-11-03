@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation } from "react-router";
+import { Link, Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation } from "react-router";
+import { langFromPath, useContent } from "./content";
+import type { SectionId } from "./content/types";
 import type { Route } from "./+types/root";
 import "./styles/tokens.css";
+import "./styles/site.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -12,9 +15,10 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+const SECTIONS: SectionId[] = ["profile", "experience", "projects", "stack", "contact"];
+
 export function Layout({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation();
-  const lang = pathname.startsWith("/es") ? "es" : "en";
+  const lang = langFromPath(useLocation().pathname);
 
   return (
     <html lang={lang}>
@@ -35,5 +39,47 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const { lang, pathname, prefix, person, home } = useContent();
+  const homePath = prefix || "/";
+  const isHome = pathname === homePath || pathname === `${prefix}/`;
+  // On the home page anchors stay in-page; elsewhere they jump back to the home.
+  const anchor = (id: string) => (isHome ? `#${id}` : `${prefix}/#${id}`);
+  const enPath = pathname.replace(/^\/es(?=\/|$)/, "") || "/";
+  const esPath = enPath === "/" ? "/es" : `/es${enPath}`;
+
+  return (
+    <>
+      <header className="site-header">
+        <nav className="container nav">
+          <Link to={homePath} className="mono brand">
+            ~/orlando
+          </Link>
+          <ul className="nav-links mono">
+            {SECTIONS.map((id) => (
+              <li key={id}>
+                <a href={anchor(id)}>{home.sections[id]}</a>
+              </li>
+            ))}
+          </ul>
+          <div className="lang mono">
+            <a href={enPath} aria-current={lang === "en" ? "page" : undefined} hrefLang="en">
+              EN
+            </a>
+            <a href={esPath} aria-current={lang === "es" ? "page" : undefined} hrefLang="es">
+              ES
+            </a>
+          </div>
+        </nav>
+      </header>
+
+      <Outlet />
+
+      <footer className="container footer mono muted">
+        <span>
+          © {new Date().getFullYear()} {person.name}
+        </span>
+        <a href="#top">↑ {home.backToTop}</a>
+      </footer>
+    </>
+  );
 }

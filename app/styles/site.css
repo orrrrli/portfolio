@@ -1,0 +1,135 @@
+/* Shared across every page: header, footer, section labels, cards, chips. */
+
+/* Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(7, 9, 14, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 3.5rem;
+  font-size: 0.85rem;
+}
+
+.brand {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0 auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-links a,
+.lang a {
+  color: var(--muted);
+}
+
+.nav-links a:hover,
+.lang a:hover,
+.lang a[aria-current="page"] {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.lang {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 720px) {
+  .nav-links {
+    display: none;
+  }
+  .lang {
+    margin-left: auto;
+  }
+}
+
+/* Section pieces */
+.label,
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.label::before {
+  content: "// ";
+  color: var(--faint);
+}
+
+h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  margin-bottom: 1.5rem;
+}
+
+.lead {
+  max-width: 46rem;
+  font-size: 1.15rem;
+  color: var(--muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  padding: 1.25rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+}
+
+.chips li {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--muted);
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding-block: 2rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.8rem;
+}
