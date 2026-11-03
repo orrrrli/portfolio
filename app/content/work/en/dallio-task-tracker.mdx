@@ -78,7 +78,7 @@ Each handler is a static method that takes the request, calls MediatR to dispatc
 The diagram below maps the full picture: on the left, the lifecycle of a single `GET /tasks` request as it travels down the middleware pipeline, through the MediatR validation behavior, into the query handler, and back out mapped to a `TaskResponse`. In the center, the four Clean Architecture layers (Domain, Application, Infrastructure, and API), with the dependency arrows always pointing inward toward Domain. On the right, the domain model (`User` and `TaskItem` with their relationships and delete behaviors) and the infrastructure primitives that back it.
 
 <figure>
-  <img src="/images/projects/dallio-clean-architecture.png" alt="Clean Architecture (4 layers) for the Task Tracker API: request flow through the middleware pipeline and MediatR, the Domain, Application, Infrastructure and API layers with inward-pointing dependencies, the User and TaskItem domain model, and the technology stack" loading="lazy" />
+  <img src="/images/projects/dallio-clean-architecture.jpg" alt="Clean Architecture (4 layers) for the Task Tracker API: request flow through the middleware pipeline and MediatR, the Domain, Application, Infrastructure and API layers with inward-pointing dependencies, the User and TaskItem domain model, and the technology stack" loading="lazy" />
   <figcaption>Clean Architecture: request flow, the four layers, and the domain model</figcaption>
 </figure>
 
@@ -89,14 +89,14 @@ The whole stack (API, React app, and Postgres) is defined in a single `docker-co
 At runtime, traffic enters through Cloudflare (DNS, CDN, WAF, and SSL termination), reaches Nginx on the VPS acting as a reverse proxy, and is routed by path: `/` goes to the frontend container (Vite, host port 3009 → container 80) and `/api/*` goes to the backend container (.NET, host port 8081 → container 8080). The diagram traces a request end-to-end through both routes and back.
 
 <figure>
-  <img src="/images/projects/dallio-network-architecture.png" alt="Network architecture: Internet to Cloudflare to Nginx reverse proxy on the VPS, routing / to the Vite frontend container and /api/* to the .NET backend container, with the host-to-container port mappings" loading="lazy" />
+  <img src="/images/projects/dallio-network-architecture.jpg" alt="Network architecture: Internet to Cloudflare to Nginx reverse proxy on the VPS, routing / to the Vite frontend container and /api/* to the .NET backend container, with the host-to-container port mappings" loading="lazy" />
   <figcaption>Network path: Cloudflare to Nginx to Docker containers, routed by path</figcaption>
 </figure>
 
 Deployment is fully automated. GitHub Actions runs `dotnet test` and `npm test` on every push; on merge to `main`, path-filtered workflows build the API and frontend images, push them to GHCR (`ghcr.io`), and the VPS pulls the new images and rolls the stack forward with no manual step. Postgres runs on the VPS host and is reached from the API container via `host.docker.internal`.
 
 <figure>
-  <img src="/images/projects/dallio-cicd-pipeline.png" alt="CI/CD pipeline: git push to main triggers GitHub Actions to build and push the API and frontend images to GHCR, which the personal VPS pulls behind Nginx, with PostgreSQL running on the host" loading="lazy" />
+  <img src="/images/projects/dallio-cicd-pipeline.jpg" alt="CI/CD pipeline: git push to main triggers GitHub Actions to build and push the API and frontend images to GHCR, which the personal VPS pulls behind Nginx, with PostgreSQL running on the host" loading="lazy" />
   <figcaption>CI/CD: push to main builds images, pushes to GHCR, and the VPS pulls</figcaption>
 </figure>
 
