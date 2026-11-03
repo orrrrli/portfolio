@@ -13,6 +13,14 @@ export const es: Content = {
       "Desarrollador Full Stack en Ensenada",
       "Creando sistemas confiables y experiencias de usuario intuitivas.",
     ],
+    sections: {
+      profile: "perfil",
+      experience: "experiencia",
+      projects: "proyectos",
+      stack: "stack",
+      contact: "contacto",
+    },
+    backToTop: "inicio",
   },
   about: {
     intro: { ...en.about.intro, title: "Introducción" },

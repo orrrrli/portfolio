@@ -23,7 +23,12 @@ export type Home = {
   headline: string[];
   subline: string[];
   stack: string[];
+  /** Nav and section labels; keys are the stable anchor ids */
+  sections: Record<SectionId, string>;
+  backToTop: string;
 };
+
+export type SectionId = "profile" | "experience" | "projects" | "stack" | "contact";
 
 export type ExperienceSubsection = { title: string; achievements: string[] };
 
