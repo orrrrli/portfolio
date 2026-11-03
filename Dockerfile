@@ -8,7 +8,8 @@ RUN npm run build
 
 # Unprivileged image: runs as uid 101, no root inside the container.
 FROM nginxinc/nginx-unprivileged:1.29-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/build/client /usr/share/nginx/html
 
 # Same port as the previous portfolio container, so the host nginx site and compose stay unchanged.
