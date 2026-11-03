@@ -1,11 +1,16 @@
 import { Link } from "react-router";
-import { useContent } from "../content";
+import { getContent, langFromPath, useContent } from "../content";
 import { listEntries } from "../content/mdx";
+import { seoMeta } from "../content/seo";
 import type { ExperienceSection } from "../content/types";
 import "../styles/home.css";
 import type { Route } from "./+types/home";
 
-export const meta: Route.MetaFunction = () => [{ title: "Orlando Castañeda" }];
+export const meta: Route.MetaFunction = ({ location }) => {
+  const lang = langFromPath(location.pathname);
+  const { home } = getContent(lang);
+  return seoMeta({ lang, path: "/", title: home.title, description: home.description, image: home.image });
+};
 
 function Achievements({ items }: { items: string[] }) {
   return (

@@ -2,6 +2,7 @@ import { useParams } from "react-router";
 import { APIPlayground } from "../components/APIPlayground";
 import { getContent, langFromPath, useContent } from "../content";
 import { findEntry, type Kind } from "../content/mdx";
+import { seoMeta } from "../content/seo";
 import "../styles/entry.css";
 import type { Route } from "./+types/entry";
 
@@ -9,12 +10,21 @@ const kindFromPath = (pathname: string): Kind => (pathname.includes("/build-lear
 
 export const meta: Route.MetaFunction = ({ location, params }) => {
   const lang = langFromPath(location.pathname);
-  const entry = findEntry(kindFromPath(location.pathname), lang, params.slug);
-  if (!entry) return [{ title: getContent(lang).person.name }];
-  return [
-    { title: `${entry.frontmatter.title} – ${getContent(lang).person.name}` },
-    { name: "description", content: entry.frontmatter.summary },
-  ];
+  const kind = kindFromPath(location.pathname);
+  const { person, home } = getContent(lang);
+  const entry = findEntry(kind, lang, params.slug);
+  if (!entry) return [{ title: person.name }, { name: "robots", content: "noindex" }];
+
+  const { title, summary, images } = entry.frontmatter;
+  return seoMeta({
+    lang,
+    path: `/${kind}/${entry.slug}`,
+    title: `${title} – ${person.name}`,
+    description: summary,
+    image: images?.[0] ?? home.image,
+    type: "article",
+    hasTranslation: Boolean(findEntry(kind, lang === "es" ? "en" : "es", entry.slug)),
+  });
 };
 
 export default function EntryPage() {

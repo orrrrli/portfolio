@@ -8,4 +8,8 @@ export default [
   route("es/work/:slug", "routes/entry.tsx", { id: "work-es" }),
   route("build-learn/:slug", "routes/entry.tsx", { id: "build-learn-en" }),
   route("es/build-learn/:slug", "routes/entry.tsx", { id: "build-learn-es" }),
+  // Resource routes, prerendered to static .xml files.
+  route("rss.xml", "routes/rss.ts", { id: "rss-en" }),
+  route("es/rss.xml", "routes/rss.ts", { id: "rss-es" }),
+  route("sitemap.xml", "routes/sitemap.ts"),
 ] satisfies RouteConfig;

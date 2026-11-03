@@ -18,5 +18,5 @@ const entryPaths = KINDS.flatMap((kind) =>
 
 export default {
   ssr: false,
-  prerender: ["/", "/es", ...entryPaths],
+  prerender: ["/", "/es", ...entryPaths, "/rss.xml", "/es/rss.xml", "/sitemap.xml"],
 } satisfies Config;

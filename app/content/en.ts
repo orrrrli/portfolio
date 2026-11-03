@@ -23,7 +23,7 @@ export const en: Content = {
     title: `${person.name}, Full Stack Developer`,
     description:
       "Portfolio of Orlando Castañeda, a Full Stack Developer building backends with .NET and products with React and Next.js.",
-    image: "/images/og/home.jpg",
+    image: "/images/og/home-en.png",
     headline: ["Building reliable backends and seamless frontend experiences"],
     subline: [
       "Full Stack Developer based in Ensenada",

@@ -8,6 +8,7 @@ export const es: Content = {
   home: {
     ...en.home,
     label: "Inicio",
+    image: "/images/og/home-es.png",
     headline: ["Desarrollando backends", "confiables y creando", "experiencias fluidas en frontend."],
     subline: [
       "Desarrollador Full Stack en Ensenada",
