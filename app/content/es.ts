@@ -4,14 +4,14 @@ import type { Content } from "./types";
 // Fields not overridden here were never translated in the old site and stay in English verbatim.
 export const es: Content = {
   ...en,
-  person: { ...en.person, role: "Desarrollador Full Stack" },
+  person: { ...en.person, role: "Software Engineer enfocado en IA" },
   home: {
     ...en.home,
     label: "Inicio",
     image: "/images/og/home-es.png",
     headline: ["Desarrollando backends", "confiables y creando", "experiencias fluidas en frontend."],
     subline: [
-      "Desarrollador Full Stack en Ensenada",
+      "Software Engineer enfocado en IA, en Ensenada",
       "Creando sistemas confiables y experiencias de usuario intuitivas.",
     ],
     cta: { projects: "Ver proyectos", blog: "Leer el blog", contact: "Contacto" },
@@ -32,7 +32,7 @@ export const es: Content = {
       terminal: {
         host: "orlando@ensenada:~/career",
         lines: [
-          { command: "whoami", output: "Software Engineer & AI Engineer" },
+          { command: "whoami", output: "Software Engineer enfocado en IA" },
           {
             command: "grep -i focus ./stack.log",
             output: "LLM tool calling, evals, Kotlin/Spring Boot, ASP.NET Core, SwiftUI, Next.js, GCP",
@@ -159,7 +159,7 @@ export const es: Content = {
     path: "/build-learn",
     label: "Aprende & Construye",
     title: "Aprende & Construye",
-    description: "Cosas que estoy construyendo, explorando y aprendiendo como Full Stack Developer.",
+    description: "Cosas que estoy construyendo, explorando y aprendiendo como Software Engineer enfocado en IA.",
     intro: "Cosas que construyo para entender de verdad cómo funciona cada pieza.",
     labels: { backLink: "Aprende & Construye", recentPosts: "Publicaciones recientes" },
   },

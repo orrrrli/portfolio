@@ -4,7 +4,7 @@ const person: Person = {
   firstName: "Orlando",
   lastName: "Castañeda",
   name: "Orlando Castañeda",
-  role: "Full Stack Developer",
+  role: "AI-focused Software Engineer",
   avatar: "/images/avatar-og.jpg",
   email: "keorcasa@gmail.com",
   city: "Ensenada, Mexico",
@@ -20,13 +20,13 @@ export const en: Content = {
   ],
   home: {
     label: "Home",
-    title: `${person.name}, Full Stack Developer`,
+    title: `, `,
     description:
-      "Portfolio of Orlando Castañeda, a Full Stack Developer building backends with .NET and products with React and Next.js.",
+      "Portfolio of Orlando Castañeda, an AI-focused Software Engineer shipping LLM features on Kotlin and .NET backends, and products with React and Next.js.",
     image: "/images/og/home-en.png",
     headline: ["Building reliable backends and seamless frontend experiences"],
     subline: [
-      "Full Stack Developer based in Ensenada",
+      "AI-focused Software Engineer based in Ensenada",
       "Designing reliable systems and intuitive user experiences.",
     ],
     stack: ["ASP.NET Core", "C#", "React", "Next.js", "TypeScript", "PostgreSQL", "Docker"],
@@ -48,7 +48,7 @@ export const en: Content = {
       terminal: {
         host: "orlando@ensenada:~/career",
         lines: [
-          { command: "whoami", output: "Software Engineer & AI Engineer" },
+          { command: "whoami", output: "AI-focused Software Engineer" },
           {
             command: "grep -i focus ./stack.log",
             output: "LLM tool calling, evals, Kotlin/Spring Boot, ASP.NET Core, SwiftUI, Next.js, GCP",
@@ -191,7 +191,7 @@ export const en: Content = {
     path: "/build-learn",
     label: "Build & Learn",
     title: "Build & Learn",
-    description: "Things I'm building, exploring, and learning as a Full Stack Developer.",
+    description: "Things I'm building, exploring, and learning as an AI-focused Software Engineer.",
     intro: "Things I build to actually understand how each piece works.",
     labels: { backLink: "Build & Learn", recentPosts: "Recent posts" },
   },
