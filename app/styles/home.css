@@ -407,6 +407,51 @@
   font-size: 0.8rem;
 }
 
+/* Project cards: full-bleed cover, then a body that pins the CTA to the bottom. */
+.work-card {
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+  transition: border-color 0.2s ease;
+}
+
+.work-card:hover {
+  border-color: var(--line-strong);
+}
+
+.work-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.work-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.work-body .timeframe {
+  font-size: 0.75rem;
+}
+
+.work-summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.chip-more {
+  color: var(--faint);
+}
+
 /* Stack marquee */
 .marquee {
   display: flex;

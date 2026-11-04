@@ -52,6 +52,14 @@ const RIGHT_ART: DotShape[] = [
   { src: "/images/art/code.svg", from: "--accent-amber", to: "--accent-violet" },
   { src: "/images/art/dotnet.svg", from: "--accent-violet", to: "--accent-violet" },];
 
+/** Project cards show this many stack chips, then "+N". */
+const MAX_CHIPS = 5;
+
+/** Renders `backtick` spans of a frontmatter string as <code>. */
+function InlineCode({ text }: { text: string }) {
+  return text.split("`").map((part, i) => (i % 2 ? <code key={part}>{part}</code> : part));
+}
+
 /** Stroke icons for the profile focus list. */
 const FOCUS_ICONS: Record<FocusIcon, ReactNode> = {
   ai: (
@@ -255,24 +263,40 @@ export default function Home() {
         <p className="label mono">{home.sections.projects}</p>
         <h2>{work.labels.selectedWork}</h2>
         <ul className="cards projects">
-          {projects.map(({ slug, frontmatter }) => (
-            <li key={slug} className="card project">
-              <h3>
-                <Link to={`${prefix}/work/${slug}`}>{frontmatter.title}</Link>
-              </h3>
-              <p className="muted">{frontmatter.summary}</p>
-              {frontmatter.stack && (
-                <ul className="chips mono">
-                  {frontmatter.stack.map((tech) => (
-                    <li key={tech}>{tech}</li>
-                  ))}
-                </ul>
-              )}
-              <Link to={`${prefix}/work/${slug}`} className="card-cta mono">
-                {work.labels.readCaseStudy} →
-              </Link>
-            </li>
-          ))}
+          {projects.map(({ slug, frontmatter }) => {
+            // "Name – Tagline": the name is the heading, the tagline goes next to the year.
+            const [name, tagline] = frontmatter.title.split(" – ");
+            const stack = frontmatter.stack ?? [];
+            const cover = frontmatter.images?.[0];
+            return (
+              <li key={slug} className="card project work-card">
+                {cover && <img className="work-cover" src={cover} alt="" loading="lazy" />}
+                <div className="work-body">
+                  <p className="timeframe mono">
+                    {frontmatter.publishedAt.slice(0, 4)}
+                    {tagline && ` · ${tagline}`}
+                  </p>
+                  <h3>
+                    <Link to={`${prefix}/work/${slug}`}>{name}</Link>
+                  </h3>
+                  <p className="muted work-summary">
+                    <InlineCode text={frontmatter.summary} />
+                  </p>
+                  {stack.length > 0 && (
+                    <ul className="chips mono">
+                      {stack.slice(0, MAX_CHIPS).map((tech) => (
+                        <li key={tech}>{tech}</li>
+                      ))}
+                      {stack.length > MAX_CHIPS && <li className="chip-more">+{stack.length - MAX_CHIPS}</li>}
+                    </ul>
+                  )}
+                  <Link to={`${prefix}/work/${slug}`} className="card-cta mono">
+                    {work.labels.readCaseStudy} →
+                  </Link>
+                </div>
+              </li>
+            );
+          })}
         </ul>
 
         <h3 id="blog" className="sub-title">
