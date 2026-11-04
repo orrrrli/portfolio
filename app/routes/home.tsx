@@ -271,6 +271,9 @@ export default function Home() {
             return (
               <li key={slug} className="card project work-card">
                 {cover && <img className="work-cover" src={cover} alt="" loading="lazy" />}
+                {cover && frontmatter.coverCaption && (
+                  <p className="work-cover-caption">{frontmatter.coverCaption}</p>
+                )}
                 <div className="work-body">
                   <p className="timeframe mono">
                     {frontmatter.publishedAt.slice(0, 4)}
