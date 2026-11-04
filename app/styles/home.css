@@ -9,10 +9,6 @@
 }
 
 /* Hero */
-.hero {
-  padding-bottom: 4rem;
-}
-
 .hero-intro {
   position: relative;
   display: grid;
@@ -93,8 +89,74 @@
   border-color: var(--accent);
 }
 
-.hero-terminal {
-  max-width: 44rem;
+/* Profile: statement + terminal on the left, summary + focus list on the right. */
+.profile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.profile-title {
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.1;
+}
+
+.profile .lead {
+  margin-bottom: 2.5rem;
+}
+
+.profile-summary {
+  margin: 0;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.25rem;
+  line-height: 1.6;
+}
+
+.focus {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.focus li {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 1rem;
+  padding-block: 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.focus li:last-child {
+  border-bottom: none;
+}
+
+.focus-icon {
+  color: var(--muted);
+  padding-top: 0.15rem;
+}
+
+.focus-path {
+  margin: 0;
+  color: var(--faint);
+  font-size: 0.8rem;
+}
+
+.focus h3 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.focus p.muted {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .profile {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
 }
 
 /* Dot drawings beside the name, drawn and morphed by DotMorph (canvas). */
@@ -161,24 +223,28 @@
 }
 
 .terminal-bar {
-  display: flex;
-  gap: 0.4rem;
-  padding: 0.6rem 0.8rem;
+  margin: 0;
+  padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 0.8rem;
 }
 
-.terminal-bar span {
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-  background: var(--line-strong);
-}
-
-.terminal pre {
+.terminal dl {
+  display: grid;
+  gap: 1rem;
   margin: 0;
   padding: 1.25rem;
-  white-space: pre-wrap;
+}
+
+.terminal dt {
   color: var(--text);
+}
+
+.terminal dd {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .prompt {

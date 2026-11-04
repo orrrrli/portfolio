@@ -41,10 +41,47 @@ export const en: Content = {
     backToTop: "top",
   },
   about: {
-    intro: {
-      title: "Introduction",
+    profile: {
+      title: "Building production software, from the API to the LLM that calls it.",
       description:
-        "Full Stack Developer based in Ensenada, Mexico, with around 4 years building production systems with ASP.NET Core and Clean Architecture, shipping full-stack products end-to-end.",
+        "Software Engineer with around 4 years in production across backend, mobile and web. Lately I put LLM features into production: tool calling, evals and vision models on Kotlin and .NET backends.",
+      terminal: {
+        host: "orlando@ensenada:~/career",
+        lines: [
+          { command: "whoami", output: "Software Engineer & AI Engineer" },
+          {
+            command: "grep -i focus ./stack.log",
+            output: "LLM tool calling, evals, Kotlin/Spring Boot, ASP.NET Core, SwiftUI, Next.js, GCP",
+          },
+          { command: "cat education", output: "B.S. Software & Emerging Technologies Engineering, UABC (2019–2024)" },
+          { command: "certs --active", output: "Meta Front-End Developer, Google Cloud DevOps (in progress)" },
+        ],
+      },
+      summary:
+        "At Dallio I ship mobile products for clients: an LLM assistant with 13 tools, real-money game flows in Kotlin and SwiftUI, and the image pipeline on GCP behind them.",
+      focus: [
+        {
+          icon: "ai",
+          path: "./ai",
+          title: "LLM features in production",
+          description:
+            "Tool calling and evals against the live model (92% tool-call success, $0.03 per eval), streamed replies with a Stop control, and a vision model that gates images at 95.6% accuracy.",
+        },
+        {
+          icon: "arch",
+          path: "./arch",
+          title: "Backend architecture",
+          description:
+            "Kotlin/Spring Boot and ASP.NET Core with Clean Architecture and CQRS: 100+ REST endpoints, state machines driven by scheduled tasks, and optimistic locking on money paths.",
+        },
+        {
+          icon: "ops",
+          path: "./ops",
+          title: "Cloud and infrastructure",
+          description:
+            "GCP (Cloud Run, Storage, CDN), Kubernetes and Terraform: images 10x lighter, locked-down buckets, and a real-time connection with 92% fewer reconnects.",
+        },
+      ],
     },
     work: {
       title: "Work Experience",
@@ -54,12 +91,12 @@ export const en: Content = {
           logo: "/images/companies/dallio.svg",
           timeframe: "Mar 2026 – Present",
           role: "Software Engineer",
-          summary: "Full-stack development of mobile products for clients: a social golf app with real-money games (iOS + Kotlin API + Next.js console) and a golf community app (Android).",
+          summary: "Full-stack development of mobile products for clients: a social app with real-money games (iOS + Kotlin API + Next.js console) and a community app (Android).",
           sections: [
             {
               title: "LLM & Agentic Systems",
               achievements: [
-                "LLM assistant: Shipped features for the app's LLM golf assistant: it builds a round from a chat conversation using 13 tools, answers photo questions, and reminds users of upcoming rounds. Took part in 67 evals against the live model, with 92% tool-call success, a sub-500 ms median per tool call and an average cost of $0.03 USD per eval. Added a system to limit questions and a guard against API failures, and made replies stream one at a time with a Stop control, charging each question exactly once.",
+                "LLM assistant: Shipped features for the app's LLM assistant: it sets up a game from a chat conversation using 13 tools, answers photo questions, and reminds users of upcoming games. Took part in 67 evals against the live model, with 92% tool-call success, a sub-500 ms median per tool call and an average cost of $0.03 USD per eval. Added a system to limit questions and a guard against API failures, and made replies stream one at a time with a Stop control, charging each question exactly once.",
                 "Vision image gate: Integrated a vision model (Cloudflare Clef via OpenRouter) as an image gate that rejects blurry images and images that do not match the expected content, and requests a new image when model confidence falls below a threshold. Tuned its thresholds on live calls and fixed false \"blurry\" rejections of sharp images, reaching 95.6% classification accuracy.",
               ],
             },
@@ -129,25 +166,6 @@ export const en: Content = {
               ],
             },
           ],
-        },
-      ],
-    },
-    studies: {
-      title: "Education",
-      institutions: [
-        {
-          name: "Universidad Autónoma de Baja California",
-          description: "B.S. in Software Engineering & Emerging Technologies, 2019–2024.",
-        },
-        {
-          name: "Meta Front-End Developer",
-          description: "Professional certificate, Coursera / Meta, 2023.",
-          link: "https://coursera.org/share/970fc9983db283fff37e0b2b761e0e88",
-        },
-        {
-          name: "Google Cloud DevOps Engineer",
-          description: "Preparing for Google Cloud Certification, Coursera / Google Cloud, 2023.",
-          link: "https://coursera.org/share/3ec32abb273169789f880e424ee9e3e3",
         },
       ],
     },

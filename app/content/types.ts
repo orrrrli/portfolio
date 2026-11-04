@@ -49,13 +49,21 @@ export type Experience = {
   sections: ExperienceSection[];
 };
 
+export type FocusIcon = "ai" | "arch" | "ops";
+
+export type Profile = {
+  /** Big statement on the left */
+  title: string;
+  description: string;
+  terminal: { host: string; lines: Array<{ command: string; output: string }> };
+  /** Lead paragraph on the right, above the focus list */
+  summary: string;
+  focus: Array<{ icon: FocusIcon; path: string; title: string; description: string }>;
+};
+
 export type About = {
-  intro: { title: string; description: string };
+  profile: Profile;
   work: { title: string; experiences: Experience[] };
-  studies: {
-    title: string;
-    institutions: Array<{ name: string; description: string; link?: string }>;
-  };
   technical: {
     title: string;
     skills: Array<{ title: string; description: string; tags: string[] }>;

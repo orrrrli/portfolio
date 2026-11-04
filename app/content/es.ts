@@ -25,10 +25,47 @@ export const es: Content = {
     backToTop: "inicio",
   },
   about: {
-    intro: {
-      title: "Introducción",
+    profile: {
+      title: "Construyo software en producción, desde el API hasta el LLM que lo llama.",
       description:
-        "Desarrollador Full Stack en Ensenada, México, con alrededor de 4 años construyendo sistemas en producción con ASP.NET Core y Clean Architecture, entregando productos full-stack de punta a punta.",
+        "Software Engineer con alrededor de 4 años en producción en backend, mobile y web. Últimamente llevo features de LLM a producción: tool calling, evals y modelos de visión sobre backends en Kotlin y .NET.",
+      terminal: {
+        host: "orlando@ensenada:~/career",
+        lines: [
+          { command: "whoami", output: "Software Engineer & AI Engineer" },
+          {
+            command: "grep -i focus ./stack.log",
+            output: "LLM tool calling, evals, Kotlin/Spring Boot, ASP.NET Core, SwiftUI, Next.js, GCP",
+          },
+          { command: "cat education", output: "Ingeniería en Software y Tecnologías Emergentes, UABC (2019–2024)" },
+          { command: "certs --active", output: "Meta Front-End Developer, Google Cloud DevOps (en curso)" },
+        ],
+      },
+      summary:
+        "En Dallio entrego productos móviles para clientes: un asistente con LLM y 13 tools, flujos de juegos con dinero real en Kotlin y SwiftUI, y el pipeline de imágenes en GCP que los sostiene.",
+      focus: [
+        {
+          icon: "ai",
+          path: "./ai",
+          title: "Features de LLM en producción",
+          description:
+            "Tool calling y evals contra el modelo en vivo (92% de éxito en tool calls, $0.03 por eval), respuestas en streaming con botón para detenerlas, y un modelo de visión que filtra imágenes con 95.6% de precisión.",
+        },
+        {
+          icon: "arch",
+          path: "./arch",
+          title: "Arquitectura backend",
+          description:
+            "Kotlin/Spring Boot y ASP.NET Core con Clean Architecture y CQRS: más de 100 endpoints REST, máquinas de estados con tareas programadas y optimistic locking en los movimientos de dinero.",
+        },
+        {
+          icon: "ops",
+          path: "./ops",
+          title: "Cloud e infraestructura",
+          description:
+            "GCP (Cloud Run, Storage, CDN), Kubernetes y Terraform: imágenes 10 veces más ligeras, buckets cerrados al público y una conexión en tiempo real con 92% menos reconexiones.",
+        },
+      ],
     },
     work: {
       title: "Experiencia",
@@ -38,12 +75,12 @@ export const es: Content = {
           logo: "/images/companies/dallio.svg",
           timeframe: "mar. 2026 – presente",
           role: "Software Engineer",
-          summary: "Desarrollo full-stack de productos móviles para clientes: una app social de golf con juegos de dinero real (iOS + API en Kotlin + consola en Next.js) y una app de comunidad de golf (Android).",
+          summary: "Desarrollo full-stack de productos móviles para clientes: una app social con juegos de dinero real (iOS + API en Kotlin + consola en Next.js) y una app de comunidad (Android).",
           sections: [
             {
               title: "LLM & Agentic Systems",
               achievements: [
-                "Asistente LLM: entregué features del asistente de golf con LLM: arma una ronda desde una conversación de chat usando 13 tools, responde preguntas con fotos y recuerda a los usuarios sus próximas rondas. Participé en 67 evals contra el modelo en vivo, con 92% de éxito en tool calls, mediana menor a 500 ms por tool call y un costo promedio de $0.03 USD por eval. Agregué un sistema para limitar las preguntas y un guard ante fallas del API, y logré que las respuestas lleguen una a la vez con un botón para detenerlas, cobrando cada pregunta una sola vez.",
+                "Asistente LLM: entregué features del asistente con LLM: arma una partida desde una conversación de chat usando 13 tools, responde preguntas con fotos y recuerda a los usuarios sus próximas partidas. Participé en 67 evals contra el modelo en vivo, con 92% de éxito en tool calls, mediana menor a 500 ms por tool call y un costo promedio de $0.03 USD por eval. Agregué un sistema para limitar las preguntas y un guard ante fallas del API, y logré que las respuestas lleguen una a la vez con un botón para detenerlas, cobrando cada pregunta una sola vez.",
                 "Filtro de imágenes con visión: integré un modelo de visión (Cloudflare Clef vía OpenRouter) como filtro de imágenes que rechaza las que no corresponden al contenido esperado o están borrosas, y solicita una nueva imagen cuando la confianza del modelo está por debajo del umbral. Ajusté sus umbrales con llamadas reales y corregí rechazos falsos de imágenes nítidas, alcanzando 95.6% de precisión en la clasificación.",
               ],
             },
@@ -116,7 +153,6 @@ export const es: Content = {
         },
       ],
     },
-    studies: { ...en.about.studies, title: "Formación" },
     technical: { ...en.about.technical, title: "Habilidades técnicas" },
   },
   blog: {

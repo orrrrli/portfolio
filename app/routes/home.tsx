@@ -4,7 +4,7 @@ import { DotMorph, type DotShape } from "../components/DotMorph";
 import { getContent, langFromPath, useContent } from "../content";
 import { listEntries } from "../content/mdx";
 import { seoMeta } from "../content/seo";
-import type { ExperienceSection } from "../content/types";
+import type { ExperienceSection, FocusIcon } from "../content/types";
 import "../styles/home.css";
 import type { Route } from "./+types/home";
 
@@ -51,6 +51,29 @@ const RIGHT_ART: DotShape[] = [
   { src: "/images/art/cloud.svg", from: "--accent-violet", to: "--accent" },
   { src: "/images/art/code.svg", from: "--accent-amber", to: "--accent-violet" },
   { src: "/images/art/dotnet.svg", from: "--accent-violet", to: "--accent-violet" },];
+
+/** Stroke icons for the profile focus list. */
+const FOCUS_ICONS: Record<FocusIcon, ReactNode> = {
+  ai: (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3c.6 4.2 2.8 6.4 7 7-4.2.6-6.4 2.8-7 7-.6-4.2-2.8-6.4-7-7 4.2-.6 6.4-2.8 7-7Z" />
+      <path d="M19 15c.3 1.6 1 2.3 2.5 2.5-1.5.2-2.2.9-2.5 2.5-.3-1.6-1-2.3-2.5-2.5 1.5-.2 2.2-.9 2.5-2.5Z" />
+    </svg>
+  ),
+  arch: (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="7" rx="2" />
+      <rect x="3" y="13" width="18" height="7" rx="2" />
+      <path d="M7 7.5h.01M7 16.5h.01" />
+    </svg>
+  ),
+  ops: (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 18a4 4 0 0 1-.6-7.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9Z" />
+      <path d="M12 15v-4m-2 2 2-2 2 2" />
+    </svg>
+  ),
+};
 
 /** Inline icons for the social links, keyed by SocialLink.name. Paths: Simple Icons (CC0). */
 const SOCIAL_ICONS: Record<string, ReactNode> = {
@@ -169,44 +192,44 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="container hero-terminal">
-        <div className="terminal mono">
-          <div className="terminal-bar" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <pre>
-            <span className="prompt">~/orlando $</span> whoami{"\n"}
-            {person.name}
-            {"\n\n"}
-            <span className="prompt">~/orlando $</span> cat role{"\n"}
-            {person.role}
-            {"\n\n"}
-            <span className="prompt">~/orlando $</span> locate{"\n"}
-            {person.city}
-            {"\n\n"}
-            <span className="prompt">~/orlando $</span> ls stack/{"\n"}
-            {home.stack.join("  ")}
-          </pre>
-        </div>
-        </div>
       </section>
 
-      <section id="profile" className="container block">
-        <p className="label mono">{home.sections.profile}</p>
-        <h2>{about.intro.title}</h2>
-        <p className="lead">{about.intro.description}</p>
+      <section id="profile" className="container block profile">
+        <div>
+          <p className="label mono">{home.sections.profile}</p>
+          <h2 className="profile-title">{about.profile.title}</h2>
+          <p className="lead">{about.profile.description}</p>
 
-        <h3 className="sub-title">{about.studies.title}</h3>
-        <ul className="cards">
-          {about.studies.institutions.map((inst) => (
-            <li key={inst.name} className="card">
-              <h4>{inst.link ? <a href={inst.link}>{inst.name}</a> : inst.name}</h4>
-              <p className="muted">{inst.description}</p>
-            </li>
-          ))}
-        </ul>
+          <div className="terminal mono">
+            <p className="terminal-bar">{about.profile.terminal.host}</p>
+            <dl>
+              {about.profile.terminal.lines.map((line) => (
+                <div key={line.command}>
+                  <dt>
+                    <span className="prompt">$</span> {line.command}
+                  </dt>
+                  <dd>{line.output}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+
+        <div>
+          <p className="profile-summary">{about.profile.summary}</p>
+          <ul className="focus">
+            {about.profile.focus.map((item) => (
+              <li key={item.path}>
+                <span className="focus-icon">{FOCUS_ICONS[item.icon]}</span>
+                <div>
+                  <p className="focus-path mono">{item.path}</p>
+                  <h3>{item.title}</h3>
+                  <p className="muted">{item.description}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section id="experience" className="container block">
