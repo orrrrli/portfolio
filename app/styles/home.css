@@ -80,9 +80,38 @@
 /* Experience timeline */
 .timeline {
   margin: 0;
-  padding: 0 0 0 1.5rem;
+  padding: 0 0 0 2.75rem;
   list-style: none;
   border-left: 1px solid var(--line-strong);
+  position: relative;
+  /* 0..1, driven by useTimelineProgress. Stays 1 without JS or with reduced motion. */
+  --progress: 1;
+}
+
+/* Progress line over the rail. */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: -1.5px;
+  top: 0;
+  width: 2px;
+  height: calc(var(--progress) * 100%);
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--accent-violet), var(--accent));
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Glowing tip that rides the end of the line. */
+.timeline.is-animated::after {
+  content: "";
+  position: absolute;
+  left: -5.5px;
+  top: calc(var(--progress) * 100% - 5px);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px 2px var(--accent), 0 0 18px 6px var(--accent);
 }
 
 .xp {
@@ -93,12 +122,46 @@
 .xp::before {
   content: "";
   position: absolute;
-  left: calc(-1.5rem - 5px);
+  left: calc(-2.75rem - 5px);
   top: 0.35rem;
   width: 9px;
   height: 9px;
   border-radius: 50%;
   background: var(--accent);
+}
+
+.xp.has-logo::before {
+  content: none;
+}
+
+/* Logos ship on white backgrounds; the light fill keeps transparent SVGs consistent. */
+.xp-logo {
+  position: absolute;
+  left: calc(-2.75rem - 28px);
+  top: -1rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: var(--text);
+  box-shadow: 0 0 0 4px var(--bg);
+  z-index: 1;
+  transition:
+    filter 0.5s ease,
+    transform 0.5s ease,
+    box-shadow 0.5s ease;
+}
+
+.timeline.is-animated .xp:not(.is-lit) .xp-logo {
+  filter: grayscale(1) brightness(0.55);
+  transform: scale(0.85);
+}
+
+.timeline.is-animated .xp.is-lit .xp-logo {
+  box-shadow:
+    0 0 0 4px var(--bg),
+    0 0 0 6px var(--accent),
+    0 0 20px var(--accent);
 }
 
 .timeframe {
@@ -114,6 +177,12 @@
 
 .company {
   margin: 0.25rem 0 0;
+}
+
+.xp-summary {
+  margin: 0.75rem 0 0;
+  max-width: 50rem;
+  font-style: italic;
 }
 
 .xp-section h4 {

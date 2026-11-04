@@ -41,6 +41,9 @@ export type Experience = {
   company: string;
   timeframe: string;
   role: string;
+  summary?: string;
+  /** Path under public/, rendered as the timeline marker. */
+  logo?: string;
   sections: ExperienceSection[];
 };
 

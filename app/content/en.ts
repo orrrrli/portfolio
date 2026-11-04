@@ -43,139 +43,88 @@ export const en: Content = {
     intro: {
       title: "Introduction",
       description:
-        "Full Stack Developer based in Ensenada, Mexico, with 3+ years building production systems with ASP.NET Core and Clean Architecture, shipping full-stack products end-to-end.",
+        "Full Stack Developer based in Ensenada, Mexico, with around 4 years building production systems with ASP.NET Core and Clean Architecture, shipping full-stack products end-to-end.",
     },
     work: {
       title: "Work Experience",
       experiences: [
         {
-          company: "Sistemas de Información Mozart",
-          timeframe: "Jun 2024 – Feb 2026",
+          company: "Dallio Software Solutions",
+          logo: "/images/companies/dallio.svg",
+          timeframe: "Mar 2026 – Present",
           role: "Software Engineer",
+          summary: "Full-stack development of mobile products for clients: a social golf app with real-money games (iOS + Kotlin API + Next.js console) and a golf community app (Android).",
           sections: [
             {
-              title: "Backend (.NET)",
+              title: "LLM & Agentic Systems",
               achievements: [
-                "Architected and implemented 100+ RESTful API endpoints using ASP.NET Core 8, C#, and Entity Framework Core, following Clean Architecture and CQRS principles.",
-                "Implemented cursor-based pagination on a module with 5,000+ records and ~20 properties, reducing load time from 10–12 minutes to 4–5 minutes.",
-                "Designed and deployed a structured production logging system with role-based access for the support team, enabling independent error identification without escalating to engineering.",
-                "Implemented end-to-end request tracing using Correlation IDs propagated across chained endpoint calls within the same flow, enabling full request chain visibility in production.",
-                "Implemented a unit test suite with xUnit and Moq covering full positive and negative path coverage across all API endpoints, catching regressions before they reached production.",
+                "LLM assistant: Shipped features for the app's LLM golf assistant: it builds a round from a chat conversation using 13 tools, answers photo questions, and reminds users of upcoming rounds. Took part in 67 evals against the live model, with 92% tool-call success, a sub-500 ms median per tool call and an average cost of $0.03 USD per eval. Added a system to limit questions and a guard against API failures, and made replies stream one at a time with a Stop control, charging each question exactly once.",
+                "Vision image gate: Integrated a vision model (Cloudflare Clef via OpenRouter) as an image gate that rejects blurry images and images that do not match the expected content, and requests a new image when model confidence falls below a threshold. Tuned its thresholds on live calls and fixed false \"blurry\" rejections of sharp images, reaching 95.6% classification accuracy.",
               ],
             },
             {
-              title: "Android App (Kotlin / Jetpack Compose)",
+              title: "Product (iOS + Kotlin API)",
               achievements: [
-                "Built an offline-first inventory application enabling warehouse operators to continue working without internet connectivity.",
-                "Designed an incremental synchronization mechanism based on modification timestamps, significantly reducing transferred data volume.",
-                "Implemented Clean Architecture to separate business logic from UI layers.",
-                "Secured authentication using JWT with automatic token refresh.",
-                "Designed intuitive onboarding flows and built reusable UI components, reducing duplicated code across screens.",
-                "Implemented a support role with in-device log access, allowing the support team to diagnose client-side issues directly on customer devices without server access.",
+                "Transactional workflow engine: Built payments, payouts and game states for real-money games (Kotlin/Spring Boot API + SwiftUI): geolocation check-in, Lucra charges and payouts, and a state machine driven by scheduled tasks with automatic actions such as expirations and reminders. Guarded money paths with server-side state validation and optimistic locking against concurrent writes, validated end to end across 118 buy-ins with zero duplicate charges.",
               ],
             },
             {
-              title: "Infrastructure / Azure",
+              title: "Infra & Security",
               achievements: [
-                "Researched and built a proof-of-concept for Azure migration (App Service, Blob Storage, Azure SQL), providing the team with real data to support the infrastructure decision.",
+                "Content delivery: Built image delivery on Google Cloud Storage and imgproxy on Cloud Run behind Cloud CDN: images are 10x lighter than the originals (45 KB vs 450 KB on average) and 94% of bytes are served from cache.",
+                "Storage security: Detected and fixed an exposure that allowed listing the content buckets and downloading private photos from chats and the assistant. Restricted bucket access with Terraform and classified every file as public or private, so private content can no longer be discovered or bulk-downloaded.",
+                "Real-time infra: Fixed the app's real-time connection, which dropped every 30 s, by giving its streaming routes a dedicated Kubernetes Service with a longer load-balancer timeout. Reconnections dropped 92%.",
               ],
             },
           ],
         },
         {
           company: "Sistemas de Información Mozart",
-          timeframe: "Feb 2024 – May 2024",
-          role: "Junior Software Engineer (Trainee)",
+          logo: "/images/companies/mozart.jpg",
+          timeframe: "Jan 2024 – Feb 2026",
+          role: "Software Engineer",
+          summary: "Joined as a Trainee in Jan 2024 and became Software Engineer in Jun 2024. Backend and Android app of the ERP.",
           sections: [
             {
-              title: "Accounting Module (WinForms / C#)",
+              title: "Backend (.NET)",
               achievements: [
-                "Developed 10–15 financial report interfaces using WinForms and C#, implementing business logic for report generation over relational data.",
-                "Optimized LINQ queries using projections to select only required fields, eliminating unnecessary entity loads and improving report generation efficiency.",
-                "Normalized SQL Server table schemas to third normal form, improving data integrity and query efficiency across business movement records.",
-                "Applied SOLID principles in the data access layer architecture, reducing database request bottlenecks.",
+                "Architected and implemented 100+ RESTful endpoints with ASP.NET Core 8, C# and EF Core, following Clean Architecture and CQRS.",
+                "Implemented cursor-based pagination on a module with 5,000+ records and 20+ properties, cutting per-page query time from 1–2 s to an average of 500 ms.",
+                "Designed a structured production logging system with role-based access: the support team identifies errors directly, without escalating to development.",
+                "Wrote a unit test suite (xUnit, Moq) covering positive and negative paths of every endpoint, catching regressions before they reached production.",
+              ],
+            },
+            {
+              title: "Android App (Kotlin / Jetpack Compose)",
+              achievements: [
+                "Built an offline-first inventory app that lets warehouse operators keep working without internet; by adopting the backend's cursor pagination and optimizing local processing, cut the module's load-and-sync time from 10–12 to 4–5 minutes.",
+                "Structured the app into data/domain/presentation layers so the sync logic can be tested without the UI; JWT authentication with automatic token refresh.",
+                "Built a reusable component library used across 40+ screens, eliminating redundant implementations.",
+                "Implemented a support role with in-device log access to diagnose client-side issues without server access.",
+              ],
+            },
+            {
+              title: "Infrastructure & Trainee",
+              achievements: [
+                "Managed production deployments to IIS and coordinated mobile release builds, keeping versions consistent across development and QA.",
+                "As a Trainee, built 10–15 financial report screens (WinForms/C#), optimized LINQ queries with projections and normalized SQL Server schemas to third normal form.",
               ],
             },
           ],
         },
         {
           company: "OmniTEK Dev",
+          logo: "/images/companies/omnitek.jpg",
           timeframe: "Feb 2023 – Dec 2023",
           role: "Web Developer",
           sections: [
             {
-              title: "Backend (Node.js / Express)",
+              title: "Full-Stack & DevOps",
               achievements: [
-                "Developed 30+ REST API endpoints using Node.js and Express, extending an existing backend to support new business features across client projects.",
-                "Built an isolated scraping microservice for real-time Estafeta shipment tracking without a public API available, decoupling it from the main system to prevent upstream changes from affecting the rest of the application.",
-              ],
-            },
-            {
-              title: "Frontend / Components",
-              achievements: [
-                "Developed responsive landing pages with lead capture forms using React, Remix, and Tailwind CSS, applying Atomic Design to build a reusable component library adopted across multiple client projects.",
-                "Translated Figma mockups into production-ready components, shortening design-to-code iteration cycles.",
-                "Integrated a newsletter subscription feature by consuming a Node.js API, connecting forms to an external email service and persisting subscriber data to a database.",
-                "Identified and resolved frontend bugs across multiple production environments, ensuring consistent UI behavior across deployments.",
-              ],
-            },
-          ],
-        },
-        {
-          company: "Freelance · Full-Stack Development",
-          timeframe: "2024 – Present",
-          role: "Current Projects · Parallel to full-time employment",
-          sections: [
-            {
-              title: "Axiriam Shop (E-commerce platform, Beta)",
-              subsections: [
-                {
-                  title: "Frontend (Next.js / React)",
-                  achievements: [
-                    "Built a Next.js 15 App Router storefront and admin dashboard with TypeScript in strict mode, using Atomic Design for a reusable component library shared across customer-facing and admin surfaces.",
-                    "Implemented global cart and checkout state with Zustand, persisted to localStorage, coordinating multi-step checkout flows (address, shipping quote, payment) without losing state on reload.",
-                    "Integrated Stripe Elements for card and SPEI bank transfer payments, handling redirect-based return flows and reconciling payment status across multiple non-terminal states.",
-                    "Built data-fetching hooks with SWR for the admin panel (orders, inventory, quotes, in-store sales), with optimistic mutations for a responsive editing experience.",
-                    "Audited and refactored UI components for mobile responsiveness across the storefront and checkout flow.",
-                  ],
-                },
-                {
-                  title: "Backend (Next.js / Prisma / PostgreSQL)",
-                  achievements: [
-                    "Designed and implemented 50+ API routes across catalog, cart, orders, quotes, inventory, and admin domains, following Clean Architecture with dependency injection between layers.",
-                    "Modeled the core PostgreSQL schema in Prisma covering products, orders, quotes, raw materials, and supplier orders, with mapper layers isolating persistence details from business logic.",
-                    "Built Stripe PaymentIntents and webhook integration supporting card and SPEI bank-transfer payments, including idempotent order-status transitions driven by webhook events.",
-                    "Integrated Envia shipping API for label generation and tracking, and Cloudinary for asset storage.",
-                    "Implemented Redis-backed JWT token blacklisting and rate limiting in middleware to harden the NextAuth.js authentication layer.",
-                    "Instrumented critical checkout and order-creation paths with Sentry for production error tracking, closing a prior gap of silent failures in payment processing.",
-                    "Wrote unit and integration tests with Vitest for use-case services, enforcing a zero-oversell stock guarantee under concurrent checkout load.",
-                  ],
-                },
-              ],
-            },
-            {
-              title: "Metavix (Diabetes management platform, Beta)",
-              subsections: [
-                {
-                  title: "Backend (ASP.NET Core 9 / C#)",
-                  achievements: [
-                    "Architected a Clean Architecture and CQRS backend using ASP.NET Core 9, C#, EF Core, and MediatR, exposing 50+ endpoints through Carter minimal APIs with railway-oriented error handling (ErrorOr<T>) instead of exceptions for business logic.",
-                    "Designed a clinical goal evaluation engine implementing ADA Standards of Care thresholds with per-patient doctor overrides, pregnancy-specific rule branching, and immutable historical snapshots that never recalculate retroactively.",
-                    "Implemented JWT authentication with HttpOnly/Secure cookies, refresh-token rotation, anti-enumeration login responses, and login-attempt lockout, plus doctor identity verification against Mexico's official medical license registry.",
-                    "Built a correlation-ID based request tracing system using Serilog and PostgreSQL sink with role-gated log access for support staff, enforcing a strict no-PHI-in-logs policy across the codebase.",
-                    "Backed the API with 95+ automated tests across unit and integration suites using xUnit, NSubstitute, and Testcontainers for real-database validation.",
-                    "AI-powered clinical insights via third-party API integration, pending implementation.",
-                  ],
-                },
-                {
-                  title: "Frontend (Next.js / React)",
-                  achievements: [
-                    "Built the patient and doctor web application with Next.js 16 App Router and React 19, using a feature-folder architecture with role-based route groups and a typed API client layer.",
-                    "Implemented a multi-step glucose-logging wizard with React Hook Form and Zod validation, designed mobile-first since patients primarily log data from their phones.",
-                    "Used TanStack Query for server-state management and Zustand for session state, with an automatic 401 to token-refresh to retry interceptor to keep cookie-based JWT sessions transparent to the user.",
-                    "Built glucose and vitals visualization with Recharts and PDF export of patient records for doctor consultations.",
-                  ],
-                },
+                "Developed 30+ REST endpoints with Node.js and Express for client projects, including a Warehouse Management System (WMS).",
+                "Built an isolated scraping microservice for real-time Estafeta shipment tracking (no public API), decoupled from the main system.",
+                "Built landing pages and a reusable component library (React, Remix, Tailwind, Atomic Design) adopted across several projects; by translating Figma mockups into components, cut design-to-code time from days to hours.",
+                "Implemented a CI/CD pipeline with GitHub Actions, Docker Compose, Nginx (reverse proxy) and GHCR, deploying automatically to a Linux VPS with reproducible environments.",
               ],
             },
           ],

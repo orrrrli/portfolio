@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { getContent, langFromPath, useContent } from "../content";
 import { listEntries } from "../content/mdx";
@@ -40,10 +41,53 @@ function Section({ section }: { section: ExperienceSection }) {
   );
 }
 
+/** Eases the timeline's --progress toward the viewport center and lights each entry the tip has passed. */
+function useTimelineProgress() {
+  const ref = useRef<HTMLOListElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const items = Array.from(el.querySelectorAll<HTMLElement>(".xp"));
+    let current = 0;
+    let frame = 0;
+
+    const tick = () => {
+      const rect = el.getBoundingClientRect();
+      const target = Math.min(1, Math.max(0, (innerHeight / 2 - rect.top) / rect.height));
+      current += (target - current) * 0.12;
+      if (Math.abs(target - current) < 0.0005) current = target;
+
+      el.style.setProperty("--progress", String(current));
+      const tip = current * rect.height;
+      for (const item of items) item.classList.toggle("is-lit", item.offsetTop <= tip);
+
+      frame = current === target ? 0 : requestAnimationFrame(tick);
+    };
+    const start = () => {
+      if (!frame) frame = requestAnimationFrame(tick);
+    };
+
+    el.classList.add("is-animated");
+    start();
+    addEventListener("scroll", start, { passive: true });
+    addEventListener("resize", start);
+    return () => {
+      cancelAnimationFrame(frame);
+      removeEventListener("scroll", start);
+      removeEventListener("resize", start);
+    };
+  }, []);
+
+  return ref;
+}
+
 export default function Home() {
   const { lang, prefix, person, social, home, about, work, blog } = useContent();
   const projects = listEntries("work", lang);
   const posts = listEntries("build-learn", lang);
+  const timelineRef = useTimelineProgress();
 
   return (
     <main id="top">
@@ -106,12 +150,14 @@ export default function Home() {
       <section id="experience" className="container block">
         <p className="label mono">{home.sections.experience}</p>
         <h2>{about.work.title}</h2>
-        <ol className="timeline">
+        <ol className="timeline" ref={timelineRef}>
           {about.work.experiences.map((xp) => (
-            <li key={`${xp.company}-${xp.timeframe}`} className="xp">
+            <li key={`${xp.company}-${xp.timeframe}`} className={xp.logo ? "xp has-logo" : "xp"}>
+              {xp.logo && <img className="xp-logo" src={xp.logo} alt="" width={56} height={56} loading="lazy" />}
               <p className="timeframe mono">{xp.timeframe}</p>
               <h3>{xp.role}</h3>
               <p className="company muted">{xp.company}</p>
+              {xp.summary && <p className="xp-summary muted">{xp.summary}</p>}
               {xp.sections.map((section) => (
                 <Section key={section.title} section={section} />
               ))}

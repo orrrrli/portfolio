@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Dallio">
+  <!-- Gold L (bottom-left) -->
+  <rect x="12" y="14" width="13" height="72" fill="#d4a564"/>
+  <rect x="12" y="73" width="52" height="13" fill="#d4a564"/>
+  <!-- Sage reverse-L (top-right) -->
+  <rect x="36" y="14" width="52" height="13" fill="#6b9e8a"/>
+  <rect x="75" y="14" width="13" height="72" fill="#6b9e8a"/>
+</svg>
