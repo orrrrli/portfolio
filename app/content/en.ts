@@ -30,6 +30,7 @@ export const en: Content = {
       "Designing reliable systems and intuitive user experiences.",
     ],
     stack: ["ASP.NET Core", "C#", "React", "Next.js", "TypeScript", "PostgreSQL", "Docker"],
+    cta: { projects: "View projects", blog: "Read the blog", contact: "Contact" },
     sections: {
       profile: "profile",
       experience: "experience",

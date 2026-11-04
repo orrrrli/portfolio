@@ -23,6 +23,8 @@ export type Home = {
   headline: string[];
   subline: string[];
   stack: string[];
+  /** Hero button labels */
+  cta: { projects: string; blog: string; contact: string };
   /** Nav and section labels; keys are the stable anchor ids */
   sections: Record<SectionId, string>;
   backToTop: string;

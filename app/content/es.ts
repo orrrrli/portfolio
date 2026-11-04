@@ -14,6 +14,7 @@ export const es: Content = {
       "Desarrollador Full Stack en Ensenada",
       "Creando sistemas confiables y experiencias de usuario intuitivas.",
     ],
+    cta: { projects: "Ver proyectos", blog: "Leer el blog", contact: "Contacto" },
     sections: {
       profile: "perfil",
       experience: "experiencia",

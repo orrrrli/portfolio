@@ -10,18 +10,126 @@
 
 /* Hero */
 .hero {
+  padding-bottom: 4rem;
+}
+
+.hero-intro {
+  position: relative;
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 3rem;
-  align-items: center;
+  place-items: center;
   min-height: calc(100vh - 3.5rem);
   padding-block: 4rem;
+  overflow: hidden;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 52rem;
+  text-align: center;
+}
+
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.4rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+.hero-social {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--accent);
+  transition: border-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+}
+
+.hero-terminal {
+  max-width: 44rem;
+}
+
+/* Dot drawings beside the name, drawn and morphed by DotMorph (canvas). */
+.hero-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dot-art {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  width: clamp(200px, 26vw, 400px);
+  aspect-ratio: 1;
+}
+
+.dot-art.left {
+  left: 3%;
+}
+
+.dot-art.right {
+  right: 3%;
 }
 
 @media (max-width: 900px) {
-  .hero {
-    grid-template-columns: 1fr;
-    min-height: auto;
+  .dot-art {
+    width: 45vw;
+    opacity: 0.4;
+  }
+  .dot-art.left {
+    left: -8%;
+  }
+  .dot-art.right {
+    right: -8%;
   }
 }
 
