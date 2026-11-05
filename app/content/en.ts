@@ -20,7 +20,7 @@ export const en: Content = {
   ],
   home: {
     label: "Home",
-    title: `, `,
+    title: `${person.name}, ${person.role}`,
     description:
       "Portfolio of Orlando Castañeda, an AI-focused Software Engineer shipping LLM features on Kotlin and .NET backends, and products with React and Next.js.",
     image: "/images/og/home-en.png",
