@@ -33,7 +33,7 @@ export const en: Content = {
       "Designing reliable systems and intuitive user experiences.",
     ],
     stack: [
-      "LLM / AI", "C# / .NET", "React", "Next.js", "TypeScript", "Node.js", "Python", "Kotlin", "Spring Boot", "Jetpack Compose", "SwiftUI", "PostgreSQL", "Docker", "GitHub Actions", "Nginx", "GCP", "Kubernetes", "Terraform",
+      "LLM / AI", "C# / .NET Core", "React", "Next.js", "TypeScript", "Node.js", "Python", "Kotlin", "Spring Boot", "Jetpack Compose", "SwiftUI", "PostgreSQL", "Docker", "GitHub Actions", "Nginx", "GCP", "Kubernetes", "Terraform",
     ],
     stackTip: "See work with",
     cta: { projects: "View projects", blog: "Read the blog", contact: "Contact" },
@@ -250,11 +250,11 @@ export const en: Content = {
           title: "C# / .NET Core",
           description:
             "Building production REST APIs with ASP.NET Core 8, Clean Architecture, CQRS/MediatR, EF Core, and FluentValidation. Patterns I use on every backend.",
-          tags: ["C# / .NET", "PostgreSQL"],
+          tags: ["Architecture", "Security", "Performance", "Observability", "Testing", "PostgreSQL"],
           bullets: [
             {
               topic: "CQRS",
-              tags: ["C# / .NET"],
+              tags: ["Architecture", "PostgreSQL"],
               summary:
                 "Centralized saving for Commands in the MediatR pipeline, so every Command saves exactly once and never when its handler fails.",
               story: [
@@ -266,7 +266,7 @@ export const en: Content = {
             },
             {
               topic: "Clean Architecture",
-              tags: ["C# / .NET"],
+              tags: ["Architecture", "PostgreSQL"],
               summary:
                 "Split the API into Domain, Application, Infrastructure, API and Contracts, with dependencies pointing inward so business rules never reach the route handlers.",
               story: [
@@ -278,7 +278,7 @@ export const en: Content = {
             },
             {
               topic: "Carter modules",
-              tags: ["C# / .NET"],
+              tags: ["Architecture"],
               summary:
                 "Modeled the API as Carter modules on Minimal APIs: one module per feature area, each endpoint with its own handler, validator and contract, no controllers.",
               story: [
@@ -290,7 +290,7 @@ export const en: Content = {
             },
             {
               topic: "Validation pipeline",
-              tags: ["C# / .NET"],
+              tags: ["Architecture"],
               summary: "Ran FluentValidation through a MediatR pipeline behavior, so handlers never call validators directly.",
               story: [
                 { label: "PROBLEM", text: "The app's forms had to flag every invalid field with its message in Spanish. If each handler called its own validators, one could easily be forgotten, or the API could return only the first error and make the user fix and resend field by field." },
@@ -301,7 +301,7 @@ export const en: Content = {
             },
             {
               topic: "API security",
-              tags: ["C# / .NET"],
+              tags: ["Security"],
               summary:
                 "Protected the API with JWT in HttpOnly cookies, BCrypt password hashing, rate limits on login and sign-up, and responses that don't reveal which records exist.",
               story: [
@@ -313,7 +313,7 @@ export const en: Content = {
             },
             {
               topic: "Data access",
-              tags: ["C# / .NET", "PostgreSQL"],
+              tags: ["Security", "PostgreSQL"],
               summary:
                 "Made every handler check who owns a record in the same query that reads it, so users reach only their own data or the data of someone who granted them access.",
               story: [
@@ -325,7 +325,7 @@ export const en: Content = {
             },
             {
               topic: "Role-based logging",
-              tags: ["C# / .NET"],
+              tags: ["Observability"],
               summary:
                 "Built a role-based logging system with Serilog that support reads inside the app, and errors escalated to development went from several a week to a few a month.",
               story: [
@@ -337,7 +337,7 @@ export const en: Content = {
             },
             {
               topic: "API contracts",
-              tags: ["C# / .NET"],
+              tags: ["Architecture"],
               summary:
                 "Made every route declare its contract, so the OpenAPI spec describes exactly what the API returns, errors included.",
               story: [
@@ -349,7 +349,7 @@ export const en: Content = {
             },
             {
               topic: "Cursor pagination",
-              tags: ["C# / .NET"],
+              tags: ["Performance"],
               summary:
                 "Moved the mobile app's initial load to cursor pagination over 15,000+ records and 100+ properties, and the full load went from almost 30 minutes to 3–5.",
               story: [
@@ -361,7 +361,7 @@ export const en: Content = {
             },
             {
               topic: "Testing strategy",
-              tags: ["C# / .NET"],
+              tags: ["Testing", "PostgreSQL"],
               summary:
                 "Built the API's tests in three levels with xUnit, NSubstitute and Testcontainers, and over 8,000 cases run on every PR and before every deploy.",
               story: [
@@ -373,7 +373,7 @@ export const en: Content = {
             },
             {
               topic: "Financial reports",
-              tags: ["C# / .NET"],
+              tags: ["Performance"],
               summary:
                 "As a Trainee, built 10–15 financial report screens in WinForms/C#, optimized LINQ queries with projections and normalized SQL Server schemas to third normal form.",
               story: [

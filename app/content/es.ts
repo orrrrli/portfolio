@@ -230,7 +230,7 @@ export const es: Content = {
           bullets: [
             {
               topic: "CQRS",
-              tags: ["C# / .NET"],
+              tags: ["Architecture", "PostgreSQL"],
               summary:
                 "Centralicé el guardado de los Commands en el pipeline de MediatR, así cada Command guarda una sola vez y nunca cuando el handler falla.",
               story: [
@@ -242,7 +242,7 @@ export const es: Content = {
             },
             {
               topic: "Clean Architecture",
-              tags: ["C# / .NET"],
+              tags: ["Architecture", "PostgreSQL"],
               summary:
                 "Dividí la API en Domain, Application, Infrastructure, API y Contracts, con las dependencias apuntando hacia adentro para que las reglas de negocio nunca lleguen a los route handlers.",
               story: [
@@ -254,7 +254,7 @@ export const es: Content = {
             },
             {
               topic: "Módulos Carter",
-              tags: ["C# / .NET"],
+              tags: ["Architecture"],
               summary:
                 "Armé la API con módulos de Carter sobre Minimal APIs: un módulo por área, cada endpoint con su handler, validator y contrato, sin controllers.",
               story: [
@@ -266,7 +266,7 @@ export const es: Content = {
             },
             {
               topic: "Pipeline de validación",
-              tags: ["C# / .NET"],
+              tags: ["Architecture"],
               summary: "Corrí FluentValidation como pipeline behavior de MediatR, así los handlers nunca llaman a los validators.",
               story: [
                 { label: "PROBLEMA", text: "Los formularios de la app tenían que marcar cada campo inválido con su mensaje en español. Si cada handler llamaba a sus validators, era fácil que alguno se olvidara, o que la API regresara solo el primer error y el usuario corrigiera y reenviara campo por campo." },
@@ -277,7 +277,7 @@ export const es: Content = {
             },
             {
               topic: "Seguridad de la API",
-              tags: ["C# / .NET"],
+              tags: ["Security"],
               summary:
                 "Protegí la API con JWT en cookies HttpOnly, contraseñas con BCrypt, rate limit en login y registro, y respuestas que no dejan adivinar qué registros existen.",
               story: [
@@ -289,7 +289,7 @@ export const es: Content = {
             },
             {
               topic: "Acceso a datos",
-              tags: ["C# / .NET", "PostgreSQL"],
+              tags: ["Security", "PostgreSQL"],
               summary:
                 "Hice que cada handler revise de quién es el registro en el mismo query que lo lee, así un usuario solo alcanza sus datos o los de alguien que le dio acceso.",
               story: [
@@ -301,7 +301,7 @@ export const es: Content = {
             },
             {
               topic: "Logging por rol",
-              tags: ["C# / .NET"],
+              tags: ["Observability"],
               summary:
                 "Construí un sistema de logging por rol con Serilog que soporte consulta desde la app, y los errores que llegaban a desarrollo varias veces por semana bajaron a unos pocos al mes.",
               story: [
@@ -313,7 +313,7 @@ export const es: Content = {
             },
             {
               topic: "Contratos de API",
-              tags: ["C# / .NET"],
+              tags: ["Architecture"],
               summary:
                 "Hice que cada ruta declare su contrato, así el spec de OpenAPI describe exactamente lo que responde la API, incluidos sus errores.",
               story: [
@@ -325,7 +325,7 @@ export const es: Content = {
             },
             {
               topic: "Paginación por cursor",
-              tags: ["C# / .NET"],
+              tags: ["Performance"],
               summary:
                 "Cambié la carga inicial de la app móvil a paginación por cursor sobre 15,000+ registros y 100+ propiedades, y la carga completa bajó de casi 30 minutos a 3–5.",
               story: [
@@ -337,7 +337,7 @@ export const es: Content = {
             },
             {
               topic: "Estrategia de pruebas",
-              tags: ["C# / .NET"],
+              tags: ["Testing", "PostgreSQL"],
               summary:
                 "Armé las pruebas de la API en tres niveles con xUnit, NSubstitute y Testcontainers, y más de 8,000 casos corren en cada PR y antes de cada deploy.",
               story: [
@@ -349,7 +349,7 @@ export const es: Content = {
             },
             {
               topic: "Reportes financieros",
-              tags: ["C# / .NET"],
+              tags: ["Performance"],
               summary:
                 "Como Trainee, desarrollé 10–15 interfaces de reportes financieros en WinForms/C#, optimicé consultas LINQ con proyecciones y normalicé esquemas de SQL Server a tercera forma normal.",
               story: [
