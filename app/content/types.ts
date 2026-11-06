@@ -61,12 +61,28 @@ export type Profile = {
   focus: Array<{ icon: FocusIcon; path: string; title: string; description: string }>;
 };
 
+export type StoryRow = {
+  /** Row label, e.g. "PROBLEM", "DECISION", "HOW", "RESULT" */
+  label: string;
+  text: string;
+  /** Placeholder row still to be written: label renders amber */
+  pending?: boolean;
+};
+
+export type SkillBullet = {
+  topic: string;
+  /** Which of the skill's chips this bullet shows under when filtered */
+  tags?: string[];
+  summary: string;
+  story?: StoryRow[];
+};
+
 export type About = {
   profile: Profile;
   work: { title: string; experiences: Experience[] };
   technical: {
     title: string;
-    skills: Array<{ title: string; description: string; tags: string[] }>;
+    skills: Array<{ title: string; description: string; tags: string[]; bullets: SkillBullet[] }>;
   };
 };
 

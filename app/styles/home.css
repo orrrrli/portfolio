@@ -495,3 +495,279 @@
 .social a {
   color: var(--text);
 }
+
+/* Skill bullets: one line per skill, expands into a PROBLEM/DECISION/HOW/RESULT story. */
+.skill-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin: 1.5rem 0 0;
+  padding: 1.25rem 0 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.skill-bullet-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.skill-bullet-toggle {
+  width: 100%;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.skill-bullet-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 8px;
+}
+
+.skill-bullet-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: -2px;
+  color: var(--accent);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  transition: border-color 150ms, background-color 150ms;
+}
+
+.skill-bullet-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.skill-bullet-topic {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-underline-offset: 4px;
+}
+
+.skill-bullet-summary {
+  line-height: 1.55;
+  color: var(--muted);
+  transition: color 150ms;
+}
+
+.skill-bullet-toggle:hover .skill-bullet-icon {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.skill-bullet-toggle:hover .skill-bullet-topic {
+  text-decoration: underline;
+}
+
+.skill-bullet-toggle:hover .skill-bullet-summary {
+  color: var(--text);
+}
+
+/* grid-rows 0fr -> 1fr animates height without measuring it */
+.skill-bullet-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 350ms ease-out, opacity 350ms ease-out;
+}
+
+.skill-bullet-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.skill-bullet-panel > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-bullet-panel {
+    transition: none;
+  }
+}
+
+.skill-bullet-story {
+  display: flex;
+  flex-direction: column;
+  margin: 1.125rem 0 0 2.375rem;
+}
+
+.skill-bullet-story > div {
+  display: grid;
+  grid-template-columns: 6.875rem minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.skill-bullet-story dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.skill-bullet-story dd {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.skill-bullet-story [data-pending] dt {
+  color: var(--accent-amber);
+}
+
+.skill-bullet-story [data-pending] dd {
+  color: var(--faint);
+}
+
+@media (max-width: 40rem) {
+  .skill-bullet-story {
+    margin-left: 0;
+  }
+
+  .skill-bullet-story > div {
+    grid-template-columns: 1fr;
+    gap: 0.375rem;
+  }
+}
+
+/* Skill tabs: one skill visible at a time, full container width. */
+/* Arrow buttons around one row of tabs that scrolls sideways instead of wrapping. The base
+   line is an inset shadow so the active tab's border draws over it without a negative margin,
+   which overflow would clip. */
+.skill-tabbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+.skill-tablist {
+  display: flex;
+  flex: 1;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* The row loops, so there is always more on both sides. */
+  mask-image: linear-gradient(to right, transparent, #000 3rem, #000 calc(100% - 3rem), transparent);
+}
+
+.skill-tablist::-webkit-scrollbar {
+  display: none;
+}
+
+.skill-scroll {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 150ms, background-color 150ms;
+}
+
+.skill-scroll:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.skill-tablist button {
+  flex: none;
+  white-space: nowrap;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--faint);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+
+.skill-tablist button:hover {
+  color: var(--text);
+}
+
+.skill-tablist button[data-selected] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.skill-tablist button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.skill-panel {
+  margin-top: 1.5rem;
+}
+
+/* Skill chips double as filters: the button carries the chip look instead of the li. */
+.skill-filters li {
+  padding: 0;
+  border: 0;
+}
+
+.skill-filters button {
+  padding: 0.2rem 0.6rem;
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms, background-color 150ms;
+}
+
+.skill-filters button:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.skill-filters button[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.skill-filters button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.skill-filters button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.skill-filter-count {
+  margin-left: 0.25rem;
+  color: var(--faint);
+}

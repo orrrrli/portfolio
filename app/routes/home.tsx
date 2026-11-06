@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { DotMorph, type DotShape } from "../components/DotMorph";
+import { SkillTabs } from "../components/SkillTabs";
 import { getContent, langFromPath, useContent } from "../content";
 import { listEntries } from "../content/mdx";
 import { seoMeta } from "../content/seo";
@@ -341,19 +342,9 @@ export default function Home() {
           </ul>
         </div>
 
-        <ul className="container cards skills">
-          {about.technical.skills.map((skill) => (
-            <li key={skill.title} className="card">
-              <h4>{skill.title}</h4>
-              <p className="muted">{skill.description}</p>
-              <ul className="chips mono">
-                {skill.tags.map((tag) => (
-                  <li key={tag}>{tag}</li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <div className="container">
+          <SkillTabs skills={about.technical.skills} />
+        </div>
       </section>
 
       <section id="contact" className="container block">
