@@ -230,7 +230,7 @@ export const es: Content = {
           bullets: [
             {
               topic: "CQRS",
-              tags: ["Architecture", "PostgreSQL"],
+              tags: ["Architecture"],
               summary:
                 "Centralicé el guardado de los Commands en el pipeline de MediatR, así cada Command guarda una sola vez y nunca cuando el handler falla.",
               story: [
@@ -242,7 +242,7 @@ export const es: Content = {
             },
             {
               topic: "Clean Architecture",
-              tags: ["Architecture", "PostgreSQL"],
+              tags: ["Architecture"],
               summary:
                 "Dividí la API en Domain, Application, Infrastructure, API y Contracts, con las dependencias apuntando hacia adentro para que las reglas de negocio nunca lleguen a los route handlers.",
               story: [
@@ -289,7 +289,7 @@ export const es: Content = {
             },
             {
               topic: "Acceso a datos",
-              tags: ["Security", "PostgreSQL"],
+              tags: ["Security"],
               summary:
                 "Hice que cada handler revise de quién es el registro en el mismo query que lo lee, así un usuario solo alcanza sus datos o los de alguien que le dio acceso.",
               story: [

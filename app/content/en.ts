@@ -254,7 +254,7 @@ export const en: Content = {
           bullets: [
             {
               topic: "CQRS",
-              tags: ["Architecture", "PostgreSQL"],
+              tags: ["Architecture"],
               summary:
                 "Centralized saving for Commands in the MediatR pipeline, so every Command saves exactly once and never when its handler fails.",
               story: [
@@ -266,7 +266,7 @@ export const en: Content = {
             },
             {
               topic: "Clean Architecture",
-              tags: ["Architecture", "PostgreSQL"],
+              tags: ["Architecture"],
               summary:
                 "Split the API into Domain, Application, Infrastructure, API and Contracts, with dependencies pointing inward so business rules never reach the route handlers.",
               story: [
@@ -313,7 +313,7 @@ export const en: Content = {
             },
             {
               topic: "Data access",
-              tags: ["Security", "PostgreSQL"],
+              tags: ["Security"],
               summary:
                 "Made every handler check who owns a record in the same query that reads it, so users reach only their own data or the data of someone who granted them access.",
               story: [
