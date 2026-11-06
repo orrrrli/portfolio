@@ -254,6 +254,9 @@
 /* Experience timeline */
 .timeline {
   margin: 0;
+  /* The 56px logo is centered on the rail: half of it plus the 6px lit ring (34px) must fit
+     in the gutter plus the space beside the container, or the screen edge cuts it. */
+  margin-left: max(0px, 34px - var(--gutter) - max(0px, (100vw - var(--container)) / 2));
   padding: 0 0 0 2.75rem;
   list-style: none;
   border-left: 1px solid var(--line-strong);
@@ -463,7 +466,14 @@
 /* Stack marquee */
 .marquee {
   display: flex;
-  overflow: hidden;
+  /* Scrolls by trackpad, wheel, touch and drag (StackMarquee); no scrollbar, no buttons. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  /* A sideways swipe past the end must not trigger browser back/forward. */
+  overscroll-behavior-x: contain;
+  cursor: grab;
+  user-select: none;
   /* mask-image hides anything outside the box, so the box reaches 3rem above the band for
      the tooltips; the negative margin keeps the layout. */
   margin: -3rem 0 2.5rem;
@@ -471,6 +481,14 @@
   mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
   /* The extra top area sits over the heading: let clicks through to it. */
   pointer-events: none;
+}
+
+.marquee::-webkit-scrollbar {
+  display: none;
+}
+
+.marquee:active {
+  cursor: grabbing;
 }
 
 .marquee-track {
@@ -487,13 +505,6 @@
   list-style: none;
   font-size: 1.1rem;
   color: var(--muted);
-  animation: marquee 90s linear infinite;
-}
-
-/* Stop so a moving logo can be pointed at and clicked. */
-.marquee:hover .marquee-track,
-.marquee:focus-within .marquee-track {
-  animation-play-state: paused;
 }
 
 .marquee-track li {
@@ -556,12 +567,6 @@
   .marquee-link,
   .marquee-link::after {
     transition: none;
-  }
-}
-
-@keyframes marquee {
-  to {
-    transform: translateX(-100%);
   }
 }
 

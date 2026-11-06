@@ -7,8 +7,10 @@ type Skill = About["technical"]["skills"][number];
 /** Which skill tab is open and which of its chips filters the bullets. Owned by the page so other sections can open a tab. */
 export type SkillView = { skill: number; filter: string | null };
 
-/** The tab with the most bullets tagged `tag`, with that chip on. */
+/** The tab titled `tag` with no filter, else the tab with the most bullets tagged `tag`, with that chip on. */
 export function viewForTag(skills: Skill[], tag: string): SkillView {
+  const titled = skills.findIndex((s) => s.title === tag);
+  if (titled >= 0) return { skill: titled, filter: null };
   const counts = skills.map((s) => s.bullets.filter((b) => b.tags?.includes(tag)).length);
   return { skill: counts.indexOf(Math.max(...counts)), filter: tag };
 }

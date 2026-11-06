@@ -32,7 +32,9 @@ export const en: Content = {
       "AI-focused Software Engineer based in Ensenada",
       "Designing reliable systems and intuitive user experiences.",
     ],
-    stack: ["C# / .NET", "React", "Next.js", "TypeScript", "PostgreSQL", "Docker"],
+    stack: [
+      "LLM / AI", "C# / .NET", "React", "Next.js", "TypeScript", "Node.js", "Python", "Kotlin", "Spring Boot", "Jetpack Compose", "SwiftUI", "PostgreSQL", "Docker", "GitHub Actions", "Nginx", "GCP", "Kubernetes", "Terraform",
+    ],
     stackTip: "See work with",
     cta: { projects: "View projects", blog: "Read the blog", contact: "Contact" },
     sections: {
