@@ -1,6 +1,31 @@
 import { useId, useState } from "react";
 import type { SkillBullet as SkillBulletData } from "../content/types";
 
+/** `{{term|explanation}}` in story text: the term shows the explanation on hover or focus. */
+const TERM = /\{\{([^|}]+)\|([^}]+)\}\}/g;
+
+function StoryText({ text }: { text: string }) {
+  // split with two capture groups gives [text, term, tip, text, term, tip, ..., text]
+  const parts = text.split(TERM);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (i % 3 === 0) return part;
+        if (i % 3 === 2) return null;
+        return (
+          // Focusable so keyboard and touch users can open it too.
+          <span key={i} className="story-term" tabIndex={0}>
+            {part}
+            <span role="tooltip" className="story-term-tip">
+              {parts[i + 1]}
+            </span>
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 /** One skill bullet. With a story it toggles open; without one it is plain text. */
 export function SkillBullet({ topic, summary, story = [] }: SkillBulletData) {
   const [open, setOpen] = useState(false);
@@ -43,7 +68,9 @@ export function SkillBullet({ topic, summary, story = [] }: SkillBulletData) {
             {story.map((row) => (
               <div key={row.label} data-pending={row.pending || undefined}>
                 <dt className="mono">{row.label}</dt>
-                <dd>{row.text}</dd>
+                <dd>
+                  <StoryText text={row.text} />
+                </dd>
               </div>
             ))}
           </dl>

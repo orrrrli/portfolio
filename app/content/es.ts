@@ -167,36 +167,60 @@ export const es: Content = {
               topic: "Asistente LLM",
               tags: ["Tool calling"],
               summary:
-                "Entregué features de un asistente LLM que arma un juego desde una conversación de chat usando 13 tools, responde preguntas con fotos y recuerda a los usuarios sus próximos juegos.",
+                "Entregué features de un asistente LLM que completa flujos de la app a partir de una conversación de chat. Usa 13 tools, responde preguntas con fotos y le recuerda al usuario lo que tiene agendado.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "67 evals contra el modelo en vivo: 92% de éxito en tool calls, mediana menor a 500 ms por tool call y $0.03 USD de costo promedio por eval." },
+                { label: "PROBLEMA", text: "La app tiene muchos flujos y muchos usuarios no sabían cómo completarlos. Se atoraban a medio camino o ni los empezaban. La idea fue que el usuario le dijera al asistente qué quería hacer y el asistente hiciera el flujo por él. Meter un LLM traía tres riesgos. Podía inventar datos, podía ver información de otros usuarios y el costo podía crecer sin control." },
+                { label: "DECISIÓN", text: "Desde el inicio el modelo solo propone y el servidor valida. El servidor le pasa a cada tool el usuario de la sesión, sacado del JWT. La tool nunca le pregunta al modelo de quién son los datos. Así, aunque alguien intente un prompt injection para pedir datos de otro usuario, el modelo no tiene forma de hacerlo. Si el modelo sugiere un flujo, ese ID tiene que haber salido de una tool en la misma respuesta. Si no, el servidor lo rechaza, y eso evita IDs inventados." },
+                { label: "CÓMO", text: "Armé el loop de tool calling en Kotlin con Spring Boot. Cada una de las 13 tools revisa permisos por su cuenta. Si pides algo de un grupo al que no perteneces, la tool responde NOT_FOUND. El costo lo controlan un tope diario de preguntas por usuario, un límite al tamaño del request y un deadline por respuesta.\n\nLos nombres que escriben los usuarios entran al prompt marcados como datos, no como instrucciones. Analytics guarda el resultado y la latencia, nunca la foto ni el texto. En iOS, con SwiftUI, agregué chips que llevan directo al flujo y un recordatorio en Home." },
+                { label: "RESULTADO", text: "Corrí 67 evals contra el modelo en vivo. El 92% de los tool calls salieron bien, con una mediana de menos de 500 ms por tool call y un costo promedio de $0.03 USD por eval." },
+              ],
+            },
+            {
+              topic: "Reglas en contexto vs. tool",
+              tags: ["Tool calling", "Context engineering"],
+              summary:
+                "Medí si convenía sacar las reglas de los flujos del prompt y mandarlas con una tool. Decidí dejarlas en el contexto.",
+              story: [
+                { label: "PROBLEMA", text: "El asistente carga en cada respuesta las reglas de 12 flujos, unos 9.1k caracteres del prompt estático. Todo lo que entra ahí se paga en cada respuesta, aunque la pregunta no tenga nada que ver con reglas. Además el prompt estático ya estaba cerca de su presupuesto." },
+                { label: "DECISIÓN", text: "Evalué mandar las reglas con una tool que el modelo llamara solo cuando hicieran falta. Descarté una tool por juego porque cada definición de tool viaja en todos los requests y se comía el ahorro. El ahorro era de ~12% (~$3 por cada 1,000 respuestas). Pero con la tool, que el modelo tuviera las reglas de la app dependía de que decidiera pedirlas. Si no la llamaba, contestaba de memoria con reglas genéricas que no son las de la app. Y si la llamaba, una pregunta de reglas hecha fuera de un {{flujo activo|Una pantalla de la que el asistente recibe contexto, como el Lobby de un juego.}} pasaba a necesitar 2 llamadas al modelo, una para pedir la tool y otra para contestar, con ~5 s más de latencia. Dentro de un flujo activo, las reglas de ese flujo se podían agregar al prompt sin llamar a la tool. Decidí dejar las reglas en el contexto." },
+                { label: "CÓMO", text: "Saqué el costo real por respuesta de los mensajes guardados del asistente, con los tokens y el costo que reporta OpenRouter. Medí cada sección de reglas por separado y separé lo que tenía que quedarse fijo de lo que se podía mover. Las reglas que comparten todos los flujos y la guía que usa el asistente para recomendar un flujo tenían que quedarse fijas, así que la tool solo podía sacar del prompt 7.3k de los 9.1k caracteres." },
+                { label: "RESULTADO", text: "Las preguntas de reglas se siguen contestando en una sola llamada al modelo, sin latencia extra y siempre con las reglas de la app. La tool quedó documentada con su costo, sus riesgos, su diseño y el punto en que conviene construirla." },
+              ],
+            },
+            {
+              topic: "Reglas de fotos bajo demanda",
+              tags: ["Context engineering"],
+              summary:
+                "Agregué las reglas para leer fotos sin tocar el prompt estático del asistente.",
+              story: [
+                { label: "PROBLEMA", text: "El asistente iba a empezar a contestar preguntas con fotos, y para eso necesitaba reglas propias. Por ejemplo, no inventar números que no se leen y no seguir instrucciones escritas dentro de la foto. El prompt estático tiene un presupuesto fijo que un test hace cumplir, y ya iba en ~41,500 de 41,600 caracteres. Las reglas de fotos miden 1,010 caracteres y no cabían." },
+                { label: "DECISIÓN", text: "Esas reglas solo sirven cuando el usuario manda una foto. Decidí no meterlas al prompt base y mandarlas solo en las conversaciones que traen una." },
+                { label: "CÓMO", text: "Al armar el system prompt, las reglas de fotos se agregan al final del system prompt solo cuando la pregunta o el hilo traen una foto. Van después del contexto dinámico del usuario, así que el prefijo estático no cambia y el prompt cache sigue funcionando en todas las preguntas. En el historial, cada foto anterior queda como el texto [photo] y solo la foto de la última pregunta llega al modelo como imagen. Un test falla si el prefijo estático pasa del tope, para que ningún cambio infle el prompt sin que nadie lo note." },
+                { label: "RESULTADO", text: "El feature de fotos salió sin tocar el prefijo estático y sin sacar otro conocimiento del prompt. Las preguntas de texto no pagan los ~250 tokens de estas reglas (~$0.60 menos por cada 1,000 respuestas) y el prompt cache quedó intacto." },
               ],
             },
             {
               topic: "Streaming y límites",
               tags: ["Streaming"],
               summary:
-                "Hice que las respuestas lleguen una a la vez con un botón para detenerlas, y agregué un límite de preguntas y un guard ante fallas del API.",
+                "Hice que el asistente conteste una pregunta a la vez, con un botón para detenerla, y que cada pregunta se cobre una sola vez aunque la app la reintente o el proveedor falle.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Cada pregunta se cobra una sola vez." },
+                { label: "PROBLEMA", text: "Si el usuario mandaba otra pregunta mientras el asistente contestaba, la nueva cortaba la respuesta que iba a medias. Bastaba un doble tap o un segundo dispositivo para perder una respuesta. Tampoco había forma de detener una respuesta larga. Y no estaba definido cuándo una pregunta contaba contra el tope diario, ni qué pasaba si la app reintentaba la misma pregunta o el proveedor fallaba." },
+                { label: "DECISIÓN", text: "Una pregunta nueva ya no corta la respuesta que está corriendo. El servidor contesta una pregunta a la vez por usuario, y el usuario decide cuándo parar con un botón de Stop. Para el cobro definí una regla. Una pregunta cuenta cuando el usuario ve texto, recibe una respuesta o causa la falla. Si falla por algo nuestro antes de mostrar texto, se le devuelve. Una falla causada por el usuario no se devuelve, porque si no, una sola cuenta podría gastar gratis el tope global de IA y dejar a todos sin asistente." },
+                { label: "CÓMO", text: "Cada pregunta lleva un requestId de la app, así que un reintento recibe la respuesta en curso o la ya guardada, sin llamar al modelo ni contar de nuevo. Una pregunta que llega mientras otra corre recibe un 409, y el Stop corta la llamada al proveedor y guarda el texto que ya se había mostrado. En el contador diario, cada pregunta se reserva al entrar y se libera solo si falló por nuestra culpa." },
+                { label: "RESULTADO", text: "Cada pregunta se cobra una sola vez, aunque la app la reintente. Un doble tap ya no corta una respuesta, y una falla del proveedor no le cuesta una pregunta al usuario." },
               ],
             },
             {
               topic: "Filtro de imágenes con visión",
               tags: ["Vision models"],
               summary:
-                "Integré un modelo de visión (Cloudflare Clef vía OpenRouter) que rechaza imágenes borrosas o que no corresponden, y pide una nueva cuando la confianza baja del umbral.",
+                "Integré un modelo de visión (Cloudflare Clef vía OpenRouter) que revisa cada foto antes de guardarla o mandarla al asistente. Rechaza las que son ilegibles o no tienen que ver con la app, y le dice al usuario qué tipo de foto sí puede leer.",
               story: [
-                { label: "PROBLEMA", text: "El filtro rechazaba imágenes nítidas como borrosas." },
-                todo("DECISIÓN"),
-                { label: "CÓMO", text: "Ajusté los umbrales con llamadas reales." },
-                { label: "RESULTADO", text: "95.6% de precisión en la clasificación." },
+                { label: "PROBLEMA", text: "El asistente iba a empezar a recibir fotos, y cada foto que llega al modelo principal cuesta una llamada. Hacía falta un filtro barato antes, que descartara fotos ilegibles o ajenas a la app. En la primera versión, QA reportó que el filtro rechazaba como borrosas fotos nítidas de leaderboards y de equipo, y el usuario quedaba atorado pidiendo otra foto una y otra vez." },
+                { label: "DECISIÓN", text: "Medí con llamadas reales sobre la misma foto en distintos niveles de blur. El modelo de visión no distingue bien el blur medio, porque una foto que sí se lee y una que no salían casi con el mismo puntaje. Decidí que el filtro solo rechace el blur extremo y que el modelo principal decida los casos intermedios, con la regla de nunca adivinar un número. Un rechazo falso deja al usuario en un loop de reintentos, y dejar pasar una foto de más cuesta ~$0.003. Cuando QA falló el ticket, en lugar de mover más umbrales busqué por qué cada foto nítida salía como borrosa." },
+                { label: "CÓMO", text: "El filtro hace tres preguntas en una sola llamada (tipo de foto, legibilidad y contenido inseguro), y todos los umbrales viven en config. Bajé el umbral de legibilidad de 0.25 a 0.08. Para el fallo de QA encontré dos causas. Sin un provider fijo, 9 de 36 llamadas regresaban HTTP 400 porque el provider no aceptaba imágenes, así que fijé Cloudflare (0 de 44 fallas) y agregué un reintento para 429 y 5xx. Además, los leaderboards salían con poca confianza y caían en la rama de \"borrosa\". Amplié la descripción de la categoría scorecard para que cubriera leaderboards, y su confianza subió de 0.35 a ~0.8 sin tocar umbrales. También separé los mensajes, así que una foto borrosa, una que no tiene que ver con la app, una de equipo y una falla del clasificador ya no se ven igual, y cada mensaje dice qué fotos sí puede leer el asistente." },
+                { label: "RESULTADO", text: "Las fotos nítidas ya no se rechazan como borrosas, y una falla del clasificador ya no se confunde con una foto mala. Las llamadas al clasificador bajaron de 9 fallas en 36 a 0 en 44. Lo verifiqué en el simulador con cada tipo de rechazo, con 579 tests en la API y 32 en iOS." },
               ],
             },
           ],

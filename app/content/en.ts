@@ -182,42 +182,66 @@ export const en: Content = {
           title: "LLM / AI",
           description:
             "Shipping LLM features to production: tool calling, vision models and streamed replies, measured with evals against the live model.",
-          tags: ["Tool calling", "Streaming", "Vision models"],
+          tags: ["Tool calling", "Streaming", "Vision models", "Context engineering"],
           bullets: [
             {
               topic: "LLM assistant",
               tags: ["Tool calling"],
               summary:
-                "Shipped features for an in-app LLM assistant that sets up a game from a chat conversation using 13 tools, answers photo questions and reminds users of upcoming games.",
+                "Shipped features for an LLM assistant that completes app flows from a chat conversation. It uses 13 tools, answers questions about photos and reminds users of what they have scheduled.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "67 evals against the live model: 92% tool-call success, a sub-500 ms median per tool call and $0.03 USD average cost per eval." },
+                { label: "PROBLEM", text: "The app has many flows, and many users didn't know how to complete them. They got stuck halfway or never started. The idea was that users tell the assistant what they want to do and the assistant runs the flow for them. Adding an LLM brought three risks. It could make up data, it could see other users' information, and costs could grow out of control." },
+                { label: "DECISION", text: "From day one, the model only proposes and the server validates. The server hands each tool the signed-in user, taken from the JWT. A tool never asks the model whose data to read. So even if someone tries a prompt injection to get another user's data, the model has no way to do it. If the model suggests a flow, that ID must have come from a tool in the same response. Otherwise the server rejects it, which rules out made-up IDs." },
+                { label: "HOW", text: "I built the tool-calling loop in Kotlin with Spring Boot. Each of the 13 tools checks permissions on its own. Ask for something in a group you don't belong to and the tool answers NOT_FOUND. Cost is held by a daily question cap per user, a request size limit and a deadline per reply.\n\nUser-written names enter the prompt marked as data, not instructions. Analytics stores the outcome and latency, never the photo or the text. On iOS, with SwiftUI, I added chips that jump straight into a flow and a reminder on Home." },
+                { label: "RESULT", text: "I ran 67 evals against the live model. 92% of tool calls succeeded, with a sub-500 ms median per tool call and an average cost of $0.03 USD per eval." },
+              ],
+            },
+            {
+              topic: "Rules in context vs. tool",
+              tags: ["Tool calling", "Context engineering"],
+              summary:
+                "Measured whether to take the flow rules out of the prompt and serve them through a tool. Decided to keep them in context.",
+              story: [
+                { label: "PROBLEM", text: "The assistant loads the rules for 12 flows on every reply, about 9.1k characters of the static prompt. Everything in it is paid for on every reply, even when the question has nothing to do with rules. And the static prompt was already close to its budget." },
+                { label: "DECISION", text: "I evaluated serving the rules through a tool the model would call only when needed. I ruled out one tool per game because every tool definition travels in every request and would eat the saving. The saving was ~12% (~$3 per 1,000 replies). But with the tool, whether the model had the app's rules depended on it deciding to ask for them. If it didn't call the tool, it answered from memory with generic rules that aren't the app's. And if it did, a rules question asked outside an {{active flow|A screen the assistant gets context from, like a game's Lobby.}} would now need 2 model calls, one to request the tool and one to answer, adding ~5 s of latency. Inside an active flow, that flow's rules could be added to the prompt without calling the tool. I decided to keep the rules in context." },
+                { label: "HOW", text: "I pulled the real cost per reply from the assistant's stored messages, with the tokens and cost OpenRouter reports. I measured each rules section separately and split what had to stay fixed from what could move. The rules shared by every flow and the guide the assistant uses to recommend a flow had to stay fixed, so the tool could only take 7.3k of the 9.1k characters out of the prompt." },
+                { label: "RESULT", text: "Rules questions are still answered in a single model call, with no extra latency and always with the app's rules. The tool is documented with its cost, risks, design and the point where it's worth building." },
+              ],
+            },
+            {
+              topic: "On-demand photo rules",
+              tags: ["Context engineering"],
+              summary:
+                "Added the rules for reading photos without touching the assistant's static prompt.",
+              story: [
+                { label: "PROBLEM", text: "The assistant was about to start answering questions with photos, and that needed its own rules. For example, don't make up numbers that can't be read, and don't follow instructions written inside the photo. The static prompt has a fixed budget enforced by a test, and it was already at ~41,500 of 41,600 characters. The photo rules are 1,010 characters and didn't fit." },
+                { label: "DECISION", text: "Those rules only matter when the user sends a photo. I decided to keep them out of the base prompt and send them only in conversations that include one." },
+                { label: "HOW", text: "When the system prompt is built, the photo rules are appended to the end of the system prompt only when the question or thread includes a photo. They go after the user's dynamic context, so the static prefix doesn't change and the prompt cache keeps working on every question. In the history, each earlier photo becomes the text [photo], and only the latest question's photo reaches the model as an image. A test fails if the static prefix goes over the cap, so no change can bloat the prompt unnoticed." },
+                { label: "RESULT", text: "The photo feature shipped without touching the static prefix or dropping other knowledge from the prompt. Text questions don't pay the ~250 tokens of these rules (~$0.60 less per 1,000 replies), and the prompt cache stayed intact." },
               ],
             },
             {
               topic: "Streaming and limits",
               tags: ["Streaming"],
               summary:
-                "Made replies stream one at a time with a Stop control, and added a question limit and a guard against API failures.",
+                "Made the assistant answer one question at a time, with a button to stop it, and charge each question once even when the app retries it or the provider fails.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Each question is charged exactly once." },
+                { label: "PROBLEM", text: "If the user sent another question while the assistant was answering, the new one cut off the reply in progress. A double tap or a second device was enough to lose a reply. There was also no way to stop a long reply. And it wasn't defined when a question counted against the daily cap, or what happened when the app retried the same question or the provider failed." },
+                { label: "DECISION", text: "A new question no longer cuts off the reply that's running. The server answers one question at a time per user, and the user decides when to stop with a Stop button. For charging I set one rule. A question counts when the user sees text, gets an answer or causes the failure. If it fails because of us before any text shows, it's given back. A failure the user causes isn't given back, because otherwise one account could spend the global AI cap for free and leave everyone without the assistant." },
+                { label: "HOW", text: "Each question carries a requestId from the app, so a retry gets the reply in progress or the stored one, without calling the model or counting again. A question that arrives while another runs gets a 409, and Stop cuts the provider call and stores the text already shown. In the daily counter, each question is reserved on the way in and released only if it failed because of us." },
+                { label: "RESULT", text: "Each question is charged once, even when the app retries it. A double tap no longer cuts off a reply, and a provider failure doesn't cost the user a question." },
               ],
             },
             {
               topic: "Vision image gate",
               tags: ["Vision models"],
               summary:
-                "Integrated a vision model (Cloudflare Clef via OpenRouter) that rejects blurry or off-topic images and asks for a new one when confidence falls below a threshold.",
+                "Integrated a vision model (Cloudflare Clef via OpenRouter) that checks every photo before it's stored or sent to the assistant. It rejects photos that are unreadable or unrelated to the app, and tells the user which kinds of photo it can read.",
               story: [
-                { label: "PROBLEM", text: "The gate rejected sharp images as blurry." },
-                todo("DECISION"),
-                { label: "HOW", text: "Tuned its thresholds on live calls." },
-                { label: "RESULT", text: "95.6% classification accuracy." },
+                { label: "PROBLEM", text: "The assistant was about to start receiving photos, and every photo that reaches the main model costs a call. It needed a cheap filter first, to drop unreadable photos or ones unrelated to the app. In the first version, QA reported that the filter rejected sharp photos of leaderboards and equipment as blurry, and users got stuck asking for another photo again and again." },
+                { label: "DECISION", text: "I measured with real calls on the same photo at different blur levels. The vision model can't tell medium blur apart well, because a readable photo and an unreadable one came out with almost the same score. I decided the filter only rejects extreme blur and the main model decides the in-between cases, under a rule to never guess a number. A false rejection traps the user in a retry loop, while letting one extra photo through costs ~$0.003. When QA failed the ticket, instead of moving more thresholds I looked for why every sharp photo came out as blurry." },
+                { label: "HOW", text: "The filter asks three questions in one call (photo type, legibility and unsafe content), and every threshold lives in config. I lowered the legibility threshold from 0.25 to 0.08. For the QA failure I found two causes. Without a pinned provider, 9 of 36 calls returned HTTP 400 because the provider didn't accept images, so I pinned Cloudflare (0 of 44 failures) and added a retry for 429 and 5xx. Also, leaderboards came out with low confidence and fell into the \"blurry\" branch. I widened the scorecard category's description to cover leaderboards, and its confidence rose from 0.35 to ~0.8 without touching thresholds. I also split the messages, so a blurry photo, one unrelated to the app, an equipment photo and a classifier failure no longer look the same, and each message says which photos the assistant can read." },
+                { label: "RESULT", text: "Sharp photos are no longer rejected as blurry, and a classifier failure is no longer mistaken for a bad photo. Classifier calls went from 9 failures in 36 to 0 in 44. I verified it in the simulator with every rejection type, with 579 tests on the API and 32 on iOS." },
               ],
             },
           ],
