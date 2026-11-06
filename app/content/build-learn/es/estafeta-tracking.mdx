@@ -1,83 +1,72 @@
 ---
-title: "Construí el API de Rastreo de una Paquetería Mexicana"
+title: "Una API de rastreo para Estafeta"
 publishedAt: "2026-06-18"
-summary: "El carrier de entregas rojo más popular de México mueve millones de paquetes al día. No tienen una API pública de rastreo. Así que la construí yo, y así fue como lo hice."
+summary: "Estafeta no tiene API pública de rastreo. En vez de cargar su página en un navegador, repito el request interno que hace el sitio y parseo solo el fragmento de HTML que regresa. Aquí explico cómo."
 tag: "Backend"
 ---
 
-## El Problema del que Nadie Habla
+## Estafeta no tiene API de rastreo
 
-Si alguna vez has construido una plataforma de e-commerce en México, ya te topaste con este muro.
+Si has hecho un e-commerce en México, seguro te tocó: el cliente envía con Estafeta y sus compradores quieren saber dónde va su paquete. Buscas una API de rastreo y no hay.
 
-Tu cliente envía con el carrier rojo más grande del país. Sus clientes quieren saber dónde está su paquete. Abres el portal de desarrolladores del carrier y buscas una API de rastreo.
+Lo que hay es el formulario de su sitio. Metes el número y te regresa una tabla en HTML. No hay JSON, ni webhooks, ni tokens.
 
-No existe.
+Existe Envia, que sí ofrece rastreo por API. Pero contratar un agregador solo para consultar el estatus es demasiado, cuando ese dato ya es público para cualquiera que tenga el número de guía.
 
-Lo que encuentras en su lugar es un formulario web: un input HTML simple que devuelve una tabla de estatus. Sin JSON, sin webhooks, sin tokens de autenticación. Solo HTML que tienes que parsear para obtener una sola cadena de estatus.
+La solución típica es un scraper que carga la página completa, muchas veces en un navegador headless (un Chrome sin ventana) como Puppeteer. He visto eso, `cheerio` y hasta curl con `grep`, y yo también he escrito alguno. Son pesados y lentos, y se rompen cuando Estafeta cambia su HTML.
 
-Cada agencia que envía producto en México ha resuelto esto en silencio de la peor manera posible: un scraper frágil que se rompe cada vez que el carrier actualiza su markup. Lo he visto hecho con Puppeteer, con `cheerio`, con curl pasado por `grep`. Yo mismo lo he hecho. Funciona hasta que no funciona, y cuando se rompe, es tu cliente quien recibe las llamadas a medianoche.
+## Qué encontré
 
-Este es un problema resuelto en todos los demás países. No debería ser un problema aquí.
+Buscar un número en el sitio toma dos requests, y los dos se ven en la pestaña Network de DevTools. Un GET a la página de búsqueda deja las cookies de sesión. Luego la página pide el historial de eventos con un POST a un endpoint interno, enviado como request XHR (`X-Requested-With`). Ese endpoint regresa solo un fragmento de HTML: el timeline de estatus, nada más.
 
-## Lo que Encontré
+Así que me salté el navegador y escribí una API chica que repite esos dos requests:
+- Recibe el número de rastreo en la ruta y lo valida
+- Manda el GET para las cookies y luego el POST con los headers que el endpoint espera (`X-Requested-With`, `Referer`)
+- Parsea el fragmento con AngleSharp y selectores CSS, y regresa siempre el mismo JSON: el estatus actual y el historial de eventos
+- Guarda cada resultado en cache 10 minutos
 
-La página de rastreo del carrier es un formulario renderizado del lado del servidor. Cuando envías un número de rastreo, hace un POST a un endpoint interno y devuelve HTML. Eso es obvio desde la pestaña Network de DevTools.
+Sigue siendo un scraper, porque lee HTML. Pero es uno ligero: sin navegador y sin página completa, solo el fragmento que usa el timeline. No tiene base de datos, cola ni auth.
 
-Lo que no es tan obvio es que, enterrado en esa misma cadena de solicitudes, hay un endpoint JSON secundario que la aplicación web llama para poblar un timeline de estatus. No está documentado. No tiene versión. Pero está ahí, devuelve JSON limpio, y ha sido estable el tiempo suficiente como para apostarle.
-
-Escribí un wrapper delgado alrededor de él.
-
-El wrapper hace tres cosas:
-- Acepta un número de rastreo como parámetro de ruta
-- Reenvía la solicitud al endpoint interno del carrier con los headers correctos
-- Devuelve JSON normalizado sin importar cómo se vea la respuesta subyacente
-
-Eso es todo. Sin base de datos, sin cola, sin capa de auth. Solo una superficie REST limpia sobre algo que ya existía.
-
-## El Endpoint
+## El endpoint
 
 ```
 GET https://lab.orlando.codes/api/v1/tracking/:number
 ```
 
-Pasa cualquier número de rastreo de Estafeta como parámetro `:number`. La respuesta es JSON.
+Pasa un número de rastreo de Estafeta en `:number` y te regresa JSON.
 
-Un número de rastreo válido devuelve el estatus actual, ubicación y timeline de eventos. Un número inválido o desconocido devuelve una descripción indicando que no se encontró nada, lo cual en sí es útil: significa que la red funciona y el número es el problema, no tu integración.
+Con un número válido recibes el estatus actual y el historial de eventos, cada uno con su fecha, ubicación y estatus. Con uno inválido o que no existe recibes un mensaje de que no se encontró nada. Eso también sirve: te dice que la conexión funciona y que el problema es el número, no tu integración.
 
-Pruébalo aquí. Reemplaza el valor en **Path** con un número de rastreo real:
+Pruébalo aquí. Cambia el valor en **Path** por un número de rastreo real:
 
 <APIPlayground
   url="https://lab.orlando.codes/api/v1/tracking/:number"
   initialPath={[{ key: "number", value: "1234567890" }]}
 />
 
-## Por Qué Importa
+## Para qué sirve
 
-Una API de rastreo suena trivial. No lo es.
+Con el estatus en JSON puedes:
 
-Cuando tienes una, puedes:
+- Mandar avisos de envío por WhatsApp o SMS sin estar consultando la página
+- Guardar el historial en tu base de datos por si hay una disputa
+- Hacer una página de rastreo con tu marca en vez de mandar al cliente al sitio de Estafeta
+- Avisar a operaciones en cuanto un paquete se queda detenido
 
-- Enviar actualizaciones proactivas de envío por WhatsApp o SMS sin hacer polling a un sitio web
-- Almacenar el historial de estatus en tu propia base de datos para resolución de disputas
-- Construir una página de rastreo para el cliente que coincida con tu marca, no con la del carrier
-- Alertar a tu equipo de operaciones en el momento en que un paquete se quede detenido
+## Limitaciones
 
-Nada de eso es posible cuando tu única opción es scraping de HTML. Todo se vuelve directo con un endpoint JSON.
+No es una integración oficial. Estafeta no aprobó este uso del endpoint y lo puede cambiar cuando quiera.
 
-## Lo que Esto No Es
+Además es scraping, así que depende del HTML del fragmento. El parser busca clases CSS específicas (`.row.eventInfo`, `.col-sm-7`). Si Estafeta las renombra, la API responde "no encontrado" aunque el número sea válido.
 
-Esta no es una integración oficial. El carrier no ha aprobado este endpoint. Podría cambiar.
+Corre en mi servidor de pruebas. Es una prueba de concepto, sin SLA. Si lo vas a usar para algo en serio, monitorea el endpoint y ten un plan B.
 
-Corre en mi servidor personal de laboratorio: es una prueba de concepto y un ejercicio de aprendizaje, no tiene un SLA de producción. Si estás construyendo algo serio sobre esto, deberías monitorear el endpoint y tener una estrategia de respaldo.
+Si hay interés, lo siguiente sería una versión bien hospedada con rate limiting, monitoreo del parser y changelog.
 
-Lo que sí es, es una demostración funcional de que los datos subyacentes existen y son accesibles. Si hay demanda, el siguiente paso es una versión hospedada apropiadamente con rate limiting, caché y un changelog formal.
+## Qué aprendí
 
-## Lo que Aprendí
+Lo más difícil fue armar el request correcto, no el parser. El endpoint interno solo responde si llevas las cookies de sesión de la página de búsqueda y los headers `X-Requested-With` y `Referer`. Para dar con eso tuve que leer las trazas de red con calma.
 
-La parte más difícil no fue el wrapper HTTP. Fue descifrar la forma correcta de la solicitud: el endpoint interno del carrier es exigente con los headers y espera campos de formulario específicos en un orden específico. Hacer eso bien implicó leer trazas de red con cuidado y probar casos borde que el sitio web no expone.
+Después vino el parseo. El historial viene agrupado por día: cada grupo tiene una fecha y varios eventos adentro. Cada evento se convierte en una entrada con fecha y hora, ubicación y estatus, y las filas sin estatus se descartan.
 
-La segunda parte más difícil fue la normalización. La respuesta cruda tiene inconsistencias dependiendo de si un paquete ha sido escaneado, está en tránsito o ha sido entregado. Escribir un transformador que maneje los tres estados limpiamente tomó más iteraciones de las esperadas.
-
-El wrapper en sí son unas 80 líneas. La capa de normalización son otras 60. Todo corre en un VPS pequeño sin dependencias externas excepto el endpoint del carrier.
-
-A veces la solución correcta no es compleja. Solo requiere que alguien se siente y haga el trabajo.
+El scraper y el parser caben en un archivo de unas 100 líneas. Alrededor hay una API chica en ASP.NET Core con MediatR, FluentValidation y cache en memoria. Corre en un VPS chico y no depende de nada más que del sitio de Estafeta.

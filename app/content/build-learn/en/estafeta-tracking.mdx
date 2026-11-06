@@ -1,83 +1,72 @@
 ---
-title: "I Built the Tracking API for a Mexican Carrier"
+title: "A Tracking API for Estafeta"
 publishedAt: "2026-06-18"
-summary: "Mexico's most popular red delivery carrier moves millions of packages a day. They have no public tracking API. So I built one, and here's how."
+summary: "Estafeta has no public tracking API. Instead of loading its page in a browser, I replay the request the site makes internally and parse only the HTML fragment it returns. This is how."
 tag: "Backend"
 ---
 
-## The Problem Nobody Talks About
+## Estafeta has no tracking API
 
-If you've ever built an e-commerce platform in Mexico, you've hit this wall.
+If you've built an e-commerce site in Mexico, you've probably run into this. Your client ships with Estafeta, and their customers want to know where their package is. You look for a tracking API and there isn't one.
 
-Your client ships with the country's largest red delivery carrier. Their customers want to know where their package is. So you open the carrier's developer portal and look for a tracking API.
+What there is is the form on their website. You enter the number and get back an HTML table. No JSON, no webhooks, no tokens.
 
-There isn't one.
+Envia does offer tracking through an API. But signing up for an aggregator just to check a status is too much, when that data is already public to anyone who has the tracking number.
 
-What you find instead is a website form: a plain HTML input that spits out a status table. No JSON, no webhooks, no authentication tokens. Just HTML you have to parse to get a single status string.
+The usual fix is a scraper that loads the whole page, often in a headless browser (Chrome without a window) like Puppeteer. I've seen that, `cheerio`, even curl piped into `grep`, and I've written a few myself. They are heavy and slow, and they break when Estafeta changes its HTML.
 
-Every agency that ships product in Mexico has quietly solved this in the worst possible way: a brittle scraper that breaks every time the carrier updates their markup. I've seen it done with Puppeteer, with `cheerio`, with curl piped through `grep`. I've done it myself. It works until it doesn't, and when it breaks, your client is the one getting calls at midnight.
+## What I found
 
-This is a solved problem in every other country. It shouldn't be a problem here.
+Searching a number on the site takes two requests, and you can see both in the DevTools Network tab. A GET to the search page sets the session cookies. Then the page asks for the event history with a POST to an internal endpoint, sent as an XHR request (`X-Requested-With`). That endpoint returns only an HTML fragment: the status timeline, nothing else.
 
-## What I Actually Found
+So I skipped the browser and wrote a small API that repeats those two requests:
+- Takes the tracking number from the path and validates it
+- Sends the GET for the cookies, then the POST with the headers the endpoint expects (`X-Requested-With`, `Referer`)
+- Parses the fragment with AngleSharp and CSS selectors, and always returns the same JSON: the current status and the event history
+- Caches each result for 10 minutes
 
-The carrier's tracking page is a server-rendered form. When you submit a tracking number, it posts to an internal endpoint and returns HTML. That much is obvious from the DevTools Network tab.
+It is still a scraper, because it reads HTML. But it is a light one: no browser and no full page, only the fragment the timeline uses. It has no database, queue or auth.
 
-What's less obvious is that buried in that same request chain, there's a secondary JSON endpoint the web app calls to populate a status timeline. It's not documented. It's not versioned. But it's there, it returns clean JSON, and it's been stable for long enough to be worth betting on.
-
-I wrote a thin wrapper around it.
-
-The wrapper does three things:
-- Accepts a tracking number as a path parameter
-- Forwards the request to the carrier's internal endpoint with the right headers
-- Returns normalized JSON regardless of what the underlying response looks like
-
-That's it. No database, no queue, no auth layer. Just a clean REST surface over something that was already there.
-
-## The Endpoint
+## The endpoint
 
 ```
 GET https://lab.orlando.codes/api/v1/tracking/:number
 ```
 
-Pass any Estafeta tracking number as the `:number` path parameter. The response is JSON.
+Pass an Estafeta tracking number as `:number` and you get JSON back.
 
-A valid tracking number returns the current status, location, and event timeline. An invalid or unknown number returns a description telling you nothing was found, which is itself useful: it means the network is working and the number is the problem, not your integration.
+A valid number returns the current status and the event history, each event with its date, location and status. An invalid or unknown number returns a message saying nothing was found. That is useful too: it tells you the connection works and the number is the problem, not your integration.
 
-Try it below. Replace the value in **Path** with a real tracking number:
+Try it here. Replace the value in **Path** with a real tracking number:
 
 <APIPlayground
   url="https://lab.orlando.codes/api/v1/tracking/:number"
   initialPath={[{ key: "number", value: "1234567890" }]}
 />
 
-## Why This Matters
+## What you can do with it
 
-A tracking API sounds trivial. It isn't.
+With the status as JSON you can:
 
-When you have one, you can:
+- Send shipping updates over WhatsApp or SMS without checking the website
+- Store the history in your own database in case of a dispute
+- Build a tracking page with your brand instead of sending customers to Estafeta's site
+- Alert your ops team as soon as a package gets stuck
 
-- Send proactive shipping updates over WhatsApp or SMS without polling a website
-- Store status history in your own database for dispute resolution
-- Build a customer-facing tracking page that matches your brand, not the carrier's
-- Alert your ops team the moment a package gets stuck
+## Limitations
 
-None of those things are possible when your only option is scraping HTML. All of them become straightforward with a JSON endpoint.
+This is not an official integration. Estafeta hasn't approved this use of the endpoint and can change it at any time.
 
-## What This Isn't
+It is also scraping, so it depends on the HTML of the fragment. The parser looks for specific CSS classes (`.row.eventInfo`, `.col-sm-7`). If Estafeta renames them, the API answers "not found" even for valid numbers.
 
-This is not an official integration. The carrier hasn't blessed this endpoint. It could change.
+It runs on my lab server. It's a proof of concept with no SLA. If you use it for anything serious, monitor the endpoint and have a fallback.
 
-It runs on my personal lab server: it's a proof of concept and a learning exercise, not a production SLA. If you're building something serious on top of it, you should monitor the endpoint and have a fallback strategy.
+If there is interest, the next step is a properly hosted version with rate limiting, monitoring of the parser and a changelog.
 
-What it is is a working demonstration that the underlying data exists and is accessible. If demand is there, the next step is a proper hosted version with rate limiting, caching, and a proper changelog.
+## What I learned
 
-## What I Learned
+The hard part was getting the request right, not the parser. The internal endpoint only answers with the session cookies from the search page and the `X-Requested-With` and `Referer` headers. Getting there meant reading network traces carefully.
 
-The hardest part wasn't the HTTP wrapper. It was figuring out the right request shape: the carrier's internal endpoint is picky about headers and expects specific form fields in a specific order. Getting that right meant reading network traces carefully and testing edge cases that the website doesn't surface.
+Then came parsing. The history comes grouped by day: each group has one date and several events inside. Each event becomes one entry with date and time, location and status, and rows without a status are skipped.
 
-The second hardest part was normalization. The raw response has inconsistencies depending on whether a package has been scanned, is in transit, or has been delivered. Writing a transformer that handles all three states cleanly took more iterations than I expected.
-
-The wrapper itself is about 80 lines. The normalization layer is another 60. The whole thing runs on a small VPS with no external dependencies except the carrier's endpoint.
-
-Sometimes the right solution isn't complex. It just requires someone to sit down and do the work.
+The scraper and the parser fit in one file of about 100 lines. Around it sits a small ASP.NET Core API with MediatR, FluentValidation and an in-memory cache. It runs on a small VPS and depends on nothing but Estafeta's site.
