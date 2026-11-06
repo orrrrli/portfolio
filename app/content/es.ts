@@ -365,87 +365,44 @@ export const es: Content = {
           ...en.about.technical.skills[2],
           bullets: [
             {
-              topic: "Librería de componentes",
-              tags: ["React"],
-              summary:
-                "Construí una librería de componentes reutilizable con React, Remix, Tailwind y Atomic Design, que se usó en varios proyectos de clientes.",
-              story: [
-                todo("PROBLEMA"),
-                {
-                  label: "DECISIÓN",
-                  text: "Organicé los componentes con Atomic Design y pasé los mockups de Figma directo a esos componentes.",
-                },
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Pasar de diseño a código bajó de días a horas, y la librería se usó en varios proyectos." },
-              ],
-            },
-            {
-              topic: "Cliente de API tipado",
-              tags: ["React", "TypeScript"],
-              summary:
-                "Generé tipos y un cliente fetch tipado desde el spec OpenAPI del backend con openapi-ts, así el frontend no se puede desalinear del contrato de la API.",
-              story: [
-                todo("PROBLEMA"),
-                {
-                  label: "DECISIÓN",
-                  text: "Los dos servicios no comparten nada en runtime. El spec OpenAPI es lo único que los conecta.",
-                },
-                todo("CÓMO"),
-                todo("RESULTADO"),
-              ],
-            },
-            {
               topic: "Validación en las dos capas",
-              tags: ["React", "TypeScript"],
+              tags: ["Security", "TypeScript"],
               summary:
-                "Validé el input con Zod en el frontend y FluentValidation en el backend, con la misma forma gracias a los tipos generados.",
-              story: [todo("PROBLEMA"), todo("DECISIÓN"), todo("CÓMO"), todo("RESULTADO")],
-            },
-            {
-              topic: "Estrategia de rendering",
-              tags: ["Next.js"],
-              summary:
-                "Elegí el rendering por ruta: SSG para páginas estáticas, ISR para el catálogo, SSR para producto, client-side para carrito y checkout, sin cache para admin.",
+                "Validé con el mismo schema de Zod el formulario en el navegador y el request en la API, así el cliente y el servidor nunca aceptan datos distintos.",
               story: [
-                { label: "PROBLEMA", text: "No todas las rutas necesitan el mismo nivel de frescura." },
-                {
-                  label: "DECISIÓN",
-                  text: "Cada ruta responde dos preguntas: ¿el contenido cambia por usuario? y ¿qué tan seguido? La respuesta decide entre SSG, ISR, SSR, client-side o sin cache.",
-                },
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "El proyecto recibe datos de formularios de registro, direcciones y pedidos. Los tipos de TypeScript desaparecen al compilar, así que no protegen nada en tiempo de ejecución, y un body con un campo faltante o de otro tipo podía llegar hasta la base. Validar a mano en cada formulario y en cada ruta duplicaba las reglas y las dejaba desfasarse." },
+                { label: "DECISIÓN", text: "Puse los schemas de Zod en una carpeta compartida, y los usan tanto el formulario como la ruta de la API. El navegador valida para mostrar el error junto al campo, y la ruta vuelve a validar porque un request se puede armar a mano sin pasar por el formulario." },
+                { label: "CÓMO", text: "Los formularios conectan el schema con react-hook-form a través de zodResolver. Las rutas de la API hacen safeParse del body antes de tocar la base y responden 400 si no pasa. Hoy 22 rutas validan así, y los schemas de productos tienen sus propias pruebas unitarias." },
+                { label: "RESULTADO", text: "Una regla, como el formato de un teléfono o de una dirección, se cambia en un solo lugar y aplica en el formulario y en la API al mismo tiempo. Un request armado a mano no se salta la validación." },
               ],
             },
             {
-              topic: "Invalidación de cache",
-              tags: ["Next.js"],
+              topic: "Cache del catálogo con CSP estricta",
+              tags: ["Security", "Caching"],
               summary:
-                "Serví el catálogo desde el Full Route Cache sin tocar la base de datos, y lo invalido con revalidateTag('catalog') en cada pago o cambio de stock.",
+                "Mantuve una CSP estricta con nonce, que obliga a renderizar cada página por request, y moví el cache del catálogo de la página a los datos, así el catálogo sigue sin consultar la base en cada visita.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                {
-                  label: "CÓMO",
-                  text: "En el build, /catalog consulta Postgres una vez y llena el Data Cache (3600s) y el Full Route Cache (600s). revalidateTag los marca como stale y el siguiente request vuelve a consultar y renderizar.",
-                },
-                { label: "RESULTADO", text: "Los requests normales al catálogo no tocan la base de datos." },
+                { label: "PROBLEMA", text: "El plan era cachear páginas completas, con el catálogo y el producto regenerándose cada hora. Pero la CSP usa un nonce con strict-dynamic, y Next solo pone ese nonce en sus scripts cuando renderiza un request. En una página estática los scripts salían sin nonce, la CSP los bloqueaba y la página quedaba en blanco." },
+                { label: "DECISIÓN", text: "Elegí la CSP estricta sobre el cache de páginas. Todas las rutas se renderizan por request, y el cache pasó de la página a los datos. Renderizar es barato, y lo caro era consultar la base en cada visita." },
+                { label: "CÓMO", text: "El layout raíz fuerza el rendering dinámico. Las consultas del catálogo van envueltas en unstable_cache con el tag catalog y una vigencia de una hora. Cada pago confirmado, cancelación, pedido vencido o cambio de inventario llama a revalidateTag('catalog'), y la siguiente visita vuelve a consultar con el stock al día." },
+                { label: "RESULTADO", text: "Ningún script corre sin el nonce de su request, y las visitas normales al catálogo no consultan la base. El stock que ve el usuario se actualiza en cuanto cambia, no hasta que vence la hora." },
               ],
             },
             {
               topic: "Checkout con Stripe",
-              tags: ["Next.js"],
+              tags: ["Payments"],
               summary:
                 "Construí un checkout de varios pasos con Stripe donde solo el webhook confirma el pago, así el inventario nunca se libera con una transacción sin confirmar.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                { label: "CÓMO", text: "Pagos con tarjeta y SPEI, con transiciones de estado del pedido idempotentes, así un checkout concurrente nunca sobrevende el stock." },
-                { label: "RESULTADO", text: "La tienda procesa más de 200 pedidos al mes en producción." },
+                { label: "PROBLEMA", text: "Un pago se puede confirmar por dos caminos, la verificación al regresar del checkout y el webhook de Stripe, y los dos pueden llegar en cualquier orden o repetirse. Con SPEI, una transferencia puede llegar incompleta, de más o cuando el pedido ya venció. Procesar dos veces el mismo pago, o confiar solo en el navegador, podía marcar pagado un pedido sin dinero o regresar el dinero de una venta válida." },
+                { label: "DECISIÓN", text: "El webhook firmado de Stripe es la fuente de verdad del pago, y cada cambio de estado del pedido es condicional. Marcar un pedido como pagado solo funciona si sigue pendiente, así que el segundo en llegar no cambia nada. Cuando no queda claro si un pago sobra, el sistema avisa y una persona decide, porque regresar el dinero de una venta real es peor que revisar un caso a mano." },
+                { label: "CÓMO", text: "Pagos con tarjeta y SPEI. El webhook verifica la firma y atiende pago exitoso, fallido, pendiente de transferencia, transferencia parcial, saldo disponible y reembolso fallido. Marcar como pagado es un update condicional sobre los estados pendientes, así un replay o la carrera con la verificación del navegador no cambian nada. Una transferencia de más se paga primero y el excedente se reembolsa después, y una que llega a un pedido vencido se le regresa al cliente." },
+                { label: "RESULTADO", text: "El proyecto procesa más de 200 pedidos al mes en producción. Un pago repetido o una carrera entre el webhook y el navegador no sobrevende stock ni cobra dos veces." },
               ],
             },
             {
               topic: "Reserva de inventario",
-              tags: ["Next.js"],
+              tags: ["Payments"],
               summary:
                 "Reservé el stock al crear el pedido y corrí un job que expira los pedidos sin pagar cada 5 minutos, así un carrito abandonado nunca bloquea inventario.",
               story: [
@@ -454,56 +411,44 @@ export const es: Content = {
                   label: "DECISIÓN",
                   text: "Reservar el inventario al crear el pedido y regresarlo si se cancela, sin conciliación manual.",
                 },
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "CÓMO", text: "Al crear el pedido, cada línea descuenta stock con un update condicional dentro de una transacción, que solo pasa si hay unidades suficientes. Si una línea no alcanza, la transacción completa se revierte y el usuario ve cuántas quedan. El pedido guarda si tomó stock, para regresarlo exacto al cancelarse o vencer. Un cron cada 5 minutos primero rescata los pedidos cuyo pago sí llegó con el webhook tarde, después vence las transferencias viejas y los pedidos sin pagar, regresa su stock e invalida el cache del catálogo." },
+                { label: "RESULTADO", text: "Un carrito abandonado regresa su stock en minutos, y dos compradores no pueden apartar la misma última unidad. Un pago que llega tarde no pierde su pedido, porque el cron lo rescata antes de vencerlo." },
               ],
             },
             {
               topic: "Panel de admin",
-              tags: ["Next.js"],
+              tags: ["Architecture"],
               summary:
-                "Diseñé el panel de admin según cómo trabaja el equipo de la tienda: subir productos, pedidos e inventario, sin necesitar a un desarrollador.",
+                "Diseñé el panel de admin alrededor de cómo trabaja el equipo que opera el proyecto, con cotizaciones, ventas de mostrador, almacén, compras y productos, sin necesitar a un desarrollador.",
               story: [
-                { label: "PROBLEMA", text: "Un dashboard genérico asume un flujo de trabajo que el equipo de la tienda no tenía." },
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "El equipo que opera el proyecto no solo vende en línea. Arma pedidos por cotización, vende en mostrador, compra material a proveedores y convierte ese material en producto. Un dashboard genérico de e-commerce solo cubre la venta en línea, y todo lo demás quedaba fuera." },
+                { label: "DECISIÓN", text: "Diseñé el panel alrededor de esos flujos, no de las tablas de la base. Cada flujo tiene su sección, y cada acción respeta las reglas del negocio, para que el equipo opere sin depender de un desarrollador." },
+                { label: "CÓMO", text: "Una cotización se convierte en venta con su dirección y su envío, y se paga con un link firmado que solo abre el correo del cliente. Las ventas de mostrador se pueden marcar como pagadas a mano, y las ventas en línea no, porque esas solo las confirma Stripe. Crear un producto descuenta del almacén el material que consume, y cada cambio de inventario invalida el cache del catálogo. El middleware solo deja entrar a /admin a usuarios con rol de admin." },
+                { label: "RESULTADO", text: "El equipo opera cotizaciones, ventas, inventario y compras desde el panel, sin pedirle cambios a desarrollo para el trabajo del día a día." },
               ],
             },
             {
               topic: "Rutas de API",
-              tags: ["Next.js", "TypeScript"],
+              tags: ["Architecture", "TypeScript"],
               summary:
-                "Construí el storefront y el panel de administración en Next.js 15 con TypeScript strict y 60+ rutas de API sobre PostgreSQL y Prisma.",
+                "Construí el sitio público y el panel de administración en Next.js 15 con TypeScript strict, y 55 rutas de API en capas sobre PostgreSQL y Prisma.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Con más de 50 rutas, la lógica vivía revuelta en una carpeta lib/ que mezclaba Prisma, Stripe, correo y utilidades puras. Una regla de negocio podía quedar dentro de un handler y repetirse en otro, y no había un lugar claro para probarla." },
+                { label: "DECISIÓN", text: "Separé el código en capas. El handler solo se encarga de HTTP, que es la sesión, el rate limit, la validación con Zod y la respuesta. Las reglas viven en use-cases, el acceso a datos en repositorios, y Prisma, Redis, Stripe y el correo en infrastructure. El precio de un pedido siempre se calcula en el servidor y nunca se toma del cliente." },
+                { label: "CÓMO", text: "Crear un pedido muestra el patrón completo. La ruta revisa la sesión, limita a 5 pedidos por minuto por usuario, valida el body con Zod y exige un Idempotency-Key, así un reintento del navegador no crea dos pedidos. La tarifa de envío llega firmada y se verifica, y el total se recalcula con los precios de la base. Las rutas que mueven dinero tienen pruebas propias, como la cancelación, la idempotencia y la verificación del pago." },
+                { label: "RESULTADO", text: "Una regla vive en un solo use-case y la usan todas las rutas que la necesitan. El cliente no puede cambiar un precio ni duplicar un pedido, y con las capas separadas la API quedó lista para migrarse a un backend en .NET, que ya tiene documentadas las rutas que debe reproducir." },
               ],
             },
             {
               topic: "Autenticación reforzada",
-              tags: ["Next.js"],
+              tags: ["Security"],
               summary:
-                "Reforcé la autenticación con blacklisting de JWT en Redis.",
+                "Hice que una sesión con JWT se pueda revocar al instante, con una blacklist en Redis que revisa el middleware y una versión de sesión en la base.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
-              ],
-            },
-            {
-              topic: "Seguimiento de errores",
-              tags: ["Next.js"],
-              summary:
-                "Instrumenté el checkout con Sentry para seguir los errores en producción.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Las sesiones usan JWT, que no se pueden revocar una vez emitidos. Si un admin bloqueaba a un usuario o alguien cambiaba su contraseña, el token viejo seguía funcionando hasta vencer." },
+                { label: "DECISIÓN", text: "Combiné dos mecanismos. Una blacklist en Redis corta la sesión al instante en el middleware, antes de llegar a cualquier página o ruta. Y una versión de sesión en la base hace que cualquier token emitido antes de un cambio de contraseña, un bloqueo o un logout forzado deje de servir. Si Redis falla, el middleware cierra el paso en lugar de dejar pasar." },
+                { label: "CÓMO", text: "Bloquear a un usuario o forzar su logout escribe su clave en Redis con una vigencia de 30 días, y desbloquearlo la borra. El middleware revisa esa clave en cada request, en las páginas y en la API, y responde 401 si existe. Cambiar la contraseña, bloquear o desbloquear incrementa la versión de sesión del usuario, y el callback del JWT la compara con la del token. Al principio un error de Redis dejaba pasar el request, y lo cambié para que falle cerrado." },
+                { label: "RESULTADO", text: "Un usuario bloqueado pierde el acceso en su siguiente request, no cuando vence su token. Una contraseña cambiada cierra todas las sesiones anteriores, y una falla de Redis no abre la puerta." },
               ],
             },
           ],

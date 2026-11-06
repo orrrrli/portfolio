@@ -389,90 +389,47 @@ export const en: Content = {
           title: "React / Next.js",
           description:
             "Shipping full-stack products with Next.js 15, TypeScript, Tailwind CSS, Prisma, and Stripe. From checkout flows to admin panels.",
-          tags: ["React", "Next.js", "TypeScript"],
+          tags: ["Payments", "Security", "Caching", "Architecture", "TypeScript"],
           bullets: [
             {
-              topic: "Component library",
-              tags: ["React"],
-              summary:
-                "Built a reusable component library with React, Remix, Tailwind and Atomic Design, adopted across several client projects.",
-              story: [
-                todo("PROBLEM"),
-                {
-                  label: "DECISION",
-                  text: "Organized components with Atomic Design and translated Figma mockups straight into them.",
-                },
-                todo("HOW"),
-                { label: "RESULT", text: "Design-to-code time went from days to hours, and the library was adopted across several projects." },
-              ],
-            },
-            {
-              topic: "Typed API client",
-              tags: ["React", "TypeScript"],
-              summary:
-                "Generated types and a typed fetch client from the backend's OpenAPI spec with openapi-ts, so the frontend cannot drift from the API contract.",
-              story: [
-                todo("PROBLEM"),
-                {
-                  label: "DECISION",
-                  text: "The two services share nothing at runtime. The OpenAPI spec is the only link between them.",
-                },
-                todo("HOW"),
-                todo("RESULT"),
-              ],
-            },
-            {
               topic: "Validation on both layers",
-              tags: ["React", "TypeScript"],
+              tags: ["Security", "TypeScript"],
               summary:
-                "Validated input with Zod on the frontend and FluentValidation on the backend, sharing one shape through the generated types.",
-              story: [todo("PROBLEM"), todo("DECISION"), todo("HOW"), todo("RESULT")],
-            },
-            {
-              topic: "Rendering strategy",
-              tags: ["Next.js"],
-              summary:
-                "Chose rendering per route: SSG for static pages, ISR for the catalog, SSR for product pages, client-side for cart and checkout, no cache for admin.",
+                "Validated the browser form and the API request with the same Zod schema, so client and server never accept different data.",
               story: [
-                { label: "PROBLEM", text: "Not every route needs the same freshness guarantee." },
-                {
-                  label: "DECISION",
-                  text: "Each route answers two questions: does the content change per user, and how often? The answer picks SSG, ISR, SSR, client-side or no cache.",
-                },
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The project takes data from sign-up, address and order forms. TypeScript types vanish at compile time, so they protect nothing at runtime, and a body with a missing or mistyped field could reach the database. Validating by hand in every form and every route duplicated the rules and let them drift apart." },
+                { label: "DECISION", text: "I put the Zod schemas in a shared folder, used by both the form and the API route. The browser validates to show the error next to the field, and the route validates again because a request can be built by hand without going through the form." },
+                { label: "HOW", text: "Forms wire the schema into react-hook-form through zodResolver. API routes run safeParse on the body before touching the database and answer 400 when it fails. Today 22 routes validate this way, and the product schemas have their own unit tests." },
+                { label: "RESULT", text: "A rule, like the format of a phone number or an address, changes in one place and applies to the form and the API at once. A hand-built request can't skip validation." },
               ],
             },
             {
-              topic: "Cache invalidation",
-              tags: ["Next.js"],
+              topic: "Catalog cache under a strict CSP",
+              tags: ["Security", "Caching"],
               summary:
-                "Served the catalog from the Full Route Cache with zero database hits, invalidated with revalidateTag('catalog') on every payment or stock change.",
+                "Kept a strict nonce-based CSP, which forces every page to render per request, and moved the catalog cache from the page to the data, so the catalog still doesn't hit the database on every visit.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                {
-                  label: "HOW",
-                  text: "At build, /catalog hits Postgres once and fills the Data Cache (3600s) and the Full Route Cache (600s). revalidateTag marks them stale, and the next request re-fetches and re-renders.",
-                },
-                { label: "RESULT", text: "Normal catalog requests make zero database hits." },
+                { label: "PROBLEM", text: "The plan was to cache whole pages, with the catalog and product pages regenerating every hour. But the CSP uses a nonce with strict-dynamic, and Next only stamps that nonce on its scripts while rendering a request. On a static page the scripts shipped without a nonce, the CSP blocked them and the page went blank." },
+                { label: "DECISION", text: "I chose the strict CSP over page caching. Every route renders per request, and the cache moved from the page to the data. Rendering is cheap, and the expensive part was querying the database on every visit." },
+                { label: "HOW", text: "The root layout forces dynamic rendering. Catalog queries are wrapped in unstable_cache with the catalog tag and a one-hour lifetime. Every confirmed payment, cancellation, expired order or inventory change calls revalidateTag('catalog'), and the next visit queries again with up-to-date stock." },
+                { label: "RESULT", text: "No script runs without its request's nonce, and regular catalog visits don't hit the database. The stock users see updates as soon as it changes, not when the hour runs out." },
               ],
             },
             {
               topic: "Stripe checkout",
-              tags: ["Next.js"],
+              tags: ["Payments"],
               summary:
                 "Built a multi-step Stripe checkout where only a webhook confirms a payment, so inventory never releases on an unconfirmed transaction.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                { label: "HOW", text: "Card and SPEI payments with idempotent order-status transitions, so concurrent checkouts never oversell stock." },
-                { label: "RESULT", text: "The store handles 200+ orders per month in production." },
+                { label: "PROBLEM", text: "A payment can be confirmed two ways, the check when the browser returns from checkout and Stripe's webhook, and both can arrive in any order or more than once. With SPEI, a bank transfer can arrive short, over, or after the order has expired. Processing the same payment twice, or trusting the browser alone, could mark an unpaid order as paid or refund a valid sale." },
+                { label: "DECISION", text: "Stripe's signed webhook is the source of truth for payment, and every order state change is conditional. Marking an order paid only works while it's still pending, so whichever arrives second changes nothing. When it's unclear whether a payment is extra, the system raises an alert and a person decides, because refunding a real sale is worse than reviewing one case by hand." },
+                { label: "HOW", text: "Card and SPEI payments. The webhook verifies the signature and handles succeeded, failed, awaiting transfer, partially funded, funds available and failed refund events. Marking paid is a conditional update over the pending states, so a replay or the race with the browser check changes nothing. An overfunded transfer is settled first and the surplus refunded afterwards, and one that lands on an expired order goes back to the customer." },
+                { label: "RESULT", text: "The project handles 200+ orders per month in production. A replayed payment or a race between the webhook and the browser never oversells stock or charges twice." },
               ],
             },
             {
               topic: "Inventory reservation",
-              tags: ["Next.js"],
+              tags: ["Payments"],
               summary:
                 "Reserved stock at order creation and ran a background job that expires unpaid orders every 5 minutes, so abandoned carts never lock inventory.",
               story: [
@@ -481,59 +438,44 @@ export const en: Content = {
                   label: "DECISION",
                   text: "Reserve inventory when the order is created and restore it on cancellation, with no manual reconciliation step.",
                 },
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "HOW", text: "When an order is created, each line takes stock with a conditional update inside a transaction, which only succeeds if enough units are left. If one line falls short, the whole transaction rolls back and the user sees how many remain. The order records whether it took stock, so it gives back the exact amount when cancelled or expired. A cron every 5 minutes first rescues orders whose payment did arrive with a late webhook, then expires stale transfers and unpaid orders, returns their stock and invalidates the catalog cache." },
+                { label: "RESULT", text: "An abandoned cart returns its stock within minutes, and two buyers can't claim the same last unit. A payment that arrives late doesn't lose its order, because the cron rescues it before expiring it." },
               ],
             },
             {
               topic: "Admin panel",
-              tags: ["Next.js"],
+              tags: ["Architecture"],
               summary:
-                "Designed the admin panel around the store team's workflow: product uploads, orders and inventory, with no developer needed.",
+                "Designed the admin panel around how the team running the project works, with quotes, counter sales, warehouse, purchasing and products, with no developer needed.",
               story: [
-                {
-                  label: "PROBLEM",
-                  text: "A generic dashboard assumes a workflow the store team did not have.",
-                },
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The team running the project doesn't just sell online. It builds orders from quotes, sells over the counter, buys material from suppliers and turns that material into products. A generic e-commerce dashboard only covers online sales, and everything else was left out." },
+                { label: "DECISION", text: "I designed the panel around those workflows, not around the database tables. Each workflow has its own section, and every action follows the business rules, so the team operates without depending on a developer." },
+                { label: "HOW", text: "A quote turns into a sale with its address and shipping, and it's paid through a signed link that only the customer's email can open. Counter sales can be marked paid by hand, and online sales can't, because only Stripe confirms those. Creating a product deducts the material it consumes from the warehouse, and every inventory change invalidates the catalog cache. The middleware only lets users with the admin role into /admin." },
+                { label: "RESULT", text: "The team runs quotes, sales, inventory and purchasing from the panel, without asking development for changes for day-to-day work." },
               ],
             },
             {
               topic: "API routes",
-              tags: ["Next.js", "TypeScript"],
+              tags: ["Architecture", "TypeScript"],
               summary:
-                "Built the storefront and admin dashboard in Next.js 15 with strict TypeScript and 60+ API routes backed by PostgreSQL and Prisma.",
+                "Built the project's public site and admin dashboard in Next.js 15 with strict TypeScript, and 55 layered API routes backed by PostgreSQL and Prisma.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "With over 50 routes, the logic lived tangled in a lib/ folder that mixed Prisma, Stripe, email and pure utilities. A business rule could end up inside one handler and be repeated in another, with no clear place to test it." },
+                { label: "DECISION", text: "I split the code into layers. The handler only deals with HTTP, meaning the session, the rate limit, Zod validation and the response. Rules live in use-cases, data access in repositories, and Prisma, Redis, Stripe and email in infrastructure. An order's price is always computed on the server and never taken from the client." },
+                { label: "HOW", text: "Creating an order shows the whole pattern. The route checks the session, limits each user to 5 orders a minute, validates the body with Zod and requires an Idempotency-Key, so a browser retry can't create two orders. The shipping rate arrives signed and is verified, and the total is recomputed from database prices. Routes that move money have their own tests, like cancellation, idempotency and payment verification." },
+                { label: "RESULT", text: "A rule lives in one use-case and every route that needs it uses it. The client can't change a price or duplicate an order, and with the layers split the API was ready to move to a .NET backend, which already documents the routes it has to reproduce." },
               ],
             },
             {
               topic: "Auth hardening",
-              tags: ["Next.js"],
+              tags: ["Security"],
               summary:
-                "Hardened authentication with Redis-backed JWT blacklisting.",
+                "Made JWT sessions revocable on the spot, with a Redis blacklist the middleware checks and a session version in the database.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
-              ],
-            },
-            {
-              topic: "Error tracking",
-              tags: ["Next.js"],
-              summary:
-                "Instrumented checkout with Sentry for production error tracking.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "Sessions use JWTs, which can't be revoked once issued. If an admin blocked a user or someone changed their password, the old token kept working until it expired." },
+                { label: "DECISION", text: "I combined two mechanisms. A Redis blacklist cuts the session off instantly in the middleware, before any page or route runs. And a session version in the database makes any token issued before a password change, a block or a forced logout stop working. If Redis fails, the middleware closes the door instead of letting the request through." },
+                { label: "HOW", text: "Blocking a user or forcing their logout writes their key to Redis for 30 days, and unblocking deletes it. The middleware checks that key on every request, for pages and the API, and answers 401 when it exists. Changing the password, blocking or unblocking increments the user's session version, and the JWT callback compares it with the token's. At first a Redis error let the request through, and I changed it to fail closed." },
+                { label: "RESULT", text: "A blocked user loses access on their next request, not when their token expires. A changed password ends every earlier session, and a Redis failure doesn't open the door." },
               ],
             },
           ],
