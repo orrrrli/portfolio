@@ -64,6 +64,11 @@ jobs:
           fingerprint: ${{ secrets.VPS_FINGERPRINT }}
           script: |
             set -e
+            # Empty, throwaway Docker config: other apps' deploys log the shared `deploy` user in to
+            # ghcr.io with their own short-lived tokens, and Docker would send that stale credential
+            # here and get "denied". The package is public, so the pull needs no credentials.
+            export DOCKER_CONFIG="$(mktemp -d)"
+            trap 'rm -rf "$DOCKER_CONFIG"' EXIT
             cd /home/rokev-dynamics/portfolio
             git fetch origin main
             git reset --hard ${{ github.sha }}
