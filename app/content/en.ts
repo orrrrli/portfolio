@@ -250,24 +250,18 @@ export const en: Content = {
           title: "C# / .NET Core",
           description:
             "Building production REST APIs with ASP.NET Core 8, Clean Architecture, CQRS/MediatR, EF Core, and FluentValidation. Patterns I use on every backend.",
-          tags: ["C# / .NET", "PostgreSQL", "Docker"],
+          tags: ["C# / .NET", "PostgreSQL"],
           bullets: [
             {
               topic: "CQRS",
               tags: ["C# / .NET"],
               summary:
-                "Designed a shared Command interface so every Command inserts its data through one common path, instead of re-declaring that logic in each handler.",
+                "Centralized saving for Commands in the MediatR pipeline, so every Command saves exactly once and never when its handler fails.",
               story: [
-                {
-                  label: "PROBLEM",
-                  text: "Every Command handler had to declare the same insert logic by hand, repeating it across the codebase.",
-                },
-                {
-                  label: "DECISION",
-                  text: "Defined a Command interface that every Command implements, so inserting data lives in one shared place instead of in each handler.",
-                },
-                { label: "HOW", text: "[Pipeline behavior, generic handler or base class? One or two sentences.]", pending: true },
-                { label: "RESULT", text: "[What changed, only what is true.]", pending: true },
+                { label: "PROBLEM", text: "Saving was spread across 13 repositories. Each one called its own SaveChangesAsync, so there was no single place deciding when a Command saves, or stopping a save when the handler returned an error." },
+                { label: "DECISION", text: "I moved saving into the MediatR pipeline, with two sibling interfaces that don't inherit from each other. ICommand saves once at the end and, on a transient failure, retries only the write. ITransactionalCommand wraps the whole handler in a transaction that retries in full, and I kept it for the 4 Commands that must see the result of a write before continuing. The other 20 stayed on ICommand, because replaying the whole handler would resend external calls, like a single-use OAuth code." },
+                { label: "HOW", text: "I did it in phases, with tests green at each one. First I added the interfaces and the behavior with nothing using them, then I migrated the 24 Commands and 28 Queries, and last I removed SaveChangesAsync from the repositories. The Testcontainers integration tests caught two things the unit tests couldn't see. The DbContext had NoTracking set globally, so I added AsTracking() to every read that feeds a write. And EF's automatic retry doesn't accept hand-opened transactions, so I moved them inside its execution strategy." },
+                { label: "RESULT", text: "A new Command carries no saving code. The handler only changes entities and the pipeline decides when to save, so nobody can forget a SaveChangesAsync or save after an error. The 13 repositories were left with reads and changes only, and a retry after a transient failure no longer repeats external calls like the Google login." },
               ],
             },
             {
@@ -276,16 +270,10 @@ export const en: Content = {
               summary:
                 "Split the API into Domain, Application, Infrastructure, API and Contracts, with dependencies pointing inward so business rules never reach the route handlers.",
               story: [
-                {
-                  label: "PROBLEM",
-                  text: "The brief was about REST API design and Clean Architecture, so the layer boundaries were the deliverable, not the feature set.",
-                },
-                {
-                  label: "DECISION",
-                  text: "Domain is a pure C# project with zero NuGet dependencies. API depends on Application and Infrastructure, never on Domain. Contracts holds the only DTOs that travel over the wire.",
-                },
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The API handles sensitive data and business rules that had to be testable without a database. And the database and hosting were going to change as the project grew." },
+                { label: "DECISION", text: "I split the API into five projects with dependencies pointing inward. Domain depends only on ErrorOr. Application defines the use cases and the interfaces Infrastructure implements, like IUserRepository, and knows nothing about EF Core or HTTP. Infrastructure is the only place EF Core, Npgsql, JWT and BCrypt live. Contracts holds the DTOs that travel over HTTP." },
+                { label: "HOW", text: "The rules live in the project references, so a dependency pointing outward doesn't compile. Handlers depend on Application's interfaces, never on the DbContext. API wires everything up as the composition root, with Carter modules. I wrote each layer's rules into an architecture document that gets updated whenever a layer changes." },
+                { label: "RESULT", text: "Business rules are tested without starting a database, because handlers only see interfaces. When I moved the password reset email to an Outbox, the handler only swapped one interface for another, and the worker that sends the email lives entirely in Infrastructure. And a layering mistake shows up at compile time, not in code review." },
               ],
             },
             {
@@ -294,16 +282,10 @@ export const en: Content = {
               summary:
                 "Modeled the API as Carter modules on Minimal APIs: one module per feature area, each endpoint with its own handler, validator and contract, no controllers.",
               story: [
-                todo("PROBLEM"),
-                {
-                  label: "DECISION",
-                  text: "Each feature area is one CarterModule that maps its routes under a route group with RequireAuthorization().",
-                },
-                {
-                  label: "HOW",
-                  text: "Each handler is a static method that dispatches a MediatR command or query and maps the result to a response.",
-                },
-                todo("RESULT"),
+                { label: "PROBLEM", text: "With Minimal APIs, the API's 54 routes would have ended up loose in Program.cs, not grouped by area and not sharing their authorization. Finding an endpoint or changing an area's permissions would have meant going route by route." },
+                { label: "DECISION", text: "I split the routes into one Carter module per role or area instead of controllers. Each module opens a route group and sets authorization once for the whole group. Each area requires its role, and the Auth routes stay anonymous." },
+                { label: "HOW", text: "Each endpoint is a static method that takes the request from Contracts, turns it into a Command or Query with Mapster and sends it through MediatR. The ErrorOr result becomes the HTTP response, or an error in the same shape across the whole API. Each route declares its response types, which generate the OpenAPI docs." },
+                { label: "RESULT", text: "The 54 routes live in 5 modules, and no endpoint holds business logic. Adding one means mapping the route, converting the request and sending it, because the pipeline already handles validation and saving." },
               ],
             },
             {
@@ -311,43 +293,34 @@ export const en: Content = {
               tags: ["C# / .NET"],
               summary: "Ran FluentValidation through a MediatR pipeline behavior, so handlers never call validators directly.",
               story: [
-                todo("PROBLEM"),
-                {
-                  label: "DECISION",
-                  text: "Validation runs as a MediatR pipeline behavior in front of every handler, not inside the handlers.",
-                },
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The app's forms had to flag every invalid field with its message in Spanish. If each handler called its own validators, one could easily be forgotten, or the API could return only the first error and make the user fix and resend field by field." },
+                { label: "DECISION", text: "I ran FluentValidation as a MediatR pipeline behavior that goes before every other one. An invalid request never reaches the handler or opens a transaction, and the response carries every failing field, not just the first." },
+                { label: "HOW", text: "The behavior runs all of the request's validators in parallel and turns each failure into an ErrorOr error, with the field name in camelCase as its code. When every error is a validation error, the API answers a 400 grouped by field, and the frontend puts each message next to its field. The 20 validators register themselves from the assembly." },
+                { label: "RESULT", text: "No handler calls a validator or checks fields before doing its work. Users see all their errors at once, each next to its field, and a new validator works as soon as it's written." },
               ],
             },
             {
               topic: "API security",
               tags: ["C# / .NET"],
               summary:
-                "Protected the API with JWT bearer auth, BCrypt hashing, ErrorOr for consistent error responses, and a fixed-window rate limiter (60 req/min per IP).",
+                "Protected the API with JWT in HttpOnly cookies, BCrypt password hashing, rate limits on login and sign-up, and responses that don't reveal which records exist.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                {
-                  label: "HOW",
-                  text: "JWT issuance and BCrypt hashing live in Infrastructure, behind interfaces declared in Application. Every endpoint returns ErrorOr results, so errors share one shape.",
-                },
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The API stores its users' sensitive data. A stolen token, a brute-forced password or an endpoint revealing which IDs exist would expose that information." },
+                { label: "DECISION", text: "I delivered tokens in HttpOnly cookies, not in the body, because any script on the page can read localStorage and an XSS would take the token. I put the per-IP rate limit on login and sign-up, not on the whole API. And when a user asks for something that isn't theirs, the API answers Forbidden whether it exists or not, so nobody can probe IDs." },
+                { label: "HOW", text: "The access token lasts 15 minutes and the refresh token 7 days, and the refresh cookie only travels to /api/auth, not on every call. Login allows 10 attempts per minute and sign-up 5, with a fixed window per IP. BCrypt and JWT issuance live in Infrastructure, behind Application interfaces. Two PR reviews found endpoints that answered NotFound or Forbidden depending on whether the record existed, and I made them answer the same." },
+                { label: "RESULT", text: "An XSS can't read the tokens, and brute force against login is cut off at 10 attempts per minute. No endpoint lets you learn whether a record that isn't yours exists." },
               ],
             },
             {
               topic: "Data access",
               tags: ["C# / .NET", "PostgreSQL"],
               summary:
-                "Restricted task visibility in the read handler's query, so a user only sees tasks they created or were assigned, not just a UI filter.",
+                "Made every handler check who owns a record in the same query that reads it, so users reach only their own data or the data of someone who granted them access.",
               story: [
-                todo("PROBLEM"),
-                {
-                  label: "DECISION",
-                  text: "The filter lives in the query of the read handler, not in the UI, so the rule holds for any client that calls the API.",
-                },
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "Handlers first looked up the record and then checked whether it belonged to the user, in two steps. That order gave different answers for \"doesn't exist\" and \"isn't yours\", and each handler repeated the check its own way." },
+                { label: "DECISION", text: "I moved the check into the query. The repository looks up the record already filtered by the signed-in user, so \"doesn't exist\" and \"isn't yours\" are the same result and the API answers Forbidden for both. Seeing another user's data takes an accepted link between the two, and that rule lives in a single guard." },
+                { label: "HOW", text: "Every handler follows the same order. It gets the user from the session, loads the record filtered by owner, and only then does its work. I migrated the handlers area by area and removed the two-step loads. The shared guard checks that the user owns their profile and holds an accepted link with the other user, and 8 endpoints use it." },
+                { label: "RESULT", text: "A user's data is visible only to them or to someone with an accepted link, and the rule lives in the query, not in the UI. A new endpoint follows the same order and calls the same guard." },
               ],
             },
             {
@@ -798,7 +771,7 @@ export const en: Content = {
                 todo("DECISION"),
                 {
                   label: "HOW",
-                  text: "The API image runs migrations on startup and exposes GET /health for the compose health check. The frontend is a Vite build served by a small static server.",
+                  text: "The API image runs migrations on startup and exposes GET /health for the compose health check. The frontend is a Vite build served by a small static server. In a multi-service system, a Playwright scraper runs as a worker in its own container, next to the API and the frontend.",
                 },
                 {
                   label: "RESULT",
@@ -807,14 +780,62 @@ export const en: Content = {
               ],
             },
             {
-              topic: "CI/CD",
-              tags: ["Docker", "GitHub Actions"],
+              topic: "Minimal, non-root images",
+              tags: ["Docker"],
               summary:
-                "GitHub Actions runs dotnet test and npm test on every push. On merge to main, path-filtered workflows build images, push them to GHCR, and the VPS rolls the stack forward.",
+                "Built every image with a multi-stage build, and no container runs as root. The Go API ends in a distroless image with no shell.",
+              story: [
+                todo("PROBLEM"),
+                { label: "DECISION", text: "I split the build from the final image. The SDK, compilers and dev dependencies stay in the build stage and never reach production. No container runs as root, so a flaw in the app doesn't hand whoever exploits it root inside the container." },
+                { label: "HOW", text: "The Go API ends in distroless/static:nonroot, which ships CA certs and time zones but no shell, and runs as uid 65532. The .NET APIs run as the official image's $APP_UID user. Next.js builds in standalone mode, so the image carries only the server and what it uses. The static site runs on nginx-unprivileged, which needs no root, with a HEALTHCHECK." },
+                todo("RESULT"),
+              ],
+            },
+            {
+              topic: "Migrations before start",
+              tags: ["Docker"],
+              summary:
+                "The database is migrated before the app starts, so no new version ever runs against an old schema.",
+              story: [
+                todo("PROBLEM"),
+                { label: "DECISION", text: "I made migration a step of startup, not a manual deploy command." },
+                { label: "HOW", text: "In Compose, a migrate service runs the EF Core migrations bundle once, after Postgres passes its health check. The API only starts once that service finishes successfully. In Next.js with Prisma, the container runs prisma migrate deploy and then starts the server." },
+                todo("RESULT"),
+              ],
+            },
+            {
+              topic: "Encrypted backups in a container",
+              tags: ["Docker"],
+              summary:
+                "A container backs up the database every night with pg_dump, encrypts the backup with age and uploads it to an R2 bucket.",
+              story: [
+                todo("PROBLEM"),
+                { label: "DECISION", text: "The backup is encrypted to a public key, so the server never holds the key to read it. The R2 keys live in a separate env file that only the backup container receives, never the API." },
+                { label: "HOW", text: "The image starts from the same Postgres version as the database, so pg_dump always matches the server's major version. crond runs the script nightly and passes it the container's environment, so no file with secrets is written to disk. The dump is written in full before upload, so a pg_dump that fails halfway never uploads a truncated file. Retention deletes old backups only after a successful upload." },
+                todo("RESULT"),
+              ],
+            },
+            {
+              topic: "Local e2e environment",
+              tags: ["Docker"],
+              summary:
+                "Set up a separate compose for the e2e tests, with a local Redis instead of Upstash.",
               story: [
                 todo("PROBLEM"),
                 todo("DECISION"),
-                todo("HOW"),
+                { label: "HOW", text: "The compose starts Redis and serverless-redis-http, a proxy that exposes Redis through the same HTTP API as Upstash. So the app talks to a local Redis with the same client it uses in production." },
+                todo("RESULT"),
+              ],
+            },
+            {
+              topic: "CI/CD to a VPS",
+              tags: ["Docker", "GitHub Actions", "Nginx"],
+              summary:
+                "GitHub Actions runs the tests on every push. On merge to main it builds the images, pushes them to GHCR tagged with the commit, and the VPS runs exactly that version.",
+              story: [
+                todo("PROBLEM"),
+                todo("DECISION"),
+                { label: "HOW", text: "Path-filtered workflows run dotnet test and npm test on every push. On deploy, buildx builds the images in a matrix with the GHA cache and tags them with the commit SHA. The workflow reaches the VPS over SSH, checking the host key against known_hosts, and starts that SHA." },
                 { label: "RESULT", text: "Every merge to main deploys with no manual step." },
               ],
             },
@@ -881,18 +902,6 @@ export const en: Content = {
                 todo("DECISION"),
                 todo("HOW"),
                 { label: "RESULT", text: "Reconnections dropped 92%." },
-              ],
-            },
-            {
-              topic: "CI/CD to a VPS",
-              tags: ["Docker", "GitHub Actions", "Nginx"],
-              summary:
-                "Implemented a CI/CD pipeline with GitHub Actions, Docker Compose, Nginx and GHCR, deploying automatically to a Linux VPS with reproducible environments.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
               ],
             },
           ],
