@@ -17,6 +17,7 @@ export const es: Content = {
       "Software Engineer enfocado en IA, en Ensenada",
       "Creando sistemas confiables y experiencias de usuario intuitivas.",
     ],
+    stackTip: "Ver trabajo con",
     cta: { projects: "Ver proyectos", blog: "Leer el blog", contact: "Contacto" },
     sections: {
       profile: "perfil",

@@ -33,6 +33,7 @@ export const en: Content = {
       "Designing reliable systems and intuitive user experiences.",
     ],
     stack: ["C# / .NET", "React", "Next.js", "TypeScript", "PostgreSQL", "Docker"],
+    stackTip: "See work with",
     cta: { projects: "View projects", blog: "Read the blog", contact: "Contact" },
     sections: {
       profile: "profile",

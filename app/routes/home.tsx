@@ -1,10 +1,11 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { DotMorph, type DotShape } from "../components/DotMorph";
-import { SkillTabs } from "../components/SkillTabs";
+import { type SkillView, SkillTabs, viewForTag } from "../components/SkillTabs";
 import { getContent, langFromPath, useContent } from "../content";
 import { listEntries } from "../content/mdx";
 import { seoMeta } from "../content/seo";
+import { STACK_ICONS } from "../content/stackIcons";
 import type { ExperienceSection, FocusIcon } from "../content/types";
 import "../styles/home.css";
 import type { Route } from "./+types/home";
@@ -52,6 +53,9 @@ const RIGHT_ART: DotShape[] = [
   { src: "/images/art/cloud.svg", from: "--accent-violet", to: "--accent" },
   { src: "/images/art/code.svg", from: "--accent-amber", to: "--accent-violet" },
   { src: "/images/art/dotnet.svg", from: "--accent-violet", to: "--accent-violet" },];
+
+/** Copies of the stack list per marquee track: 6 logos are about 650px, so 4 cover a 2560px screen. */
+const MARQUEE_REPEAT = 4;
 
 /** Project cards show this many stack chips, then "+N". */
 const MAX_CHIPS = 5;
@@ -105,6 +109,25 @@ const SOCIAL_ICONS: Record<string, ReactNode> = {
 };
 
 /** Eases the timeline's --progress toward the viewport center and lights each entry the tip has passed. */
+/** Id of the skill tabs, the target of the marquee links. */
+const SKILLS_ID = "skills";
+
+/** Marquee item: the tech's logo (or its name if there is no logo), linking to the skill tab that shows that work. */
+function StackLogo({ tech, tip, hidden, onPick }: { tech: string; tip: string; hidden: boolean; onPick: () => void }) {
+  const d = STACK_ICONS[tech];
+  return (
+    <a href={`#${SKILLS_ID}`} className="marquee-link" data-tip={tip} aria-label={tip} tabIndex={hidden ? -1 : undefined} onClick={onPick}>
+      {d ? (
+        <svg className="marquee-logo" viewBox="0 0 24 24" aria-hidden="true">
+          <path d={d} fill="currentColor" />
+        </svg>
+      ) : (
+        <span className="mono">{tech}</span>
+      )}
+    </a>
+  );
+}
+
 function useTimelineProgress() {
   const ref = useRef<HTMLOListElement>(null);
 
@@ -148,6 +171,7 @@ function useTimelineProgress() {
 
 export default function Home() {
   const { lang, prefix, person, social, home, about, work, blog } = useContent();
+  const [skillView, setSkillView] = useState<SkillView>({ skill: 0, filter: null });
   const projects = listEntries("work", lang);
   const posts = listEntries("build-learn", lang);
   const timelineRef = useTimelineProgress();
@@ -329,21 +353,29 @@ export default function Home() {
           <h2>{about.technical.title}</h2>
         </div>
 
-        <div className="marquee mono">
-          <ul className="marquee-track">
-            {home.stack.map((tech) => (
-              <li key={tech}>{tech}</li>
-            ))}
-          </ul>
-          <ul className="marquee-track" aria-hidden="true">
-            {home.stack.map((tech) => (
-              <li key={tech}>{tech}</li>
-            ))}
-          </ul>
+        <div className="marquee">
+          {/* Two identical tracks loop seamlessly; each repeats the list so one track is wider than the screen. */}
+          {[0, 1].map((track) => (
+            <ul key={track} className="marquee-track" aria-hidden={track > 0 || undefined}>
+              {Array.from({ length: MARQUEE_REPEAT }, (_, r) =>
+                home.stack.map((tech) => (
+                  // Only the first pass of the first track is read out.
+                  <li key={`${r}-${tech}`} aria-hidden={r > 0 || undefined}>
+                    <StackLogo
+                      tech={tech}
+                      tip={`${home.stackTip} ${tech}`}
+                      hidden={track > 0 || r > 0}
+                      onPick={() => setSkillView(viewForTag(about.technical.skills, tech))}
+                    />
+                  </li>
+                )),
+              )}
+            </ul>
+          ))}
         </div>
 
         <div className="container">
-          <SkillTabs skills={about.technical.skills} />
+          <SkillTabs id={SKILLS_ID} skills={about.technical.skills} view={skillView} onView={setSkillView} />
         </div>
       </section>
 

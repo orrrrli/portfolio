@@ -23,6 +23,8 @@ export type Home = {
   headline: string[];
   subline: string[];
   stack: string[];
+  /** Tooltip on a stack logo, followed by the tech name */
+  stackTip: string;
   /** Hero button labels */
   cta: { projects: string; blog: string; contact: string };
   /** Nav and section labels; keys are the stable anchor ids */

@@ -1,8 +1,20 @@
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useId, useRef } from "react";
 import type { About } from "../content/types";
 import { SkillBullet } from "./SkillBullet";
 
 type Skill = About["technical"]["skills"][number];
+
+/** Which skill tab is open and which of its chips filters the bullets. Owned by the page so other sections can open a tab. */
+export type SkillView = { skill: number; filter: string | null };
+
+/** The tab with the most bullets tagged `tag`, with that chip on. */
+export function viewForTag(skills: Skill[], tag: string): SkillView {
+  const counts = skills.map((s) => s.bullets.filter((b) => b.tags?.includes(tag)).length);
+  return { skill: counts.indexOf(Math.max(...counts)), filter: tag };
+}
+
+const motion = (): ScrollBehavior =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
 /** The tab row is rendered three times side by side; the middle copy holds the real tabs. */
 const COPIES = [0, 1, 2] as const;
@@ -17,14 +29,22 @@ function period(el: HTMLDivElement) {
   return first && nextFirst ? nextFirst.offsetLeft - first.offsetLeft : 0;
 }
 
+/** SVG instead of the ‹ › glyphs, which sit off-center in the font's line box. */
+function Chevron({ d }: { d: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+
 /**
  * One tab per skill; only the selected skill's card is shown. ARIA tabs pattern with arrow-key
  * navigation. The tab row scrolls as an endless loop: when a scroll settles outside the middle
  * copy, it jumps by exactly one copy, which looks identical.
  */
-export function SkillTabs({ skills }: { skills: Skill[] }) {
-  const [active, setActive] = useState(0);
-  const [filter, setFilter] = useState<string | null>(null);
+export function SkillTabs({ id, skills, view, onView }: { id: string; skills: Skill[]; view: SkillView; onView: (view: SkillView) => void }) {
+  const { skill: active, filter } = view;
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const list = useRef<HTMLDivElement>(null);
   const settle = useRef<number | undefined>(undefined);
@@ -32,10 +52,7 @@ export function SkillTabs({ skills }: { skills: Skill[] }) {
   const skill = skills[active];
   const bullets = filter ? skill.bullets.filter((b) => b.tags?.includes(filter)) : skill.bullets;
 
-  const selectTab = (i: number) => {
-    setActive(i);
-    setFilter(null);
-  };
+  const selectTab = (i: number) => onView({ skill: i, filter: null });
 
   useEffect(() => {
     const start = () => {
@@ -47,6 +64,17 @@ export function SkillTabs({ skills }: { skills: Skill[] }) {
     // Web fonts change tab widths after first paint.
     document.fonts?.ready.then(start);
   }, []);
+
+  // A tab opened from outside (or by arrow key) may sit under the fades: bring it to the middle.
+  useEffect(() => {
+    const el = list.current;
+    const tab = tabs.current[active];
+    if (!el || !tab) return;
+    const row = el.getBoundingClientRect();
+    const box = tab.getBoundingClientRect();
+    if (box.left >= row.left + PEEK_PX && box.right <= row.right - PEEK_PX) return;
+    el.scrollBy({ left: box.left + box.width / 2 - (row.left + row.width / 2), behavior: motion() });
+  }, [active]);
 
   // ponytail: wraps on a 150 ms debounce instead of `scrollend`, which Safari lacked until recently.
   const onScroll = () => {
@@ -64,8 +92,7 @@ export function SkillTabs({ skills }: { skills: Skill[] }) {
   const scrollTabs = (dir: 1 | -1) => {
     const el = list.current;
     if (!el) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollBy({ left: dir * el.clientWidth * 0.6, behavior: reduce ? "auto" : "smooth" });
+    el.scrollBy({ left: dir * el.clientWidth * 0.6, behavior: motion() });
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -78,11 +105,11 @@ export function SkillTabs({ skills }: { skills: Skill[] }) {
   };
 
   return (
-    <div className="skill-tabs">
+    <div id={id} className="skill-tabs">
       <div className="skill-tabbar">
         {/* Outside the tablist: keyboard users already move between tabs with the arrow keys. */}
         <button type="button" className="skill-scroll" aria-label="Scroll tabs left" tabIndex={-1} onClick={() => scrollTabs(-1)}>
-          ‹
+          <Chevron d="M10 3 L5 8 L10 13" />
         </button>
         <div ref={list} role="tablist" className="skill-tablist mono" onKeyDown={onKeyDown} onScroll={onScroll}>
           {COPIES.flatMap((copy) =>
@@ -116,7 +143,7 @@ export function SkillTabs({ skills }: { skills: Skill[] }) {
           )}
         </div>
         <button type="button" className="skill-scroll" aria-label="Scroll tabs right" tabIndex={-1} onClick={() => scrollTabs(1)}>
-          ›
+          <Chevron d="M6 3 L11 8 L6 13" />
         </button>
       </div>
 
@@ -131,7 +158,7 @@ export function SkillTabs({ skills }: { skills: Skill[] }) {
                   type="button"
                   aria-pressed={filter === tag}
                   disabled={count === 0}
-                  onClick={() => setFilter(filter === tag ? null : tag)}
+                  onClick={() => onView({ skill: active, filter: filter === tag ? null : tag })}
                 >
                   {tag} <span className="skill-filter-count">{count}</span>
                 </button>

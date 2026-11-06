@@ -1,6 +1,6 @@
+/* No divider: a border would sit off the fixed background grid and read as a stray line. */
 .block {
   padding-block: 5rem;
-  border-top: 1px solid var(--line);
 }
 
 .sub-title {
@@ -464,21 +464,99 @@
 .marquee {
   display: flex;
   overflow: hidden;
-  margin-bottom: 2.5rem;
-  border-block: 1px solid var(--line);
+  /* mask-image hides anything outside the box, so the box reaches 3rem above the band for
+     the tooltips; the negative margin keeps the layout. */
+  margin: -3rem 0 2.5rem;
+  padding-top: 3rem;
   mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  /* The extra top area sits over the heading: let clicks through to it. */
+  pointer-events: none;
+}
+
+.marquee-track {
+  pointer-events: auto;
 }
 
 .marquee-track {
   display: flex;
   flex-shrink: 0;
-  gap: 3rem;
+  align-items: center;
+  gap: 4.5rem;
   margin: 0;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 2.25rem;
   list-style: none;
   font-size: 1.1rem;
   color: var(--muted);
-  animation: marquee 30s linear infinite;
+  animation: marquee 90s linear infinite;
+}
+
+/* Stop so a moving logo can be pointed at and clicked. */
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee-track li {
+  display: flex;
+}
+
+.marquee-link {
+  position: relative;
+  display: flex;
+  color: inherit;
+  text-decoration: none;
+  transition: color 200ms, transform 200ms ease;
+}
+
+.marquee-link:hover,
+.marquee-link:focus-visible {
+  color: var(--accent);
+  transform: translateY(-6px);
+}
+
+.marquee-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: var(--radius);
+}
+
+.marquee-logo {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+/* Tooltip from the link's data-tip; aria-label carries the same text for screen readers. */
+.marquee-link::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 0.75rem);
+  left: 50%;
+  translate: -50% 4px;
+  padding: 0.35rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms, translate 150ms;
+}
+
+.marquee-link:hover::after,
+.marquee-link:focus-visible::after {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-link,
+  .marquee-link::after {
+    transition: none;
+  }
 }
 
 @keyframes marquee {
@@ -648,6 +726,11 @@
 }
 
 /* Skill tabs: one skill visible at a time, full container width. */
+/* Marquee links jump here: clear the 3.5rem sticky header. */
+.skill-tabs {
+  scroll-margin-top: 5rem;
+}
+
 /* Arrow buttons around one row of tabs that scrolls sideways instead of wrapping. The base
    line is an inset shadow so the active tab's border draws over it without a negative margin,
    which overflow would clip. */
@@ -678,23 +761,28 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
-  font: inherit;
-  font-size: 1.1rem;
-  line-height: 1;
-  color: var(--accent);
-  background: none;
+  color: var(--muted);
+  /* Lit from above: lighter top, top-edge highlight, soft drop shadow. */
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--text) 10%, var(--surface)), var(--bg-raised) 75%);
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.45);
   cursor: pointer;
-  transition: border-color 150ms, background-color 150ms;
+  transition: color 150ms, border-color 150ms, box-shadow 150ms;
 }
 
 .skill-scroll:hover {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 2px 10px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .skill-tablist button {
