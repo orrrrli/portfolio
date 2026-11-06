@@ -115,7 +115,7 @@ export const es: Content = {
               title: "Backend (.NET)",
               achievements: [
                 "Diseñé e implementé más de 100 endpoints REST con ASP.NET Core 8, C# y EF Core, siguiendo Clean Architecture y CQRS.",
-                "Implementé paginación por cursor en un módulo con 5,000+ registros y 20+ propiedades, reduciendo el tiempo de consulta por página de 1–2 s a 500 ms en promedio.",
+                "Implementé paginación por cursor en un módulo con 15,000+ registros y 100+ propiedades, reduciendo el tiempo de consulta por página de 1–2 s a 500 ms en promedio.",
                 "Diseñé un sistema de logging estructurado en producción con acceso por roles: el equipo de soporte identifica errores directamente, sin escalar a desarrollo.",
                 "Escribí una suite de pruebas unitarias (xUnit, Moq) que cubre rutas positivas y negativas de todos los endpoints, detectando regresiones antes de llegar a producción.",
               ],
@@ -300,70 +300,51 @@ export const es: Content = {
               ],
             },
             {
-              topic: "API REST",
-              tags: ["C# / .NET"],
-              summary:
-                "Entregué más de 100 endpoints REST con ASP.NET Core 8 y Clean Architecture, en producción en todos los departamentos del hospital.",
-              story: [todo("PROBLEMA"), todo("DECISIÓN"), todo("CÓMO"), todo("RESULTADO")],
-            },
-            {
               topic: "Logging por rol",
               tags: ["C# / .NET"],
               summary:
-                "Construí un sistema de logging por rol que soporte usa a diario, y con eso dejaron de escalar errores al equipo de desarrollo.",
+                "Construí un sistema de logging por rol con Serilog que soporte consulta desde la app, y los errores que llegaban a desarrollo varias veces por semana bajaron a unos pocos al mes.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Soporte resuelve los errores por su cuenta todos los días, sin escalarlos a desarrollo." },
+                { label: "PROBLEMA", text: "Cuando algo fallaba, un dev tenía que encontrar qué flujo se había roto, explicárselo a soporte, y soporte se lo explicaba al cliente. Pasaba varias veces por semana, y casi nunca eran bugs. Eran permisos, datos mal capturados o errores que nadie entendía porque la lógica de negocio era muy extensa." },
+                { label: "DECISIÓN", text: "Hice un log con dos vistas, una para soporte y otra para desarrollo. Soporte ve un mensaje claro y la hora, y desarrollo ve el detalle completo. Descarté una herramienta externa porque soporte necesitaba una versión simplificada, no un panel pensado para devs." },
+                { label: "CÓMO", text: "Un middleware atrapa los errores y los escribe con Serilog en una tabla de SQL Server. Cada log lleva un ID de correlación, así un flujo que pasa por varios endpoints se lee como una sola historia. Soporte lo consulta en una pantalla dentro de la app de Kotlin, con filtros por fecha, usuario, módulo y severidad, porque no es lo mismo un crash que un error por falta de datos." },
+                { label: "RESULTADO", text: "Los escalamientos bajaron de varias veces por semana a algunos esporádicos al mes. Las 5 personas de soporte resuelven por su cuenta los casos de permisos y datos, y desarrollo dejó de interrumpir su trabajo para investigar errores." },
               ],
             },
             {
               topic: "Contratos de API",
               tags: ["C# / .NET"],
               summary:
-                "Acordé contratos de API con el equipo móvil (Kotlin/Jetpack Compose), así los dos equipos avanzaron en paralelo.",
+                "Hice que cada ruta declare su contrato, así el spec de OpenAPI describe exactamente lo que responde la API, incluidos sus errores.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Backend y móvil avanzaron en paralelo, con menos retrasos de integración." },
+                { label: "PROBLEMA", text: "Las rutas respondían con un objeto anónimo envuelto en data. El spec de OpenAPI no podía describir esas respuestas ni qué errores regresaba cada endpoint, así que el frontend se escribía leyendo el código de la API." },
+                { label: "DECISIÓN", text: "Hice que el contrato se declare en cada ruta, junto al endpoint. Cada una dice qué Response regresa y con qué status, y una envoltura tipada mantiene el mismo JSON. Los errores siguen un solo formato, con el título en español para el usuario y un code estable en inglés para que el cliente decida qué hacer." },
+                { label: "CÓMO", text: "Cada ruta declara su Response y un Produces por cada status que puede regresar, y de ahí sale el spec. Los nombres de Request y Response son únicos en toda la API, porque son el id del schema, y un 201 nunca regresa un objeto anónimo. Lo dejé escrito como regla del proyecto, así cada módulo nuevo sale con su contrato." },
+                { label: "RESULTADO", text: "El spec describe 145 rutas con su respuesta y sus errores, y el frontend reacciona a los errores por su code, como cuando se cierra una sesión de edición. Generar los tipos del frontend desde el spec quedó como siguiente paso, sin trabajo pendiente en la API." },
               ],
             },
             {
               topic: "Paginación por cursor",
               tags: ["C# / .NET"],
               summary:
-                "Implementé paginación por cursor en un módulo con 5,000+ registros y 20+ propiedades.",
+                "Cambié la carga inicial de la app móvil a paginación por cursor sobre 15,000+ registros y 100+ propiedades, y la carga completa bajó de casi 30 minutos a 3–5.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "El tiempo de consulta por página bajó de 1–2 s a 500 ms en promedio." },
+                { label: "PROBLEMA", text: "Al abrir la app móvil por primera vez había que bajar toda la configuración inicial, más de 15,000 registros con más de 100 propiedades. La API paginaba con offset, que se vuelve más lento mientras más avanza, y el usuario se quedaba casi 30 minutos viendo una pantalla de carga." },
+                { label: "DECISIÓN", text: "Cambié el offset por un cursor. Con offset, la base recorre todas las filas anteriores en cada página, y con cursor cada página empieza justo donde terminó la anterior. No hacía falta saltar a una página específica, porque la pantalla solo tenía que bajar todo en orden." },
+                { label: "CÓMO", text: "El cursor combina fecha, ID y una etiqueta de la tabla de origen, porque la carga junta registros de varias tablas en una sola secuencia. Agregué un índice sobre esas columnas, y cada página trae solo las propiedades que la app necesita, con una proyección. La app de Kotlin pide la siguiente página con el cursor de la anterior hasta terminar." },
+                { label: "RESULTADO", text: "Cada página carga en 500 ms, y la carga completa en la app bajó de casi 30 minutos a 3–5 minutos." },
               ],
             },
             {
-              topic: "Pruebas unitarias",
+              topic: "Estrategia de pruebas",
               tags: ["C# / .NET"],
               summary:
-                "Escribí una suite de pruebas con xUnit y Moq que cubre las rutas positivas y negativas de todos los endpoints.",
+                "Armé las pruebas de la API en tres niveles con xUnit, NSubstitute y Testcontainers, y más de 8,000 casos corren en cada PR y antes de cada deploy.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Las regresiones se detectaban antes de llegar a producción." },
-              ],
-            },
-            {
-              topic: "Despliegues a producción",
-              tags: ["C# / .NET"],
-              summary:
-                "Gestioné los despliegues a producción en IIS y coordiné los builds de lanzamiento móvil, con versiones consistentes entre desarrollo y QA.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "La API reemplaza un sistema anterior, y sus cálculos y parsers tenían que dar exactamente el mismo resultado. Además atiende a varias escuelas, así que un filtro mal hecho podía dejar que una escuela leyera los datos de otra." },
+                { label: "DECISIÓN", text: "Separé las pruebas en tres niveles. Domain prueba entidades y factories. Application corre el pipeline real de MediatR sobre repositorios sustituidos, así valida y guarda igual que en producción. Integración levanta Postgres con Testcontainers y las migraciones reales, y nunca mockea el DbContext." },
+                { label: "CÓMO", text: "Las pruebas golden comparan parsers y calculadoras contra la salida guardada del sistema anterior. Cada entidad por escuela tiene una prueba que demuestra que un usuario de una escuela no puede leer ni escribir en otra. Cada prueba se llama Sujeto_Condición_Resultado y arriba nombra el criterio de aceptación que prueba. En CI, un solo workflow define qué significa que las pruebas pasen, lo usan los PRs y el deploy, y nombra la prueba que se cuelga más de 5 minutos." },
+                { label: "RESULTADO", text: "Un cambio que rompe un cálculo heredado o deja ver datos de otra escuela falla en el PR, no en producción. Ningún deploy sale sin pasar la misma suite que los PRs." },
               ],
             },
             {
@@ -372,28 +353,10 @@ export const es: Content = {
               summary:
                 "Como Trainee, desarrollé 10–15 interfaces de reportes financieros en WinForms/C#, optimicé consultas LINQ con proyecciones y normalicé esquemas de SQL Server a tercera forma normal.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
-              ],
-            },
-            {
-              topic: "Scraper de rastreo",
-              tags: ["C# / .NET"],
-              summary:
-                "Construí una API de rastreo para Estafeta, que no tiene una pública: repite el request XHR del propio sitio y convierte a JSON el HTML que devuelve.",
-              story: [
-                { label: "PROBLEMA", text: "Estafeta no tiene API pública de rastreo. Su sitio solo devuelve HTML." },
-                {
-                  label: "DECISIÓN",
-                  text: "Dejar el scraping detrás de una interfaz IShipmentScraperService en Infrastructure, así el resto de la app con Clean Architecture nunca ve HTML.",
-                },
-                {
-                  label: "CÓMO",
-                  text: "Un GET a la página de búsqueda deja las cookies de sesión, y luego un POST al endpoint interno del historial con X-Requested-With y Referer devuelve un fragmento de HTML que AngleSharp parsea con selectores CSS. Los resultados se guardan en cache en memoria 10 minutos, y FluentValidation valida el número de guía antes.",
-                },
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Los reportes eran anuales, así que cada uno consultaba más de 20,000 registros y algunos pasaban de 50,000. Las consultas tenían lazy loading por default y cargaban todo, así que cada relación que tocaba el reporte disparaba otra consulta y los reportes eran lentos." },
+                { label: "DECISIÓN", text: "Dejé de depender del lazy loading. Las relaciones que el reporte sí usaba las cargué con eager loading, y en lugar de traer entidades completas proyecté solo las columnas que se mostraban, porque las entidades traían relaciones y propiedades que el reporte nunca usaba." },
+                { label: "CÓMO", text: "Cada reporte arma su consulta LINQ con las relaciones que necesita y termina en una proyección a un tipo anónimo con los campos del reporte. Usé tipos anónimos porque son inmutables, así ningún paso del reporte puede cambiar un dato después de leerlo." },
+                { label: "RESULTADO", text: "Antes del cambio, un reporte anual nunca llegó a imprimirse. Después, la pantalla dejó de trabarse y los reportes de más de 50,000 registros se generan e imprimen." },
               ],
             },
           ],

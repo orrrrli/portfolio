@@ -133,7 +133,7 @@ export const en: Content = {
               title: "Backend (.NET)",
               achievements: [
                 "Architected and implemented 100+ RESTful endpoints with ASP.NET Core 8, C# and EF Core, following Clean Architecture and CQRS.",
-                "Implemented cursor-based pagination on a module with 5,000+ records and 20+ properties, cutting per-page query time from 1–2 s to an average of 500 ms.",
+                "Implemented cursor-based pagination on a module with 15,000+ records and 100+ properties, cutting per-page query time from 1–2 s to an average of 500 ms.",
                 "Designed a structured production logging system with role-based access: the support team identifies errors directly, without escalating to development.",
                 "Wrote a unit test suite (xUnit, Moq) covering positive and negative paths of every endpoint, catching regressions before they reached production.",
               ],
@@ -324,70 +324,51 @@ export const en: Content = {
               ],
             },
             {
-              topic: "REST API",
-              tags: ["C# / .NET"],
-              summary:
-                "Delivered 100+ REST endpoints with ASP.NET Core 8 and Clean Architecture, in production use by every hospital department.",
-              story: [todo("PROBLEM"), todo("DECISION"), todo("HOW"), todo("RESULT")],
-            },
-            {
               topic: "Role-based logging",
               tags: ["C# / .NET"],
               summary:
-                "Shipped a role-based logging system support uses daily, which ended error escalations to the development team.",
+                "Built a role-based logging system with Serilog that support reads inside the app, and errors escalated to development went from several a week to a few a month.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Support handles errors on its own every day, without escalating them to development." },
+                { label: "PROBLEM", text: "When something failed, a developer had to find which flow broke, explain it to support, and support explained it to the customer. It happened several times a week, and it was rarely a bug. It was permissions, badly entered data, or errors nobody understood because the business logic was very extensive." },
+                { label: "DECISION", text: "I built one log with two views, one for support and one for development. Support sees a clear message and the time, and development sees the full detail. I ruled out an external tool because support needed a simplified version, not a dashboard built for developers." },
+                { label: "HOW", text: "A middleware catches errors and writes them with Serilog to a SQL Server table. Every log carries a correlation ID, so a flow that crosses several endpoints reads as one story. Support reads it on a screen inside the Kotlin app, filtered by date, user, module and severity, because a crash isn't the same as an error from missing data." },
+                { label: "RESULT", text: "Escalations went from several a week to a few sporadic ones a month. The 5 people on support solve permission and data cases on their own, and development stopped interrupting its work to investigate errors." },
               ],
             },
             {
               topic: "API contracts",
               tags: ["C# / .NET"],
               summary:
-                "Agreed shared API contracts with the Kotlin/Jetpack Compose mobile team, so both tracks built in parallel.",
+                "Made every route declare its contract, so the OpenAPI spec describes exactly what the API returns, errors included.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Backend and mobile developed in parallel, with fewer integration delays." },
+                { label: "PROBLEM", text: "Routes answered with an anonymous object wrapped in data. The OpenAPI spec couldn't describe those responses or which errors each endpoint returned, so the frontend was written by reading the API's code." },
+                { label: "DECISION", text: "I made the contract live on each route, next to the endpoint. Each one states which Response it returns and with which status, and a typed envelope keeps the same JSON. Errors follow one shape, with a Spanish title for the user and a stable English code for the client to branch on." },
+                { label: "HOW", text: "Each route declares its Response and one Produces per status it can return, and the spec is built from that. Request and Response names are unique across the API, because they're the schema id, and a 201 never returns an anonymous object. I wrote it down as a project rule, so every new module ships with its contract." },
+                { label: "RESULT", text: "The spec describes 145 routes with their responses and errors, and the frontend reacts to errors by their code, like when an edit session closes. Generating the frontend types from the spec is the next step, with nothing left to do on the API side." },
               ],
             },
             {
               topic: "Cursor pagination",
               tags: ["C# / .NET"],
               summary:
-                "Implemented cursor-based pagination on a module with 5,000+ records and 20+ properties.",
+                "Moved the mobile app's initial load to cursor pagination over 15,000+ records and 100+ properties, and the full load went from almost 30 minutes to 3–5.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Per-page query time dropped from 1–2 s to 500 ms on average." },
+                { label: "PROBLEM", text: "Opening the mobile app for the first time meant downloading the whole initial configuration, over 15,000 records with over 100 properties. The API paged with offset, which gets slower the further it goes, and users sat almost 30 minutes in front of a loading screen." },
+                { label: "DECISION", text: "I replaced offset with a cursor. With offset, the database walks every earlier row on each page, while with a cursor each page starts right where the last one ended. Jumping to a specific page wasn't needed, because the screen only had to download everything in order." },
+                { label: "HOW", text: "The cursor combines date, ID and a tag for the source table, because the load merges records from several tables into one sequence. I added an index on those columns, and each page brings only the properties the app needs, through a projection. The Kotlin app requests the next page with the previous page's cursor until it's done." },
+                { label: "RESULT", text: "Each page loads in 500 ms, and the full load in the app went from almost 30 minutes to 3–5 minutes." },
               ],
             },
             {
-              topic: "Unit tests",
+              topic: "Testing strategy",
               tags: ["C# / .NET"],
               summary:
-                "Wrote an xUnit and Moq suite covering the positive and negative paths of every endpoint.",
+                "Built the API's tests in three levels with xUnit, NSubstitute and Testcontainers, and over 8,000 cases run on every PR and before every deploy.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Regressions were caught before they reached production." },
-              ],
-            },
-            {
-              topic: "Production deploys",
-              tags: ["C# / .NET"],
-              summary:
-                "Managed production deployments to IIS and coordinated mobile release builds, keeping versions consistent across development and QA.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The API replaces an earlier system, and its calculations and parsers had to give exactly the same results. It also serves several schools, so a bad filter could let one school read another's data." },
+                { label: "DECISION", text: "I split the tests into three levels. Domain tests entities and factories. Application runs the real MediatR pipeline over substituted repositories, so it validates and saves the same way production does. Integration starts Postgres with Testcontainers and the real migrations, and never mocks the DbContext." },
+                { label: "HOW", text: "Golden tests compare parsers and calculators against the stored output of the earlier system. Every school-scoped entity has a test proving a user from one school can't read or write another's. Each test is named Subject_Condition_Outcome and names the acceptance criterion it proves above it. In CI, one workflow defines what \"the tests pass\" means, PRs and the deploy both use it, and it names any test that hangs past 5 minutes." },
+                { label: "RESULT", text: "A change that breaks an inherited calculation or exposes another school's data fails in the PR, not in production. No deploy ships without passing the same suite as the PRs." },
               ],
             },
             {
@@ -396,28 +377,10 @@ export const en: Content = {
               summary:
                 "As a Trainee, built 10–15 financial report screens in WinForms/C#, optimized LINQ queries with projections and normalized SQL Server schemas to third normal form.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
-              ],
-            },
-            {
-              topic: "Tracking scraper",
-              tags: ["C# / .NET"],
-              summary:
-                "Built a tracking API for Estafeta, which has no public one: it replays the site's own XHR request and turns the HTML it returns into JSON.",
-              story: [
-                { label: "PROBLEM", text: "Estafeta has no public tracking API. Its site only returns HTML." },
-                {
-                  label: "DECISION",
-                  text: "Keep the scraping behind an IShipmentScraperService interface in Infrastructure, so the rest of the Clean Architecture app never sees HTML.",
-                },
-                {
-                  label: "HOW",
-                  text: "A GET to the search page sets the session cookies, then a POST to the internal history endpoint with X-Requested-With and Referer returns an HTML fragment that AngleSharp parses with CSS selectors. Results are cached in memory for 10 minutes, and FluentValidation checks the tracking number first.",
-                },
-                todo("RESULT"),
+                { label: "PROBLEM", text: "Reports were yearly, so each one queried over 20,000 records and some passed 50,000. Queries used lazy loading by default and loaded everything, so every relationship a report touched fired another query and reports were slow." },
+                { label: "DECISION", text: "I stopped relying on lazy loading. The relationships a report did use I loaded with eager loading, and instead of fetching full entities I projected only the columns on screen, because the entities carried relationships and properties the report never used." },
+                { label: "HOW", text: "Each report builds its LINQ query with the relationships it needs and ends in a projection to an anonymous type with the report's fields. I used anonymous types because they're immutable, so no step of the report can change a value after reading it." },
+                { label: "RESULT", text: "Before the change, a yearly report never made it to print. After it, the screen stopped freezing and reports over 50,000 records generate and print." },
               ],
             },
           ],
