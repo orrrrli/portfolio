@@ -162,6 +162,8 @@ export const es: Content = {
       skills: [
         {
           ...en.about.technical.skills[0],
+          description:
+            "Features de LLM en producción con tool calling, modelos de visión y respuestas en streaming, medidas con evals contra el modelo en producción.",
           bullets: [
             {
               topic: "Asistente LLM",
@@ -227,6 +229,8 @@ export const es: Content = {
         },
         {
           ...en.about.technical.skills[1],
+          description:
+            "APIs REST en producción con ASP.NET Core 8, Clean Architecture, CQRS/MediatR, EF Core y FluentValidation. Patrones que uso en cada backend.",
           bullets: [
             {
               topic: "CQRS",
@@ -363,6 +367,8 @@ export const es: Content = {
         },
         {
           ...en.about.technical.skills[2],
+          description:
+            "Productos full-stack con Next.js 15, TypeScript, Tailwind CSS, Prisma y Stripe, desde flujos de checkout hasta paneles de admin.",
           bullets: [
             {
               topic: "Validación en las dos capas",
@@ -455,6 +461,8 @@ export const es: Content = {
         },
         {
           ...en.about.technical.skills[3],
+          description:
+            "Backend para juegos con dinero real en un API de Kotlin/Spring Boot que consume una app de SwiftUI, con invitaciones que expiran solas, check-in en el lugar y protección en cada movimiento de dinero.",
           bullets: [
             {
               topic: "Ciclo de vida del challenge",
@@ -496,6 +504,8 @@ export const es: Content = {
         },
         {
           ...en.about.technical.skills[4],
+          description:
+            "App Android offline-first hecha con Kotlin y Jetpack Compose, con arquitectura en capas y una librería de componentes compartida.",
           bullets: [
             {
               topic: "Sincronización offline-first",
@@ -537,6 +547,8 @@ export const es: Content = {
         },
         {
           ...en.about.technical.skills[5],
+          description:
+            "Scripts de Node.js y Python que automatizan tests, desde casos golden generados por un sistema legacy hasta videos de evidencia de tests de ubicación, pruebas de privacidad y pruebas de carga sobre infraestructura compartida.",
           bullets: [
             {
               topic: "Golden tests contra el legacy",
@@ -590,6 +602,8 @@ export const es: Content = {
         },
         {
           ...en.about.technical.skills[6],
+          description:
+            "Docker, GitHub Actions y Nginx en un VPS Linux para proyectos de clientes, y GCP con Kubernetes y Terraform para un producto móvil. Deploys fijados a un commit, migraciones antes de arrancar, backups cifrados y tests e2e que nunca tocan producción.",
           bullets: [
             {
               topic: "Exposición de buckets",
