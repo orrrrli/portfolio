@@ -123,10 +123,10 @@ export const es: Content = {
             {
               title: "App Android (Kotlin / Jetpack Compose)",
               achievements: [
-                "Construí una app de inventario offline-first que permite a los operadores de almacén seguir trabajando sin internet; al adoptar la paginación por cursor y optimizar el procesamiento local, reduje la carga y sincronización del módulo de 10–12 a 4–5 minutos.",
+                "Construí una app Android offline-first que guarda cada registro en el dispositivo y lo sincroniza cuando vuelve la conexión, sin perder trabajo.",
+                "Hice que la carga de configuración inicial de la app lea la API página por página con un cursor y guarde cada página en Room.",
                 "Estructuré la app en capas data/domain/presentation, lo que permite probar la lógica de sincronización sin la UI; autenticación con JWT y renovación automática de tokens.",
-                "Creé una librería de componentes reutilizables usada en 40+ pantallas, eliminando implementaciones redundantes.",
-                "Implementé un rol de soporte con acceso a logs desde el dispositivo, para diagnosticar problemas del cliente sin acceso al servidor.",
+                "Creé una librería de componentes reutilizables usada en 80+ pantallas, eliminando implementaciones redundantes.",
               ],
             },
             {
@@ -409,7 +409,7 @@ export const es: Content = {
                 { label: "PROBLEMA", text: "Un carrito abandonado podía apartar stock sin límite y bloquear a compradores reales." },
                 {
                   label: "DECISIÓN",
-                  text: "Reservar el inventario al crear el pedido y regresarlo si se cancela, sin conciliación manual.",
+                  text: "Reservar el inventario al crear el pedido y regresarlo si se cancela, para que nadie tenga que corregir el stock a mano después.",
                 },
                 { label: "CÓMO", text: "Al crear el pedido, cada línea descuenta stock con un update condicional dentro de una transacción, que solo pasa si hay unidades suficientes. Si una línea no alcanza, la transacción completa se revierte y el usuario ve cuántas quedan. El pedido guarda si tomó stock, para regresarlo exacto al cancelarse o vencer. Un cron cada 5 minutos primero rescata los pedidos cuyo pago sí llegó con el webhook tarde, después vence las transferencias viejas y los pedidos sin pagar, regresa su stock e invalida el cache del catálogo." },
                 { label: "RESULTADO", text: "Un carrito abandonado regresa su stock en minutos, y dos compradores no pueden apartar la misma última unidad. Un pago que llega tarde no pierde su pedido, porque el cron lo rescata antes de vencerlo." },
@@ -499,7 +499,7 @@ export const es: Content = {
           bullets: [
             {
               topic: "Sincronización offline-first",
-              tags: ["Kotlin", "Offline-first"],
+              tags: ["Offline-first"],
               summary:
                 "Construí una app Android offline-first que guarda cada registro en el dispositivo y lo sincroniza cuando vuelve la conexión, sin perder trabajo.",
               story: [
@@ -511,7 +511,7 @@ export const es: Content = {
             },
             {
               topic: "Arquitectura en capas",
-              tags: ["Kotlin"],
+              tags: ["Architecture"],
               summary:
                 "Estructuré la app en capas data, domain y presentation, con autenticación JWT y renovación automática de tokens.",
               story: [
@@ -523,7 +523,7 @@ export const es: Content = {
             },
             {
               topic: "Librería de componentes",
-              tags: ["Jetpack Compose"],
+              tags: ["Design system"],
               summary:
                 "Creé una librería de componentes reutilizables en Jetpack Compose usada en más de 80 pantallas, eliminando implementaciones redundantes.",
               story: [

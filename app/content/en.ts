@@ -141,10 +141,10 @@ export const en: Content = {
             {
               title: "Android App (Kotlin / Jetpack Compose)",
               achievements: [
-                "Built an offline-first inventory app that lets warehouse operators keep working without internet; by adopting the backend's cursor pagination and optimizing local processing, cut the module's load-and-sync time from 10–12 to 4–5 minutes.",
+                "Built an offline-first Android app that saves every record on the device and syncs it when the connection comes back, with no lost work.",
+                "Made the app's initial configuration load read the API page by page with a cursor and save each page to Room.",
                 "Structured the app into data/domain/presentation layers so the sync logic can be tested without the UI; JWT authentication with automatic token refresh.",
-                "Built a reusable component library used across 40+ screens, eliminating redundant implementations.",
-                "Implemented a support role with in-device log access to diagnose client-side issues without server access.",
+                "Built a reusable component library used across 80+ screens, eliminating redundant implementations.",
               ],
             },
             {
@@ -436,7 +436,7 @@ export const en: Content = {
                 { label: "PROBLEM", text: "An abandoned cart could hold stock indefinitely and block real buyers." },
                 {
                   label: "DECISION",
-                  text: "Reserve inventory when the order is created and restore it on cancellation, with no manual reconciliation step.",
+                  text: "Reserve inventory when the order is created and restore it on cancellation, so nobody has to fix the stock by hand afterward.",
                 },
                 { label: "HOW", text: "When an order is created, each line takes stock with a conditional update inside a transaction, which only succeeds if enough units are left. If one line falls short, the whole transaction rolls back and the user sees how many remain. The order records whether it took stock, so it gives back the exact amount when cancelled or expired. A cron every 5 minutes first rescues orders whose payment did arrive with a late webhook, then expires stale transfers and unpaid orders, returns their stock and invalidates the catalog cache." },
                 { label: "RESULT", text: "An abandoned cart returns its stock within minutes, and two buyers can't claim the same last unit. A payment that arrives late doesn't lose its order, because the cron rescues it before expiring it." },
@@ -527,12 +527,12 @@ export const en: Content = {
         {
           title: "Android / Jetpack Compose",
           description:
-            "Offline-first Android app for an ERP's warehouse operators, built with Kotlin and Jetpack Compose.",
-          tags: ["Kotlin", "Jetpack Compose", "Offline-first"],
+            "Offline-first Android app built with Kotlin and Jetpack Compose, with a layered architecture and a shared component library.",
+          tags: ["Offline-first", "Architecture", "Design system"],
           bullets: [
             {
               topic: "Offline-first sync",
-              tags: ["Kotlin", "Offline-first"],
+              tags: ["Offline-first"],
               summary:
                 "Built an offline-first Android app that saves every record on the device and syncs it when the connection comes back, with no work lost.",
               story: [
@@ -544,7 +544,7 @@ export const en: Content = {
             },
             {
               topic: "Layered architecture",
-              tags: ["Kotlin"],
+              tags: ["Architecture"],
               summary:
                 "Structured the app into data, domain and presentation layers, with JWT authentication and automatic token refresh.",
               story: [
@@ -556,7 +556,7 @@ export const en: Content = {
             },
             {
               topic: "Component library",
-              tags: ["Jetpack Compose"],
+              tags: ["Design system"],
               summary:
                 "Built a library of reusable Jetpack Compose components used across more than 80 screens, removing redundant implementations.",
               story: [
