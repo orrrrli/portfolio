@@ -525,24 +525,12 @@ export const es: Content = {
               topic: "Librería de componentes",
               tags: ["Jetpack Compose"],
               summary:
-                "Creé una librería de componentes reutilizables usada en 40+ pantallas, eliminando implementaciones redundantes.",
+                "Creé una librería de componentes reutilizables en Jetpack Compose usada en más de 80 pantallas, eliminando implementaciones redundantes.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
-              ],
-            },
-            {
-              topic: "Rol de soporte",
-              tags: ["Kotlin"],
-              summary:
-                "Implementé un rol de soporte con acceso a logs desde el dispositivo, para diagnosticar problemas del cliente sin acceso al servidor.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Cada pantalla construía sus propios elementos y su lógica en un mismo archivo, que terminaba siendo muy grande. Botones, search bars, modales y listas se recreaban una y otra vez, lo que duplicaba código, volvía lento el desarrollo y hacía inconsistente la interfaz." },
+                { label: "DECISIÓN", text: "Extraer esos elementos a una librería propia de componentes en lugar de seguir con implementaciones sueltas por pantalla. Cada pantalla pasa de construir el componente a solo invocarlo, y los estilos se centralizan en {{tokens de diseño|colores, tamaños y espaciados definidos en un solo lugar}}." },
+                { label: "CÓMO", text: "Construí en Jetpack Compose botones, inputs, cards, modales y listas, con su lógica de interacción incluida. Los botones son configurables (texto, ícono y estilo) y usan tokens de diseño para los estilos. Migré las pantallas para que consumieran los componentes en lugar de sus versiones propias." },
+                { label: "RESULTADO", text: "Más de 80 pantallas con menos código duplicado y un desarrollo más ágil, porque construir una pantalla se reduce a invocar componentes. Un cambio de estilo, como el del botón de imprimir, se hace en un solo archivo. Además la interfaz es consistente, y el usuario reconoce a simple vista qué tipo de registro está viendo." },
               ],
             },
           ],

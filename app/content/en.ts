@@ -558,24 +558,12 @@ export const en: Content = {
               topic: "Component library",
               tags: ["Jetpack Compose"],
               summary:
-                "Built a reusable component library used across 40+ screens, removing redundant implementations.",
+                "Built a library of reusable Jetpack Compose components used across more than 80 screens, removing redundant implementations.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
-              ],
-            },
-            {
-              topic: "Support role",
-              tags: ["Kotlin"],
-              summary:
-                "Added a support role with in-device log access, to diagnose client-side issues without server access.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "Every screen built its own elements and their logic in a single file, which ended up very large. Buttons, search bars, modals and lists were rebuilt again and again, which duplicated code, slowed development down and made the interface inconsistent." },
+                { label: "DECISION", text: "Extract those elements into our own component library instead of keeping one-off implementations per screen. Each screen goes from building the component to just calling it, and styles are centralized in {{design tokens|colors, sizes and spacing defined in one place}}." },
+                { label: "HOW", text: "I built buttons, inputs, cards, modals and lists in Jetpack Compose, with their interaction logic included. Buttons are configurable (text, icon and style) and use design tokens for their styles. I migrated the screens to use the components instead of their own versions." },
+                { label: "RESULT", text: "More than 80 screens with less duplicated code and faster development, because building a screen comes down to calling components. A style change, like the print button's, is made in a single file. The interface is also consistent, and users can tell at a glance what kind of record they're looking at." },
               ],
             },
           ],
