@@ -639,37 +639,43 @@ export const en: Content = {
         {
           title: "Infrastructure / DevOps",
           description:
-            "Shipping every project with Docker, GitHub Actions and Nginx behind Cloudflare on a Linux VPS. From docker compose up to deploy on merge.",
+            "Docker, GitHub Actions and Nginx on a Linux VPS for client projects, and GCP with Kubernetes and Terraform for a mobile product. Deploys pinned to a commit, migrations before start, encrypted backups and e2e tests that never touch production.",
           tags: ["Docker", "GitHub Actions", "Nginx", "GCP", "Kubernetes", "Terraform"],
           bullets: [
             {
-              topic: "Docker Compose",
-              tags: ["Docker"],
+              topic: "Bucket exposure",
+              tags: ["GCP", "Terraform"],
               summary:
-                "Made docker compose up the only setup step: API, frontend and Postgres start together with health checks, dependency ordering and migrations on startup.",
+                "Found that anyone could list the content buckets and download every original, private photos included, and closed it with Terraform and signed URLs that expire.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                {
-                  label: "HOW",
-                  text: "The API image runs migrations on startup and exposes GET /health for the compose health check. The frontend is a Vite build served by a small static server. In a multi-service system, a Playwright scraper runs as a worker in its own container, next to the API and the frontend.",
-                },
-                {
-                  label: "RESULT",
-                  text: "A fresh checkout to a running app on a public URL takes two commands: git clone and docker compose up.",
-                },
+                { label: "PROBLEM", text: "A new feature let users attach private photos, and they landed in the same bucket as the public images. The bucket gave anonymous users a role that includes listing, and every image URL carried the bucket path encoded in base64. Decoding one avatar URL was enough to list the folder and download every original." },
+                { label: "DECISION", text: "I weighed three options, a separate private bucket, a role that only reads an object by its name, and image URLs that expire with a shorter CDN cache. The narrow role went first because it closed listing right away. Then every file got an audience, public or private, so private files only travel through signed URLs." },
+                { label: "HOW", text: "In Terraform, the anonymous role changed to a legacy object reader, which reads a known object but can't list, with create_before_destroy so access never dropped during the swap. Each media row now records whether it's public or private. A private image gets a signed URL that expires, rounded to a 6-hour window plus 24 hours so the CDN can still cache it, and on dev the bucket stopped being public, so a signed URL is the only way in." },
+                { label: "RESULT", text: "An anonymous listing of the bucket went from answering 200 to 403, so nobody can discover what's inside. Private images travel only through URLs that expire, and on dev a signed URL is the only way to reach media." },
               ],
             },
             {
-              topic: "Minimal, non-root images",
-              tags: ["Docker"],
+              topic: "E2E environment isolated from production",
+              tags: ["Docker", "GitHub Actions"],
               summary:
-                "Built every image with a multi-stage build, and no container runs as root. The Go API ends in a distroless image with no shell.",
+                "Built an e2e environment that can't touch production, with its own Redis in Docker, and made its 21 tests a gate before every deploy.",
               story: [
-                todo("PROBLEM"),
-                { label: "DECISION", text: "I split the build from the final image. The SDK, compilers and dev dependencies stay in the build stage and never reach production. No container runs as root, so a flaw in the app doesn't hand whoever exploits it root inside the container." },
-                { label: "HOW", text: "The Go API ends in distroless/static:nonroot, which ships CA certs and time zones but no shell, and runs as uid 65532. The .NET APIs run as the official image's $APP_UID user. Next.js builds in standalone mode, so the image carries only the server and what it uses. The static site runs on nginx-unprivileged, which needs no root, with a HEALTHCHECK." },
-                todo("RESULT"),
+                { label: "PROBLEM", text: "Production is the only Upstash instance, because the free tier allows one, and staging used to share it, so a forced logout or a password reset in staging reached production. Local runs also read the production env file and sent real email. And once the staging site was retired at launch, nothing tested checkout before a deploy." },
+                { label: "DECISION", text: "The e2e suite only runs against services that can't be production. Postgres must be localhost, Stripe keys must be test keys, email, storage and error tracking are blanked, and Redis is its own container. It runs on every pull request and blocks the deploy when it fails." },
+                { label: "HOW", text: "A separate compose starts Redis and serverless-redis-http, a proxy pinned by digest that exposes Redis through the same HTTP API as Upstash, so the app talks to a local Redis with the same client it uses in production. One script runs the same locally and in CI. It starts that Redis and a Stripe webhook listener, seeds, runs the tests on a production build and stops the listener. The 21 tests cover sign-in, catalog, card checkout with shipping and pickup, declined cards, 3D Secure, order expiry and access control." },
+                { label: "RESULT", text: "The suite passes 21 of 21 locally and in CI, and on the way it found four app bugs, all fixed. A broken checkout shows up on the pull request instead of in production, and no test run sends a real email." },
+              ],
+            },
+            {
+              topic: "Deploys pinned to a commit",
+              tags: ["GitHub Actions", "Docker", "Nginx"],
+              summary:
+                "Made every deploy ship exactly the commit that built it, with serialized runs and images tagged by SHA, after three merges in three minutes left production on an older commit.",
+              story: [
+                { label: "PROBLEM", text: "Three merges within three minutes started three pipelines in parallel. The oldest build finished last, pushed the branch tag last, and production ended up running a commit without the newest changes. Nothing failed and every check was green, so nobody could tell." },
+                { label: "DECISION", text: "Fixing the order alone wasn't enough, because a deploy pulled whatever the branch tag pointed to at pull time. I serialized the runs per branch and made each deploy pull an immutable tag with its commit SHA. Push runs are never cancelled on purpose, because a deploy cut between removing the old container and starting the new one would leave nothing running." },
+                { label: "HOW", text: "A GitHub Actions concurrency group per branch queues pushes in merge order. Each image gets a sha tag next to the branch tag, and the deploy rebuilds that tag from its own commit, so it can only ship its own image. In the school system the same pattern builds three images in a buildx matrix with the GHA cache, reaches the VPS over SSH checking the host key, and starts that SHA, and its nginx image serves the frontend and proxies /api/ to the API container. On a VPS shared by several projects, each deploy logs in to GHCR with a throwaway Docker config, because a login left by one project made another's pulls fail with denied." },
+                { label: "RESULT", text: "Production always runs the newest merged commit, and the image tag says which one it is. A login left behind by one project no longer breaks another project's deploy." },
               ],
             },
             {
@@ -678,10 +684,10 @@ export const en: Content = {
               summary:
                 "The database is migrated before the app starts, so no new version ever runs against an old schema.",
               story: [
-                todo("PROBLEM"),
-                { label: "DECISION", text: "I made migration a step of startup, not a manual deploy command." },
-                { label: "HOW", text: "In Compose, a migrate service runs the EF Core migrations bundle once, after Postgres passes its health check. The API only starts once that service finishes successfully. In Next.js with Prisma, the container runs prisma migrate deploy and then starts the server." },
-                todo("RESULT"),
+                { label: "PROBLEM", text: "With migrations as a manual deploy step, nothing stops a new version from starting against an old schema, and it fails on the first query that needs the new column." },
+                { label: "DECISION", text: "I made migration a step of startup, not a manual deploy command. In the school system it's its own service, and the API only starts if it succeeds. In the Next.js project the container migrates on boot, which is simpler, at the cost that a migration that fails takes the site down, a risk the CI documents." },
+                { label: "HOW", text: "In Compose, a migrate service runs the EF Core migrations bundle once, after Postgres passes its health check, with the same image as the API. The API depends on that service finishing successfully. In Next.js with Prisma, the container runs prisma migrate deploy and then starts the server." },
+                { label: "RESULT", text: "No version starts against a schema it doesn't expect. In the school system, a failed migration stops the deploy before the new API starts." },
               ],
             },
             {
@@ -690,99 +696,45 @@ export const en: Content = {
               summary:
                 "A container backs up the database every night with pg_dump, encrypts the backup with age and uploads it to an R2 bucket.",
               story: [
-                todo("PROBLEM"),
+                { label: "PROBLEM", text: "The production database had no backup at all, so losing the server meant losing the data." },
                 { label: "DECISION", text: "The backup is encrypted to a public key, so the server never holds the key to read it. The R2 keys live in a separate env file that only the backup container receives, never the API." },
                 { label: "HOW", text: "The image starts from the same Postgres version as the database, so pg_dump always matches the server's major version. crond runs the script nightly and passes it the container's environment, so no file with secrets is written to disk. The dump is written in full before upload, so a pg_dump that fails halfway never uploads a truncated file. Retention deletes old backups only after a successful upload." },
-                todo("RESULT"),
+                { label: "RESULT", text: "The database has a nightly copy off the server that only the holder of the private key can read. A dump that fails halfway never replaces a good backup." },
               ],
             },
             {
-              topic: "Local e2e environment",
+              topic: "Streaming connection",
+              tags: ["Kubernetes", "GCP"],
+              summary:
+                "Diagnosed a real-time connection that dropped every 30 seconds and fixed it with a dedicated Kubernetes Service for the streaming routes, with a longer load-balancer timeout.",
+              story: [
+                { label: "PROBLEM", text: "The app's real-time stream kept reconnecting, and a notification could take up to 15 seconds to show. The app's logs showed the connection cut exactly 30 seconds after it opened, every time, and then the app waited up to 15 seconds of backoff before reconnecting." },
+                { label: "DECISION", text: "The cut was the load balancer's default 30-second backend timeout, which is right for normal requests. Instead of raising it for the whole API, I gave the streaming routes their own Service with a one-hour timeout. Everything else keeps 30 seconds, so a hung normal request is still dropped quickly." },
+                { label: "HOW", text: "A second Kubernetes Service with a {{BackendConfig|GKE's per-Service load-balancer settings}} of 3,600 seconds serves only the two streaming routes, the event stream and the assistant's replies, and the Ingress sends just those paths to it. On iOS, the reconnection backoff now resets after a successful response, instead of growing from 1 to 15 seconds and staying there." },
+                { label: "RESULT", text: "The stream stays open instead of dropping every 30 seconds, and when it does drop the app reconnects right away. Normal requests keep their short timeout." },
+              ],
+            },
+            {
+              topic: "Minimal images",
               tags: ["Docker"],
               summary:
-                "Set up a separate compose for the e2e tests, with a local Redis instead of Upstash.",
+                "Built images with multi-stage builds so compilers and dev dependencies never reach production, and cut the Next.js image from 3.45 GB to 985 MB.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                { label: "HOW", text: "The compose starts Redis and serverless-redis-http, a proxy that exposes Redis through the same HTTP API as Upstash. So the app talks to a local Redis with the same client it uses in production." },
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The Next.js image weighed 3.45 GB. The Dockerfile copied the whole node_modules into the final image, which undid the standalone build, and shipped a Chromium that nothing in production used." },
+                { label: "DECISION", text: "I split the build from the final image. The SDK, compilers and dev dependencies stay in the build stage, and the final image carries only what the server runs. The app containers don't run as root, so a flaw in the app doesn't hand root inside the container to whoever exploits it." },
+                { label: "HOW", text: "Next.js builds in standalone mode, and the final image copies only the server and the modules it uses, running as its own user. The .NET APIs run as the official image's non-root user." },
+                { label: "RESULT", text: "The image went from 3.45 GB to 985 MB, measured, so each deploy pulls less than a third of what it used to." },
               ],
             },
             {
-              topic: "CI/CD to a VPS",
-              tags: ["Docker", "GitHub Actions", "Nginx"],
+              topic: "Image storage on R2",
               summary:
-                "GitHub Actions runs the tests on every push. On merge to main it builds the images, pushes them to GHCR tagged with the commit, and the VPS runs exactly that version.",
+                "Moved product images from Cloudinary to Cloudflare R2 behind a custom domain, with uploads signed on the server so no storage key reaches the browser.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                { label: "HOW", text: "Path-filtered workflows run dotnet test and npm test on every push. On deploy, buildx builds the images in a matrix with the GHA cache and tags them with the commit SHA. The workflow reaches the VPS over SSH, checking the host key against known_hosts, and starts that SHA." },
-                { label: "RESULT", text: "Every merge to main deploys with no manual step." },
-              ],
-            },
-            {
-              topic: "Network path",
-              tags: ["Nginx"],
-              summary:
-                "Routed traffic through Cloudflare (DNS, CDN, WAF, SSL) to an Nginx reverse proxy that sends / to the frontend container and /api/* to the backend.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                {
-                  label: "HOW",
-                  text: "Nginx maps / to the frontend container (host 3009 to 80) and /api/* to the API container (host 8081 to 8080). Postgres runs on the host, reached through host.docker.internal.",
-                },
-                todo("RESULT"),
-              ],
-            },
-            {
-              topic: "Media and email",
-              summary:
-                "Moved image storage and delivery to Cloudinary's CDN and automated order and shipping emails with Resend.",
-              story: [
-                {
-                  label: "PROBLEM",
-                  text: "Customers had to contact the team directly to ask for their order status.",
-                },
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
-              ],
-            },
-            {
-              topic: "Image CDN",
-              tags: ["GCP"],
-              summary:
-                "Built image delivery on Google Cloud Storage and imgproxy on Cloud Run behind Cloud CDN.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Images are 10x lighter than the originals (45 KB vs 450 KB on average) and 94% of bytes are served from cache." },
-              ],
-            },
-            {
-              topic: "Storage security",
-              tags: ["GCP", "Terraform"],
-              summary:
-                "Found and fixed an exposure that allowed listing the content buckets and downloading private photos, restricting access with Terraform.",
-              story: [
-                todo("PROBLEM"),
-                { label: "DECISION", text: "Classified every file as public or private." },
-                todo("HOW"),
-                { label: "RESULT", text: "Private content can no longer be discovered or bulk-downloaded." },
-              ],
-            },
-            {
-              topic: "Real-time connection",
-              tags: ["Kubernetes"],
-              summary:
-                "Fixed a real-time connection that dropped every 30 s by giving its streaming routes a dedicated Kubernetes Service with a longer load-balancer timeout.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Reconnections dropped 92%." },
+                { label: "PROBLEM", text: "Every admin upload signed its request in the browser, so the Cloudinary API key reached the client on each upload." },
+                { label: "DECISION", text: "I moved storage to R2, whose free tier covers the catalog with no egress cost, and moved the upload to the project's own API route, so credentials never leave the server." },
+                { label: "HOW", text: "The upload route only accepts admins, takes jpg, png, webp and gif up to 5 MB, and signs the write to R2 with SigV4 through aws4fetch, about 10 KB instead of the full AWS SDK. A re-runnable script with a dry-run mode copied the existing images and rewrote their URLs in the database." },
+                { label: "RESULT", text: "Every image moved with no failures and answers from the CDN domain with the right content type. No storage key reaches the browser anymore." },
               ],
             },
           ],

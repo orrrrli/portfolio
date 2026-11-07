@@ -604,143 +604,98 @@ export const es: Content = {
           ...en.about.technical.skills[6],
           bullets: [
             {
-              topic: "Docker Compose",
-              tags: ["Docker"],
+              topic: "Exposición de buckets",
+              tags: ["GCP", "Terraform"],
               summary:
-                "Dejé docker compose up como único paso de setup: API, frontend y Postgres levantan juntos con health checks, orden de dependencias y migraciones al arrancar.",
+                "Encontré que cualquiera podía listar los buckets de contenido y bajar todos los originales, fotos privadas incluidas, y lo cerré con Terraform y URLs firmadas que expiran.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                {
-                  label: "CÓMO",
-                  text: "La imagen de la API corre las migraciones al arrancar y expone GET /health para el health check de compose. El frontend es un build de Vite servido por un servidor estático pequeño. En un sistema con varios servicios, un scraper con Playwright corre como worker en su propio contenedor, junto a la API y el frontend.",
-                },
-                {
-                  label: "RESULTADO",
-                  text: "Pasar de un checkout nuevo a la app corriendo en una URL pública toma dos comandos: git clone y docker compose up.",
-                },
+                { label: "PROBLEMA", text: "Una feature nueva dejaba a los usuarios adjuntar fotos privadas, y caían en el mismo bucket que las imágenes públicas. El bucket le daba a usuarios anónimos un rol que incluye listar, y cada URL de imagen llevaba la ruta del bucket en base64. Con decodificar la URL de un avatar bastaba para listar la carpeta y bajar todos los originales." },
+                { label: "DECISIÓN", text: "Evalué tres opciones, un bucket privado aparte, un rol que solo lee un objeto por su nombre, y URLs de imagen que expiran con un cache de CDN más corto. Primero salió el rol reducido porque cerraba el listado de inmediato. Después cada archivo recibió una audiencia, pública o privada, para que los privados solo viajen por URLs firmadas." },
+                { label: "CÓMO", text: "En Terraform, el rol anónimo cambió a un lector de objetos legacy, que lee un objeto conocido pero no puede listar, con create_before_destroy para que el acceso nunca se cayera durante el cambio. Cada fila de media ahora guarda si es pública o privada. Una imagen privada recibe una URL firmada que expira, redondeada a una ventana de 6 horas más 24 horas para que el CDN todavía la pueda cachear, y en dev el bucket dejó de ser público, así que una URL firmada es la única forma de entrar." },
+                { label: "RESULTADO", text: "Listar el bucket sin credenciales pasó de responder 200 a 403, así que nadie puede descubrir qué hay adentro. Las imágenes privadas solo viajan por URLs que expiran, y en dev una URL firmada es la única forma de llegar al media." },
               ],
             },
             {
-              topic: "Imágenes mínimas y sin root",
-              tags: ["Docker"],
+              topic: "Entorno e2e aislado de producción",
+              tags: ["Docker", "GitHub Actions"],
               summary:
-                "Construí las imágenes con multi-stage build y ningún contenedor corre como root. La API en Go termina en una imagen distroless, sin shell.",
+                "Armé un entorno e2e que no puede tocar producción, con su propio Redis en Docker, e hice de sus 21 tests una condición antes de cada deploy.",
               story: [
-                todo("PROBLEMA"),
-                { label: "DECISIÓN", text: "Separé el build de la imagen final. El SDK, los compiladores y las dependencias de desarrollo se quedan en la etapa de build y no llegan a producción. Ningún contenedor corre como root, así una falla en la app no le da root dentro del contenedor a quien la explote." },
-                { label: "CÓMO", text: "La API en Go termina en distroless/static:nonroot, que trae certificados y zona horaria pero no shell, y corre con el uid 65532. Las APIs en .NET corren con el usuario $APP_UID de la imagen oficial. Next.js se construye en modo standalone, así la imagen solo lleva el servidor y lo que usa. El sitio estático va en nginx-unprivileged, que no necesita root, con un HEALTHCHECK." },
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Producción es la única instancia de Upstash, porque el free tier permite una, y staging la compartía, así que un logout forzado o un cambio de contraseña en staging llegaba a producción. Las corridas locales además leían el archivo de env de producción y mandaban emails reales. Y cuando el sitio de staging se retiró en el lanzamiento, nada probaba el checkout antes de un deploy." },
+                { label: "DECISIÓN", text: "La suite e2e solo corre contra servicios que no pueden ser producción. Postgres tiene que ser localhost, las llaves de Stripe tienen que ser de prueba, email, storage y error tracking van vacíos, y Redis es su propio contenedor. Corre en cada pull request y bloquea el deploy cuando falla." },
+                { label: "CÓMO", text: "Un compose aparte levanta Redis y serverless-redis-http, un proxy fijado por digest que expone Redis con la misma API HTTP que Upstash, así que la app habla con un Redis local con el mismo cliente que usa en producción. Un solo script corre igual en local y en CI. Levanta ese Redis y un listener de webhooks de Stripe, siembra datos, corre los tests sobre un build de producción y apaga el listener. Los 21 tests cubren login, catálogo, checkout con tarjeta con envío y recolección, tarjetas rechazadas, 3D Secure, expiración de órdenes y control de acceso." },
+                { label: "RESULTADO", text: "La suite pasa 21 de 21 en local y en CI, y en el camino encontró cuatro bugs de la app, todos corregidos. Un checkout roto aparece en el pull request en lugar de en producción, y ninguna corrida de tests manda un email real." },
+              ],
+            },
+            {
+              topic: "Deploys fijados a un commit",
+              tags: ["GitHub Actions", "Docker", "Nginx"],
+              summary:
+                "Hice que cada deploy publique exactamente el commit que lo construyó, con corridas en serie e imágenes con tag del SHA, después de que tres merges en tres minutos dejaron producción en un commit viejo.",
+              story: [
+                { label: "PROBLEMA", text: "Tres merges en tres minutos arrancaron tres pipelines en paralelo. El build más viejo terminó al último, subió el tag de la rama al último, y producción terminó corriendo un commit sin los cambios más nuevos. Nada falló y todos los checks salieron en verde, así que nadie se dio cuenta." },
+                { label: "DECISIÓN", text: "Arreglar solo el orden no bastaba, porque un deploy bajaba lo que el tag de la rama apuntara al momento de hacer pull. Puse las corridas en serie por rama e hice que cada deploy baje un tag inmutable con el SHA de su commit. Las corridas de push nunca se cancelan a propósito, porque un deploy cortado entre borrar el contenedor viejo y levantar el nuevo dejaría todo apagado." },
+                { label: "CÓMO", text: "Un concurrency group de GitHub Actions por rama encola los pushes en orden de merge. Cada imagen recibe un tag con el SHA junto al tag de la rama, y el deploy reconstruye ese tag desde su propio commit, así que solo puede publicar su propia imagen. En el sistema escolar el mismo patrón construye tres imágenes en una matriz de buildx con el cache de GHA, entra al VPS por SSH revisando la host key y levanta ese SHA, y su imagen de nginx sirve el frontend y manda /api/ al contenedor del API. En un VPS compartido por varios proyectos, cada deploy hace login a GHCR con una config de Docker desechable, porque un login que dejaba un proyecto hacía que los pulls de otro fallaran con denied." },
+                { label: "RESULTADO", text: "Producción siempre corre el último commit mergeado, y el tag de la imagen dice cuál es. Un login que deja un proyecto ya no rompe el deploy de otro." },
               ],
             },
             {
               topic: "Migraciones antes de arrancar",
               tags: ["Docker"],
               summary:
-                "La base se migra antes de que arranque la app, así ninguna versión nueva corre contra un esquema viejo.",
+                "La base de datos se migra antes de que arranque la app, así que ninguna versión nueva corre contra un schema viejo.",
               story: [
-                todo("PROBLEMA"),
-                { label: "DECISIÓN", text: "Hice que la migración sea un paso del arranque y no un comando manual del deploy." },
-                { label: "CÓMO", text: "En Compose, un servicio migrate corre el bundle de migraciones de EF Core una sola vez, después de que Postgres pasa su health check. La API solo arranca cuando ese servicio termina bien. En Next.js con Prisma, el contenedor corre prisma migrate deploy y después levanta el servidor." },
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Con las migraciones como un paso manual del deploy, nada impide que una versión nueva arranque contra un schema viejo, y falla en la primera query que necesita la columna nueva." },
+                { label: "DECISIÓN", text: "Hice de la migración un paso del arranque, no un comando manual del deploy. En el sistema escolar es su propio servicio, y el API solo arranca si termina bien. En el proyecto de Next.js el contenedor migra al arrancar, que es más simple, con el costo de que una migración que falla tumba el sitio, un riesgo que el CI deja documentado." },
+                { label: "CÓMO", text: "En Compose, un servicio migrate corre una vez el migrations bundle de EF Core, después de que Postgres pasa su health check, con la misma imagen que el API. El API depende de que ese servicio termine bien. En Next.js con Prisma, el contenedor corre prisma migrate deploy y después levanta el servidor." },
+                { label: "RESULTADO", text: "Ninguna versión arranca contra un schema que no espera. En el sistema escolar, una migración que falla detiene el deploy antes de que arranque el API nuevo." },
               ],
             },
             {
               topic: "Backups cifrados en contenedor",
               tags: ["Docker"],
               summary:
-                "Un contenedor respalda la base cada noche con pg_dump, cifra el respaldo con age y lo sube a un bucket en R2.",
+                "Un contenedor respalda la base de datos cada noche con pg_dump, cifra el backup con age y lo sube a un bucket de R2.",
               story: [
-                todo("PROBLEMA"),
-                { label: "DECISIÓN", text: "El respaldo se cifra con la llave pública, así el servidor nunca tiene la llave para leerlo. Las llaves de R2 viven en un archivo de entorno aparte que solo recibe el contenedor de backup, nunca la API." },
-                { label: "CÓMO", text: "La imagen parte de la misma versión de Postgres que la base, así pg_dump siempre coincide con la versión mayor del servidor. crond corre el script cada noche y le pasa las variables del contenedor, así ningún archivo con secretos se escribe a disco. El dump se escribe completo antes de subirlo, para no subir un archivo truncado si pg_dump falla a la mitad. La retención borra respaldos viejos solo después de una subida exitosa." },
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "La base de datos de producción no tenía ningún backup, así que perder el servidor significaba perder los datos." },
+                { label: "DECISIÓN", text: "El backup se cifra con una llave pública, así que el servidor nunca tiene la llave para leerlo. Las llaves de R2 viven en un archivo de env aparte que solo recibe el contenedor del backup, nunca el API." },
+                { label: "CÓMO", text: "La imagen parte de la misma versión de Postgres que la base, así que pg_dump siempre coincide con la versión mayor del servidor. crond corre el script cada noche y le pasa el entorno del contenedor, así que no se escribe en disco ningún archivo con secretos. El dump se escribe completo antes de subirlo, para que un pg_dump que falla a la mitad nunca suba un archivo truncado. La retención borra los backups viejos solo después de una subida exitosa." },
+                { label: "RESULTADO", text: "La base tiene una copia cada noche fuera del servidor que solo puede leer quien tiene la llave privada. Un dump que falla a la mitad nunca reemplaza un backup bueno." },
               ],
             },
             {
-              topic: "Entorno e2e local",
+              topic: "Conexión de streaming",
+              tags: ["Kubernetes", "GCP"],
+              summary:
+                "Diagnostiqué una conexión en tiempo real que se cortaba cada 30 segundos y la arreglé con un Service de Kubernetes dedicado a las rutas de streaming, con un timeout más largo en el load balancer.",
+              story: [
+                { label: "PROBLEMA", text: "El stream en tiempo real de la app se reconectaba una y otra vez, y una notificación podía tardar hasta 15 segundos en aparecer. Los logs de la app mostraban la conexión cortada exactamente 30 segundos después de abrir, cada vez, y luego la app esperaba hasta 15 segundos de backoff antes de reconectar." },
+                { label: "DECISIÓN", text: "El corte era el timeout de backend de 30 segundos que trae el load balancer por default, que está bien para requests normales. En lugar de subirlo para todo el API, les di a las rutas de streaming su propio Service con un timeout de una hora. Todo lo demás se queda en 30 segundos, así que un request normal colgado se sigue cortando rápido." },
+                { label: "CÓMO", text: "Un segundo Service de Kubernetes con un {{BackendConfig|la configuración del load balancer de GKE por Service}} de 3,600 segundos atiende solo las dos rutas de streaming, el stream de eventos y las respuestas del asistente, y el Ingress manda solo esas rutas ahí. En iOS, el backoff de reconexión ahora se reinicia después de una respuesta exitosa, en lugar de crecer de 1 a 15 segundos y quedarse ahí." },
+                { label: "RESULTADO", text: "El stream se mantiene abierto en lugar de cortarse cada 30 segundos, y cuando sí se corta la app reconecta de inmediato. Los requests normales conservan su timeout corto." },
+              ],
+            },
+            {
+              topic: "Imágenes mínimas",
               tags: ["Docker"],
               summary:
-                "Armé un compose aparte para los tests e2e, con Redis local en lugar de Upstash.",
+                "Construí las imágenes con multi-stage builds para que compiladores y dependencias de desarrollo nunca lleguen a producción, y bajé la imagen de Next.js de 3.45 GB a 985 MB.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                { label: "CÓMO", text: "El compose levanta Redis y serverless-redis-http, un proxy que expone Redis con la misma API HTTP de Upstash. Así la app habla con Redis local con el mismo cliente que usa en producción." },
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "La imagen de Next.js pesaba 3.45 GB. El Dockerfile copiaba todo node_modules a la imagen final, lo que deshacía el build standalone, y mandaba un Chromium que nada en producción usaba." },
+                { label: "DECISIÓN", text: "Separé el build de la imagen final. El SDK, los compiladores y las dependencias de desarrollo se quedan en la etapa de build, y la imagen final lleva solo lo que corre el servidor. Los contenedores de las apps no corren como root, así que una falla en la app no le da root dentro del contenedor a quien la explote." },
+                { label: "CÓMO", text: "Next.js compila en modo standalone, y la imagen final copia solo el servidor y los módulos que usa, corriendo con su propio usuario. Los APIs de .NET corren con el usuario sin root de la imagen oficial." },
+                { label: "RESULTADO", text: "La imagen pasó de 3.45 GB a 985 MB, medido, así que cada deploy baja menos de un tercio de lo que bajaba antes." },
               ],
             },
             {
-              topic: "CI/CD a un VPS",
-              tags: ["Docker", "GitHub Actions", "Nginx"],
+              topic: "Imágenes en R2",
               summary:
-                "GitHub Actions corre los tests en cada push. Al hacer merge a main construye las imágenes, las sube a GHCR etiquetadas con el commit y el VPS levanta exactamente esa versión.",
+                "Moví las imágenes de productos de Cloudinary a Cloudflare R2 detrás de un dominio propio, con las subidas firmadas en el servidor para que ninguna llave de storage llegue al navegador.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                { label: "CÓMO", text: "Workflows filtrados por path corren dotnet test y npm test en cada push. En el deploy, buildx construye las imágenes en una matrix con cache de GHA y las etiqueta con el SHA del commit. El workflow entra al VPS por SSH verificando la llave del host contra known_hosts y levanta ese SHA." },
-                { label: "RESULTADO", text: "Cada merge a main hace deploy sin pasos manuales." },
-              ],
-            },
-            {
-              topic: "Ruta de red",
-              tags: ["Nginx"],
-              summary:
-                "Pasé el tráfico por Cloudflare (DNS, CDN, WAF, SSL) a un reverse proxy de Nginx que manda / al contenedor del frontend y /api/* al del backend.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                {
-                  label: "CÓMO",
-                  text: "Nginx manda / al contenedor del frontend (host 3009 a 80) y /api/* al de la API (host 8081 a 8080). Postgres corre en el host y la API llega a él por host.docker.internal.",
-                },
-                todo("RESULTADO"),
-              ],
-            },
-            {
-              topic: "Imágenes y correo",
-              summary:
-                "Pasé el almacenamiento y la entrega de imágenes al CDN de Cloudinary y automaticé los correos de pedido y envío con Resend.",
-              story: [
-                { label: "PROBLEMA", text: "Los clientes tenían que escribirle al equipo para saber el estado de su pedido." },
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
-              ],
-            },
-            {
-              topic: "CDN de imágenes",
-              tags: ["GCP"],
-              summary:
-                "Construí la entrega de imágenes con Google Cloud Storage e imgproxy en Cloud Run detrás de Cloud CDN.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Las imágenes llegan 10 veces más ligeras que los originales (45 KB contra 450 KB en promedio) y el 94% de los bytes sale del cache." },
-              ],
-            },
-            {
-              topic: "Seguridad de storage",
-              tags: ["GCP", "Terraform"],
-              summary:
-                "Detecté y corregí una exposición que permitía listar los buckets de contenido y descargar fotos privadas, restringiendo el acceso con Terraform.",
-              story: [
-                todo("PROBLEMA"),
-                { label: "DECISIÓN", text: "Clasifiqué cada archivo como público o privado." },
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "El contenido privado ya no se puede descubrir ni descargar en masa." },
-              ],
-            },
-            {
-              topic: "Conexión en tiempo real",
-              tags: ["Kubernetes"],
-              summary:
-                "Corregí una conexión en tiempo real que se cortaba cada 30 s, dándole a sus rutas de streaming un servicio de Kubernetes dedicado con un timeout más largo en el load balancer.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Las reconexiones bajaron 92%." },
+                { label: "PROBLEMA", text: "Cada subida desde el admin firmaba su request en el navegador, así que la API key de Cloudinary llegaba al cliente en cada subida." },
+                { label: "DECISIÓN", text: "Moví el storage a R2, cuyo free tier cubre el catálogo sin costo de egress, y moví la subida a una ruta del API del propio proyecto, para que las credenciales nunca salgan del servidor." },
+                { label: "CÓMO", text: "La ruta de subida solo acepta admins, recibe jpg, png, webp y gif de hasta 5 MB, y firma la escritura a R2 con SigV4 usando aws4fetch, unos 10 KB en lugar del AWS SDK completo. Un script que se puede volver a correr, con modo dry-run, copió las imágenes existentes y reescribió sus URLs en la base de datos." },
+                { label: "RESULTADO", text: "Todas las imágenes se movieron sin fallas y responden desde el dominio del CDN con el content type correcto. Ninguna llave de storage llega ya al navegador." },
               ],
             },
           ],
