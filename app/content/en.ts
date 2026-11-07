@@ -109,7 +109,7 @@ export const en: Content = {
             {
               title: "Product (iOS + Kotlin API)",
               achievements: [
-                "Transactional workflow engine: Built payments, payouts and game states for real-money games (Kotlin/Spring Boot API + SwiftUI): geolocation check-in, Lucra charges and payouts, and a state machine driven by scheduled tasks with automatic actions such as expirations and reminders. Guarded money paths with server-side state validation and optimistic locking against concurrent writes, validated end to end across 118 buy-ins with zero duplicate charges.",
+                "Real-money game flows: Built the invitation lifecycle with scheduled expirations and reminders, and a check-in at the venue decided by the server from the phone's location (Kotlin/Spring Boot API + SwiftUI). Guarded money paths with server-side state checks and optimistic locking against concurrent writes, so a stale write or a misplaced cancel never strands a player's buy-in.",
               ],
             },
             {
@@ -483,43 +483,43 @@ export const en: Content = {
         {
           title: "Kotlin / Spring Boot",
           description:
-            "Backend for real-money games: payments, payouts and game states on a Kotlin/Spring Boot API consumed by a SwiftUI app.",
-          tags: ["Kotlin", "Spring Boot", "SwiftUI"],
+            "Backend for real-money games on a Kotlin/Spring Boot API consumed by a SwiftUI app, with invitations that expire on their own, check-in at the venue and guards on every money write.",
+          tags: ["Scheduled jobs", "Geolocation", "Concurrency"],
           bullets: [
             {
-              topic: "Game state machine",
-              tags: ["Kotlin", "Spring Boot"],
+              topic: "Challenge lifecycle",
+              tags: ["Scheduled jobs"],
               summary:
-                "Built a state machine for real-money games driven by scheduled tasks, with automatic actions such as expirations and reminders.",
+                "Built the lifecycle of a real-money game invitation, with reminders the invitee picks and an expiry at the game's start time, run by scheduled jobs that are safe on more than one instance.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "A money game starts with an invitation, and an invitee who never answered kept their seat and held up the whole group. The old deadline also closed invitations sent minutes before a game, before anyone could read them. Reminders and expirations had to happen on their own, with nobody pressing a button." },
+                { label: "DECISION", text: "The invitation expires at the game's start time, except one sent less than an hour before, which never expires. The invitee can ask for a reminder in an hour, in a day or two hours before it expires. I ran both with scheduled jobs instead of timers in memory, because a restart loses a timer and a job just finds the pending work again on its next pass." },
+                { label: "HOW", text: "One job runs every minute and takes off whoever didn't answer by the start time, and another runs every 5 minutes and sends the reminders that are due. Each reads the pending ids and handles each one in its own transaction, under the game's {{row lock|a database lock that makes other writers to the same row wait}}, checking the state again before acting. If two instances run the same pass, the second finds nothing left to do, and one that fails doesn't hold back the rest. When the host moves the start time, the expiry and the reminder move with it." },
+                { label: "RESULT", text: "An unanswered invitation no longer blocks the group, a last-minute game can still be answered, and no reminder arrives once the game has started. Running more instances of the API doesn't send a reminder twice." },
               ],
             },
             {
-              topic: "Payments and payouts",
-              tags: ["Kotlin", "Spring Boot", "SwiftUI"],
+              topic: "Check-in at the venue",
+              tags: ["Geolocation"],
               summary:
-                "Integrated Lucra charges and payouts with a geolocation check-in, across the Kotlin API and the SwiftUI app.",
+                "Made a real-money game start only when every player who paid is at the venue, with the server deciding from the phone's location, across the Kotlin API and the SwiftUI app.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "A money game can only be played by people who are actually where it's played. A check-in button can be pressed from anywhere, and the location a phone reports can be imprecise or old." },
+                { label: "DECISION", text: "Check-in is never a button. The phone reports its position on its own and the server decides. A reading checks a player in only when its whole error circle is inside the radius, and takes the check-in away only when it's entirely outside, so a vague reading changes nothing. It's validated at the moment of start, because what matters is who is there when the money is committed." },
+                { label: "HOW", text: "On iOS, with SwiftUI, the app registers the venue's area when the game is created and reports entries, exits and refreshes while the lobby is open. The API measures the distance to the venue with a 3-mile radius, so the parking lot and the far side of the property count, and keeps every reading for disputes. A check-in lapses after 2 hours without a reading, and starting the game is refused while any player who paid isn't checked in. The host can always start it as a game for fun, and the money goes back." },
+                { label: "RESULT", text: "A money game can't start with a player who isn't there, and a player who left with location turned off stops counting. Every reading is on record if someone disputes it." },
               ],
             },
             {
               topic: "Money-path guards",
-              tags: ["Kotlin", "Spring Boot"],
+              tags: ["Concurrency"],
               summary:
-                "Guarded money paths with server-side state validation and optimistic locking against concurrent writes.",
+                "Guarded money paths with server-side state checks and optimistic locking against concurrent writes, so a stale write or a misplaced cancel never strands a player's money.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "Validated end to end across 118 buy-ins with zero duplicate charges." },
+                { label: "PROBLEM", text: "Three bugs had the same root, a write that trusted state that was no longer true. A stale copy of a player saved over a newer write and brought back an expired invitation, so the host got the same push twice. Cancelling a game whose scores were already closed left every buy-in held at the payments provider with nothing to return it. And a player who had paid showed as unpaid when another build of the app rewrote their data at the provider, which blocked the start." },
+                { label: "DECISION", text: "The server checks the state before every money write and doesn't count on the app hiding a button. I added {{optimistic locking|each row carries a version, and a save of an older version fails}} to the player row, so a stale save fails instead of overwriting, and every writer takes the game's lock before reading. Who paid is matched by the link to the provider's account, which only changes when the account is deleted, not by data any app can rewrite." },
+                { label: "HOW", text: "The player row got a version column, and the writers that read without the lock now lock first and read again, each in its own short transaction. Cancelling answers 400 while the scores are closed or the payout is pending, the same rule the app already applied on screen. Paid state reads the provider's leaderboard and matches each row by the account link first. I reproduced the stranded cancel and the unpaid player against the provider's sandbox, and each fix shipped with tests for its case." },
+                { label: "RESULT", text: "A stale save can no longer undo a newer one, a cancel can't strand buy-ins, and a player who paid stays paid. Money only moves from a state the server checked." },
               ],
             },
           ],
@@ -583,79 +583,55 @@ export const en: Content = {
         {
           title: "Node.js / Python",
           description:
-            "Node.js and Express services for client projects, and Python tooling for QA: test data, traffic simulation and evidence capture.",
-          tags: ["Node.js", "Python"],
+            "Node.js and Python scripts that automate testing, from golden cases generated by a legacy system to evidence videos of location tests, privacy probes and load tests on shared infrastructure.",
+          tags: ["Regression", "Evidence", "Security", "Performance"],
           bullets: [
             {
-              topic: "REST endpoints",
-              tags: ["Node.js"],
+              topic: "Golden tests against the legacy",
+              tags: ["Regression"],
               summary:
-                "Developed 30+ REST endpoints with Node.js and Express for client projects, including a Warehouse Management System (WMS).",
+                "Wrote 12 Node.js generators that run the legacy system's own functions and produce over 6,000 golden cases, so the migrated backend has to answer exactly what the old system answered.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The migration rewrote a school management system that kept its business rules inside one huge front-end file. Rules like which stage a generation is in on a given date, or how a file of students is read, had no documentation, and each had edge cases at month boundaries or in odd rows. Rewriting them in C# just by reading the code could change a result without anyone noticing." },
+                { label: "DECISION", text: "The legacy code itself defines the expected answer. Each generator copies the legacy function verbatim, runs it over hundreds of inputs and writes inputs and outputs to JSON, and the .NET tests compare the new code against that file. The random inputs use a fixed seed, so every run writes the same file and a diff in the JSON means a rule changed." },
+                { label: "HOW", text: "Each generator is a Node script that cites the legacy lines it copied. It mixes hand-picked edge cases, like January 15 and 16 or August 1, with seeded random inputs up to about 500 cases. The JSON lands in the test project, where an xUnit {{theory|a test that runs once per data row}} loads each case as its own test. When a file with real cases exists locally it runs those too, without committing data the client hasn't approved sharing." },
+                { label: "RESULT", text: "Twelve legacy rules across five modules were migrated with proof that they answer like the old system, case by case. When a test fails, it names the exact input where the new code differs." },
               ],
             },
             {
-              topic: "Tracking microservice",
-              tags: ["Node.js"],
+              topic: "Location test evidence",
+              tags: ["Evidence"],
               summary:
-                "Built an isolated scraping microservice for real-time Estafeta shipment tracking (no public API), decoupled from the main system.",
+                "Built a Python pipeline that turns a simulated location drive into an evidence video, with a side panel showing the geofence, the moving dot and every check-in the server recorded, in sync.",
               story: [
-                { label: "PROBLEM", text: "Estafeta has no public tracking API." },
-                { label: "DECISION", text: "Run the scraper as its own service, decoupled from the main system." },
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The check-in for real-money games depends on the phone crossing a radius around the venue, and screenshots can't prove that. The simulator's own recording has a variable frame rate, so it squeezes still time and drops frames, and the video's timing stopped matching the server's records." },
+                { label: "DECISION", text: "I recorded with a loop of screenshots named by their timestamp and rebuilt the timing from those names. The panel reads the readings from the database for the clip's window, because the server is the source of truth for check-in, not what the app shows." },
+                { label: "HOW", text: "One script turns the screenshots into an ffmpeg list with each frame's real duration. Another draws the side panel frame by frame with PIL, with the tolerance rings around the venue, the dot moving at the drive's speed, the live distance computed with {{haversine|the formula for distance between two points on a sphere}} and each reading the moment it landed, marked inside or outside. It can also draw the permission state from Settings and sudden jumps in location, to show cases like location being turned off mid-drive." },
+                { label: "RESULT", text: "Each location test ships with a video where the reviewer sees the app and the server's decision side by side, second by second. A missing or extra check-in shows up in the clip without reading logs." },
               ],
             },
             {
-              topic: "Geofence live map",
-              tags: ["Python"],
+              topic: "Privacy probe",
+              tags: ["Security"],
               summary:
-                "Contributed to a live map that plots the simulated device location against a geofence radius and tolerance rings.",
+                "Wrote a Python probe that checks 4 privacy invariants of user recommendations as a real user against the API, so a private answer can't leak through the ranking order.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "Recommendations rank users by distance and by how similar their profile answers are. Some answers are private, and even when the API never returns them, the order of the list can give them away, because changing one answer moves someone up or down. Unit tests checked each piece on its own, not what a real user can infer from outside." },
+                { label: "DECISION", text: "I tested from the attacker's side. The probe acts as a real user and compares API responses, never internal values. If two sets of answers that should look the same from outside produce different responses, something is leaking." },
+                { label: "HOW", text: "The probe runs 18 answer sheets against a ladder of seeded reference users. It checks that sheets that resolve to the same public type get identical recommendation and search responses, that a private profile never moves or shows its type, and that search ignores the latitude and longitude the client sends. As a control, changing one public answer does move a user, so the probe can tell a real pass from a test that sees nothing." },
+                { label: "RESULT", text: "The leak through the ranking order was closed with proof from outside, and all four invariants hold on the local API. The control shows the probe would catch the leak if it came back." },
               ],
             },
             {
-              topic: "API invariants check",
-              tags: ["Python"],
+              topic: "Load test of live viewers",
+              tags: ["Performance"],
               summary:
-                "Contributed to a script that verifies 4 API invariants: no data leaking through ranking order, byte-identical repeat responses, masked private profiles and stable search.",
+                "Loaded the shared Redis with 20,000 simulated viewers and a minute of live heartbeats from a Python script, to measure memory and latency before shipping the live viewer count.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "All checks passed on dev data." },
-              ],
-            },
-            {
-              topic: "Evidence videos",
-              tags: ["Python"],
-              summary:
-                "Contributed to tools that turn simulator recordings into timed evidence videos.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
-              ],
-            },
-            {
-              topic: "Test data and traffic",
-              tags: ["Python"],
-              summary:
-                "Contributed to scripts that generate test data and simulate realistic traffic scenarios against the applications.",
-              story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                todo("RESULT"),
+                { label: "PROBLEM", text: "The live viewer count keeps one Redis set per game and a heartbeat from each viewer every 25 seconds, with a sweep every 5 seconds. That Redis is shared with the rest of the app, has 256 MB and evicts keys when it fills up. A feature that grew its memory or blocked it with slow commands would hurt everything else." },
+                { label: "DECISION", text: "I measured on the dev Redis itself, with the same commands the service runs, instead of a local Redis with nothing else on it. The keys went under a throwaway prefix so the test couldn't touch real data, and were deleted by name afterwards." },
+                { label: "HOW", text: "The script loaded 5,000 games with 4 viewers each, then ran 60 seconds of live traffic, a heartbeat for every viewer every 25 seconds and a sweep every 5 seconds. It recorded the load's time, commands and errors, memory before and after, how long each sweep took and the latency other clients saw. At the end it deleted the keys and checked the database was back to zero." },
+                { label: "RESULT", text: "20,000 viewers cost 2.25 MB, memory stayed flat during the live minute, and other clients saw latency under 1 ms on average, with no evicted keys or slow commands. The feature shipped with its cost measured on the same Redis it runs on." },
               ],
             },
           ],

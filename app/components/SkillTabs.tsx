@@ -14,11 +14,11 @@ export type SkillView = { skill: number; filter: string | null };
 export function viewForTag(skills: Skill[], tag: string): SkillView {
   const titled = skills.findIndex((s) => s.title === tag);
   if (titled >= 0) return { skill: titled, filter: null };
+  const named = skills.findIndex((s) => s.title.split(" / ").includes(tag));
+  if (named >= 0) return { skill: named, filter: null };
   const counts = skills.map((s) => s.bullets.filter((b) => b.tags?.includes(tag)).length);
   const most = Math.max(...counts);
-  if (most > 0) return { skill: counts.indexOf(most), filter: tag };
-  const named = skills.findIndex((s) => s.title.split(" / ").includes(tag));
-  return { skill: Math.max(named, 0), filter: null };
+  return { skill: most > 0 ? counts.indexOf(most) : 0, filter: most > 0 ? tag : null };
 }
 
 const motion = (): ScrollBehavior =>

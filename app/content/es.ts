@@ -91,7 +91,7 @@ export const es: Content = {
             {
               title: "Producto (iOS + API en Kotlin)",
               achievements: [
-                "Motor de workflows transaccionales: construí los cobros, pagos y estados de juegos con dinero real (API en Kotlin/Spring Boot + SwiftUI): check-in por geolocalización, integración de cobros y pagos con Lucra, y una máquina de estados orquestada con tareas programadas y acciones automáticas, como expiraciones y recordatorios. Protegí los movimientos de dinero con validación de estado en el servidor y optimistic locking contra escrituras concurrentes, validado de punta a punta en 118 cuotas de entrada sin cobros duplicados.",
+                "Flujos de juegos con dinero real: construí el ciclo de vida de las invitaciones, con expiraciones y recordatorios programados, y un check-in en el lugar que decide el servidor a partir de la ubicación del teléfono (API en Kotlin/Spring Boot + SwiftUI). Protegí los movimientos de dinero con validación de estado en el servidor y optimistic locking contra escrituras concurrentes, para que una escritura vieja o una cancelación mal puesta nunca deje atorada la cuota de entrada de un jugador.",
               ],
             },
             {
@@ -457,39 +457,39 @@ export const es: Content = {
           ...en.about.technical.skills[3],
           bullets: [
             {
-              topic: "Máquina de estados",
-              tags: ["Kotlin", "Spring Boot"],
+              topic: "Ciclo de vida del challenge",
+              tags: ["Scheduled jobs"],
               summary:
-                "Construí una máquina de estados para juegos de dinero real, orquestada con tareas programadas y acciones automáticas como expiraciones y recordatorios.",
+                "Construí el ciclo de vida de la invitación a un juego de dinero real, con recordatorios que elige el invitado y una expiración a la hora de inicio, corrido por tareas programadas que funcionan con más de una instancia.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Un juego de dinero empieza con una invitación, y un invitado que nunca contestaba se quedaba con su lugar y detenía a todo el grupo. El límite anterior además cerraba invitaciones mandadas minutos antes del juego, antes de que alguien pudiera leerlas. Los recordatorios y las expiraciones tenían que pasar solos, sin que nadie apretara un botón." },
+                { label: "DECISIÓN", text: "La invitación expira a la hora de inicio del juego, salvo la que se manda con menos de una hora de anticipación, que nunca expira. El invitado puede pedir un recordatorio en una hora, en un día o dos horas antes de que expire. Las dos cosas las corrí con tareas programadas y no con timers en memoria, porque un reinicio pierde el timer y una tarea vuelve a encontrar el trabajo pendiente en su siguiente pasada." },
+                { label: "CÓMO", text: "Una tarea corre cada minuto y saca a quien no contestó antes de la hora de inicio, y otra corre cada 5 minutos y manda los recordatorios que ya tocan. Cada una lee los ids pendientes y procesa cada uno en su propia transacción, bajo el {{row lock|un lock de la base de datos que hace esperar a los demás que escriben en esa fila}} del juego, y revisa el estado otra vez antes de actuar. Si dos instancias corren la misma pasada, la segunda ya no encuentra nada que hacer, y una que falla no detiene a las demás. Cuando el host mueve la hora de inicio, la expiración y el recordatorio se mueven con ella." },
+                { label: "RESULTADO", text: "Una invitación sin respuesta ya no detiene al grupo, un juego de último minuto todavía se puede contestar y ningún recordatorio llega cuando el juego ya empezó. Correr más instancias de la API no manda un recordatorio dos veces." },
               ],
             },
             {
-              topic: "Cobros y pagos",
-              tags: ["Kotlin", "Spring Boot", "SwiftUI"],
+              topic: "Check-in en el lugar",
+              tags: ["Geolocation"],
               summary:
-                "Integré cobros y pagos con Lucra y un check-in por geolocalización, entre la API en Kotlin y la app en SwiftUI.",
+                "Hice que un juego de dinero real solo pueda empezar cuando todos los que pagaron están en el lugar, con el servidor decidiendo a partir de la ubicación del teléfono, entre la API en Kotlin y la app en SwiftUI.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Un juego de dinero solo lo pueden jugar personas que de verdad están donde se juega. Un botón de check-in se puede apretar desde cualquier lado, y la ubicación que reporta un teléfono puede ser imprecisa o vieja." },
+                { label: "DECISIÓN", text: "El check-in nunca es un botón. El teléfono reporta su posición solo y el servidor decide. Una lectura registra al jugador solo cuando todo su círculo de error cae dentro del radio, y se lo quita solo cuando cae completamente fuera, así que una lectura vaga no cambia nada. Se valida al momento de empezar, porque lo que importa es quién está ahí cuando el dinero queda comprometido." },
+                { label: "CÓMO", text: "En iOS, con SwiftUI, la app registra el área del lugar cuando se crea el juego y reporta entradas, salidas y actualizaciones mientras el lobby está abierto. La API mide la distancia al lugar con un radio de 3 millas, para que cuenten el estacionamiento y el otro extremo del terreno, y guarda cada lectura para disputas. Un check-in caduca después de 2 horas sin lecturas, y empezar el juego se rechaza mientras alguien que pagó no tenga check-in. El host siempre puede empezarlo como juego por diversión, y el dinero se devuelve." },
+                { label: "RESULTADO", text: "Un juego de dinero no puede empezar con un jugador que no está ahí, y uno que se fue con la ubicación apagada deja de contar. Cada lectura queda registrada por si alguien la disputa." },
               ],
             },
             {
               topic: "Protección de movimientos de dinero",
-              tags: ["Kotlin", "Spring Boot"],
+              tags: ["Concurrency"],
               summary:
-                "Protegí los movimientos de dinero con validación de estado en el servidor y optimistic locking contra escrituras concurrentes.",
+                "Protegí los movimientos de dinero con validación de estado en el servidor y optimistic locking contra escrituras concurrentes, para que una escritura vieja o una cancelación mal puesta nunca deje atorado el dinero de un jugador.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Validado de punta a punta en 118 cuotas de entrada sin cobros duplicados." },
+                { label: "PROBLEMA", text: "Tres bugs tenían la misma raíz, una escritura que confiaba en un estado que ya no era cierto. Una copia vieja de un jugador se guardaba encima de una escritura más nueva y revivía una invitación expirada, y el host recibía el mismo push dos veces. Cancelar un juego con los scores ya cerrados dejaba todas las cuotas de entrada retenidas en el proveedor de pagos sin nada que las devolviera. Y un jugador que ya había pagado aparecía como no pagado cuando otra build de la app reescribía sus datos en el proveedor, y eso bloqueaba el inicio." },
+                { label: "DECISIÓN", text: "El servidor revisa el estado antes de cada escritura de dinero y no cuenta con que la app esconda un botón. Le agregué {{optimistic locking|cada fila lleva una versión y guardar una versión vieja falla}} a la fila del jugador, para que un save viejo falle en lugar de sobrescribir, y todo el que escribe toma el lock del juego antes de leer. Quién pagó se identifica por el vínculo con la cuenta del proveedor, que solo cambia cuando se borra la cuenta, y no por datos que cualquier app puede reescribir." },
+                { label: "CÓMO", text: "La fila del jugador ganó una columna de versión, y los que escribían sin lock ahora toman el lock primero y vuelven a leer, cada uno en su propia transacción corta. Cancelar responde 400 mientras los scores están cerrados o el pago está pendiente, la misma regla que la app ya aplicaba en pantalla. El estado de pago lee el leaderboard del proveedor y empata cada fila primero por el vínculo de la cuenta. Reproduje la cancelación atorada y el jugador no pagado contra el sandbox del proveedor, y cada fix salió con tests para su caso." },
+                { label: "RESULTADO", text: "Un save viejo ya no puede deshacer uno más nuevo, una cancelación no puede dejar cuotas atoradas y un jugador que pagó sigue pagado. El dinero solo se mueve desde un estado que el servidor revisó." },
               ],
             },
           ],
@@ -551,75 +551,51 @@ export const es: Content = {
           ...en.about.technical.skills[5],
           bullets: [
             {
-              topic: "Endpoints REST",
-              tags: ["Node.js"],
+              topic: "Golden tests contra el legacy",
+              tags: ["Regression"],
               summary:
-                "Desarrollé 30+ endpoints REST con Node.js y Express para proyectos de clientes, incluyendo un Sistema de Gestión de Almacenes (WMS).",
+                "Escribí 12 generadores en Node.js que corren las funciones del sistema legacy y producen más de 6,000 golden cases, para que el backend migrado tenga que responder exactamente lo que respondía el sistema viejo.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "La migración reescribía un sistema de gestión escolar que tenía sus reglas de negocio dentro de un solo archivo de front-end enorme. Reglas como en qué etapa está una generación en cierta fecha, o cómo se lee un archivo de alumnos, no tenían documentación, y cada una tenía casos límite en cambios de mes o en filas raras. Reescribirlas en C# solo leyendo el código podía cambiar un resultado sin que nadie se diera cuenta." },
+                { label: "DECISIÓN", text: "El mismo código legacy define la respuesta esperada. Cada generador copia la función legacy tal cual, la corre sobre cientos de entradas y escribe entradas y salidas en un JSON, y los tests de .NET comparan el código nuevo contra ese archivo. Las entradas aleatorias usan una seed fija, así que cada corrida escribe el mismo archivo y un diff en el JSON significa que cambió una regla." },
+                { label: "CÓMO", text: "Cada generador es un script de Node que cita las líneas del legacy que copió. Mezcla casos límite elegidos a mano, como el 15 y 16 de enero o el 1 de agosto, con entradas aleatorias con seed hasta unos 500 casos. El JSON queda en el proyecto de tests, donde una {{theory|un test que corre una vez por cada fila de datos}} de xUnit carga cada caso como su propio test. Cuando existe localmente un archivo con casos reales también los corre, sin commitear datos que el cliente no ha aprobado compartir." },
+                { label: "RESULTADO", text: "Doce reglas del legacy en cinco módulos se migraron con prueba de que responden como el sistema viejo, caso por caso. Cuando un test falla, dice la entrada exacta donde el código nuevo responde distinto." },
               ],
             },
             {
-              topic: "Microservicio de rastreo",
-              tags: ["Node.js"],
+              topic: "Evidencia de tests de ubicación",
+              tags: ["Evidence"],
               summary:
-                "Construí un microservicio de scraping aislado para rastrear envíos de Estafeta en tiempo real (sin API pública), desacoplado del sistema principal.",
+                "Construí un pipeline en Python que convierte un recorrido de ubicación simulado en un video de evidencia, con un panel lateral que muestra la geofence, el punto en movimiento y cada check-in que registró el servidor, sincronizados.",
               story: [
-                { label: "PROBLEMA", text: "Estafeta no tiene API pública de rastreo." },
-                { label: "DECISIÓN", text: "Correr el scraper como un servicio aparte, desacoplado del sistema principal." },
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "El check-in de los juegos de dinero real depende de que el teléfono cruce un radio alrededor del lugar, y eso no se prueba con screenshots. La grabación del simulador tiene frame rate variable, comprime el tiempo quieto y tira frames, y los tiempos del video dejaban de coincidir con los registros del servidor." },
+                { label: "DECISIÓN", text: "Grabé con un loop de screenshots nombrados con su timestamp y reconstruí los tiempos a partir de esos nombres. El panel lee las lecturas de la base de datos para la ventana del clip, porque el servidor es quien decide el check-in, no lo que muestra la app." },
+                { label: "CÓMO", text: "Un script convierte los screenshots en una lista de ffmpeg con la duración real de cada frame. Otro dibuja el panel lateral frame por frame con PIL, con los anillos de tolerancia alrededor del lugar, el punto moviéndose a la velocidad del recorrido, la distancia en vivo calculada con {{haversine|la fórmula de distancia entre dos puntos de una esfera}} y cada lectura en el momento en que llegó, marcada dentro o fuera. También puede dibujar el estado del permiso en Settings y saltos de ubicación, para mostrar casos como apagar la ubicación a medio recorrido." },
+                { label: "RESULTADO", text: "Cada test de ubicación sale con un video donde quien revisa ve la app y la decisión del servidor lado a lado, segundo a segundo. Un check-in que falta o que sobra se ve en el clip sin leer logs." },
               ],
             },
             {
-              topic: "Mapa de geofence en vivo",
-              tags: ["Python"],
+              topic: "Probe de privacidad",
+              tags: ["Security"],
               summary:
-                "Contribuí a un mapa en vivo que muestra la ubicación simulada del dispositivo contra el radio de una geofence y sus anillos de tolerancia.",
+                "Escribí un probe en Python que revisa 4 invariants de privacidad de las recomendaciones de usuarios actuando como un usuario real contra la API, para que una respuesta privada no se filtre por el orden del ranking.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "Las recomendaciones ordenan usuarios por distancia y por qué tan parecidas son sus respuestas del perfil. Algunas respuestas son privadas, y aunque la API nunca las devuelva, el orden de la lista puede delatarlas, porque cambiar una respuesta mueve a alguien hacia arriba o hacia abajo. Los unit tests revisaban cada pieza por separado, no lo que un usuario real puede deducir desde afuera." },
+                { label: "DECISIÓN", text: "Probé desde el lado del atacante. El probe actúa como un usuario real y compara respuestas de la API, nunca valores internos. Si dos juegos de respuestas que desde afuera deberían verse iguales producen respuestas distintas, algo se está filtrando." },
+                { label: "CÓMO", text: "El probe corre 18 hojas de respuestas contra una escalera de usuarios de referencia sembrados. Revisa que las hojas que dan el mismo tipo público reciban respuestas idénticas en recomendaciones y búsqueda, que un perfil privado nunca se mueva ni muestre su tipo, y que la búsqueda ignore la latitud y longitud que manda el cliente. Como control, cambiar una respuesta pública sí mueve a un usuario, así que el probe distingue un pase real de un test que no ve nada." },
+                { label: "RESULTADO", text: "La fuga por el orden del ranking se cerró con prueba desde afuera, y los cuatro invariants se cumplen en la API local. El control demuestra que el probe atraparía la fuga si regresara." },
               ],
             },
             {
-              topic: "Verificación de invariants de la API",
-              tags: ["Python"],
+              topic: "Prueba de carga de viewers en vivo",
+              tags: ["Performance"],
               summary:
-                "Contribuí a un script que verifica 4 invariants de la API: que no se filtren datos por el orden del ranking, respuestas idénticas byte a byte al repetir, perfiles privados enmascarados y búsqueda estable.",
+                "Cargué el Redis compartido con 20,000 viewers simulados y un minuto de heartbeats en vivo desde un script de Python, para medir memoria y latencia antes de sacar el conteo de viewers en vivo.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "Todas las verificaciones pasaron con datos de dev." },
-              ],
-            },
-            {
-              topic: "Videos de evidencia",
-              tags: ["Python"],
-              summary:
-                "Contribuí a herramientas que convierten las grabaciones del simulador en videos de evidencia con tiempos.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
-              ],
-            },
-            {
-              topic: "Datos de prueba y tráfico",
-              tags: ["Python"],
-              summary:
-                "Contribuí a scripts que generan datos de prueba y simulan escenarios de tráfico realistas contra las aplicaciones.",
-              story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                todo("RESULTADO"),
+                { label: "PROBLEMA", text: "El conteo de viewers en vivo guarda un set de Redis por juego y un heartbeat de cada viewer cada 25 segundos, con un barrido cada 5 segundos. Ese Redis se comparte con el resto de la app, tiene 256 MB y saca keys cuando se llena. Una feature que creciera su memoria o lo bloqueara con comandos lentos le pegaría a todo lo demás." },
+                { label: "DECISIÓN", text: "Medí en el mismo Redis de dev, con los mismos comandos que corre el servicio, y no en un Redis local sin nada más encima. Las keys fueron bajo un prefijo desechable para que la prueba no tocara datos reales, y se borraron por nombre al final." },
+                { label: "CÓMO", text: "El script cargó 5,000 juegos con 4 viewers cada uno y luego corrió 60 segundos de tráfico en vivo, un heartbeat de cada viewer cada 25 segundos y un barrido cada 5 segundos. Registró el tiempo, los comandos y los errores de la carga, la memoria antes y después, cuánto tardó cada barrido y la latencia que vieron los demás clientes. Al final borró las keys y revisó que la base quedara en cero." },
+                { label: "RESULTADO", text: "20,000 viewers costaron 2.25 MB, la memoria se mantuvo plana durante el minuto en vivo y los demás clientes vieron latencia promedio menor a 1 ms, sin keys desalojadas ni comandos lentos. La feature salió con su costo medido en el mismo Redis donde corre." },
               ],
             },
           ],
