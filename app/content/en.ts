@@ -534,12 +534,12 @@ export const en: Content = {
               topic: "Offline-first sync",
               tags: ["Kotlin", "Offline-first"],
               summary:
-                "Built an offline-first inventory app so warehouse operators keep working without internet.",
+                "Built an offline-first Android app that saves every record on the device and syncs it when the connection comes back, with no work lost.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                { label: "HOW", text: "Adopted the backend's cursor pagination and optimized local processing." },
-                { label: "RESULT", text: "The module's load-and-sync time dropped from 10–12 to 4–5 minutes." },
+                { label: "PROBLEM", text: "The app is used where the connection isn't always stable, and every outage stopped data entry." },
+                { label: "DECISION", text: "Persist every record locally in Room with a pending-sync flag and let the server merge the changes. Conflicts are never discarded or silently overwritten. A user with the right role reviews them from the desktop app." },
+                { label: "HOW", text: "A {{dirty flag|a mark that a record changed and still has to be uploaded}} in Room marks pending records, and on reconnect the server merges them with what it already has, automatically when nothing overlaps. Conflicts are resolved by hand from the desktop app, and progress stays saved on the device so work picks up where it left off." },
+                { label: "RESULT", text: "More than 500 records a week saved and synced without depending on the network, with no work lost when the connection drops." },
               ],
             },
             {
@@ -548,10 +548,10 @@ export const en: Content = {
               summary:
                 "Structured the app into data, domain and presentation layers, with JWT authentication and automatic token refresh.",
               story: [
-                todo("PROBLEM"),
-                todo("DECISION"),
-                todo("HOW"),
-                { label: "RESULT", text: "The sync logic can be tested without the UI." },
+                { label: "PROBLEM", text: "The Android app had piled up bad practices. UI components called the API directly and ViewModels handled domain objects. That coupled everything to the presentation, made the business models hard to protect and made it impossible to test the logic without the UI." },
+                { label: "DECISION", text: "Apply a Clean Architecture adapted to Android, with the domain layer fully independent of presentation, and the repository pattern so the UI never knows where the data comes from. It's the same approach the backend uses, so both sides also share one set of rules." },
+                { label: "HOW", text: "I split the app into data, domain and presentation. ViewModels only call {{use cases|one class per business action, like syncing or signing in}}, and those depend on repository interfaces implemented in the data layer with Room and Retrofit. For authentication I used an Authenticator that refreshes the JWT automatically, with the tokens stored locally so the session and an active license can be validated offline too." },
+                { label: "RESULT", text: "The sync logic can be tested without the UI, and the domain models are isolated from presentation and from the data layer." },
               ],
             },
             {

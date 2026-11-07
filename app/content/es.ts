@@ -501,12 +501,12 @@ export const es: Content = {
               topic: "Sincronización offline-first",
               tags: ["Kotlin", "Offline-first"],
               summary:
-                "Construí una app de inventario offline-first para que los operadores de almacén sigan trabajando sin internet.",
+                "Construí una app Android offline-first que guarda cada registro en el dispositivo y lo sincroniza cuando vuelve la conexión, sin perder trabajo.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                { label: "CÓMO", text: "Adopté la paginación por cursor del backend y optimicé el procesamiento local." },
-                { label: "RESULTADO", text: "La carga y sincronización del módulo bajó de 10–12 a 4–5 minutos." },
+                { label: "PROBLEMA", text: "La app se usa donde la conexión no siempre es estable, y cada corte detenía el registro de datos." },
+                { label: "DECISIÓN", text: "Persistir cada registro localmente en Room con un flag de pendiente de sincronizar y dejar que el servidor combine los cambios. Los conflictos no se descartan ni se sobrescriben en silencio. Los revisa un usuario con el rol adecuado desde la app de escritorio." },
+                { label: "CÓMO", text: "Un {{dirty flag|una marca de que el registro cambió y falta subirlo}} en Room marca los registros pendientes, y al reconectar el servidor los combina con lo que ya tiene, de forma automática si no hay solapes. Los conflictos se resuelven a mano desde la app de escritorio, y el progreso queda guardado en el dispositivo para retomar donde se quedó." },
+                { label: "RESULTADO", text: "Más de 500 registros por semana guardados y sincronizados sin depender de la red, sin perder trabajo cuando se cae la conexión." },
               ],
             },
             {
@@ -515,10 +515,10 @@ export const es: Content = {
               summary:
                 "Estructuré la app en capas data, domain y presentation, con autenticación JWT y renovación automática de tokens.",
               story: [
-                todo("PROBLEMA"),
-                todo("DECISIÓN"),
-                todo("CÓMO"),
-                { label: "RESULTADO", text: "La lógica de sincronización se puede probar sin la UI." },
+                { label: "PROBLEMA", text: "La app Android tenía malas prácticas acumuladas. Había componentes de UI que llamaban directo a la API y ViewModels que manejaban objetos de domain. Eso acoplaba todo a la presentación, hacía difícil proteger los modelos de negocio y volvía imposible probar la lógica sin la UI." },
+                { label: "DECISIÓN", text: "Implementar una Clean Architecture adaptada a Android, con la capa de domain totalmente independiente de presentation, y el patrón repository para que la UI nunca sepa de dónde vienen los datos. Es el mismo enfoque que se usa en el backend, así que además deja un criterio común entre los dos lados." },
+                { label: "CÓMO", text: "Separé la app en data, domain y presentation. Los ViewModels solo invocan {{Use Cases|una clase por acción de negocio, como sincronizar o iniciar sesión}}, y estos dependen de interfaces de repository, implementadas en la capa data con Room y Retrofit. Para la autenticación usé un Authenticator que renueva el JWT automáticamente, con los tokens guardados localmente para poder validar la sesión y la licencia activa también sin conexión." },
+                { label: "RESULTADO", text: "La lógica de sincronización se puede probar sin la UI, y los modelos de domain quedaron aislados de presentation y de la capa de datos." },
               ],
             },
             {
