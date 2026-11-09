@@ -1,0 +1,52 @@
+---
+title: "clawd-harness – AI Engineering Stack"
+publishedAt: "2026-11-04"
+summary: "Personal Claude Code harness: a 6-agent team, 21 skills and one install script that wire the same rules, reviewers and delivery loop into any project. Stories go from PRD to a reviewed PR in one spec-driven cycle."
+images:
+  - "/images/projects/clawd-harness.jpg"
+team:
+  - name: "Orlando Castañeda"
+    role: "AI Engineer"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: "https://github.com/orrrrli/clawd-harness"
+stack:
+  - "Claude Code"
+  - "Bash"
+  - "Markdown"
+  - "MCP"
+  - "Git hooks"
+  - "GitHub Projects"
+---
+
+## Overview
+
+Every Claude Code session used to start from zero: different rules per repo, no shared reviewers, and no fixed way to go from a ticket to a merged change. clawd-harness fixes that. It is markdown and bash, no application: clone it once, run one script per machine and one per project, and every session works the same way.
+
+The main session runs as a `software-architect` agent. It writes the feature code and dispatches the rest of the team as subagents, one prompt in and one report back: a business analyst for acceptance criteria, a code reviewer, a security auditor and a debugger. Visual work runs in a separate `ui-designer` session.
+
+## Key Features
+
+- **Built** a 6-agent team with split roles: reviewers are read-only and report `file:line` findings, so the agent that writes the code is never the one that approves it
+- **Wrote** 21 skills across engineering, UI and productivity, each installed per project by stack (`web`, `dotnet`, `android`, `ios`) so a project only loads what it uses
+- **Designed** a spec-driven delivery loop: `prd-to-github-backlog` turns a PRD into Epics, fullstack Stories and Tasks on a GitHub Project; `spec-apply` implements one Story across db, backend and frontend; `spec-verify` checks every Given/When/Then criterion with `file:line` evidence
+- **Enforced** that the implementer can't buy a green run: it never edits a test, and verification fails if the diff touches one
+- **Added** guardrails Claude Code enforces before a tool runs: deny rules for `.env` and SSH keys and for force-push, ask rules for commands that destroy uncommitted work or add a dependency
+- **Scripted** worktree isolation: a git hook gives each Story worktree its own ports and Postgres container, so 2-3 Stories verify in parallel on one machine
+- **Ported** the setup to claude.ai/code cloud sessions with a generated setup script, since cloud VMs load nothing from `~/.claude`
+
+## From PRD to merged slice
+
+Work is cut in vertical slices: one Story is one behavior the user can use, built across every layer together. A Story bigger than L is split by behavior, never by layer, because the Story's size is the size of the diff the reviewer has to read.
+
+```
+PRD
+  -> prd-to-github-backlog   Epics -> fullstack Stories -> Tasks
+  -> spec-apply <STORY>      one worktree, one cycle across every layer
+  -> spec-verify             AC, code quality, existing suite, browser check
+  -> one PR per Story
+```
+
+## Tooling around it
+
+The harness sits next to tools that each solve one problem: `rtk` trims command output before it reaches the context, `engram` keeps per-project memory that reviewers search before working, and `graphify` answers structural questions about a codebase so the context files don't have to.

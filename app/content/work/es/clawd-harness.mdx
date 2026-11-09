@@ -1,0 +1,52 @@
+---
+title: "clawd-harness – AI Engineering Stack"
+publishedAt: "2026-11-04"
+summary: "Harness personal de Claude Code: un equipo de 6 agentes, 21 skills y un script de instalación que llevan las mismas reglas, revisores y flujo de entrega a cualquier proyecto. Las Stories van del PRD a un PR revisado en un solo ciclo guiado por la spec."
+images:
+  - "/images/projects/clawd-harness.jpg"
+team:
+  - name: "Orlando Castañeda"
+    role: "AI Engineer"
+    avatar: "/images/avatar-og.jpg"
+    linkedIn: "https://www.linkedin.com/in/castasan-orlando/"
+link: "https://github.com/orrrrli/clawd-harness"
+stack:
+  - "Claude Code"
+  - "Bash"
+  - "Markdown"
+  - "MCP"
+  - "Git hooks"
+  - "GitHub Projects"
+---
+
+## Descripción general
+
+Cada sesión de Claude Code empezaba de cero: reglas distintas en cada repo, sin revisores compartidos y sin un camino fijo de un ticket a un cambio mergeado. clawd-harness resuelve eso. Es markdown y bash, sin aplicación: lo clonas una vez, corres un script por máquina y otro por proyecto, y todas las sesiones trabajan igual.
+
+La sesión principal corre como el agente `software-architect`. Escribe el código de la feature y manda el resto del trabajo a subagentes, un prompt de entrada y un reporte de salida: un business analyst para los criterios de aceptación, un code reviewer, un security auditor y un debugger. El trabajo visual corre en una sesión aparte de `ui-designer`.
+
+## Características principales
+
+- **Armé** un equipo de 6 agentes con roles separados: los revisores son de solo lectura y reportan hallazgos con `file:line`, así que el agente que escribe el código nunca es el que lo aprueba
+- **Escribí** 21 skills de ingeniería, UI y productividad, que se instalan por proyecto según el stack (`web`, `dotnet`, `android`, `ios`) para que cada proyecto cargue solo lo que usa
+- **Diseñé** un flujo de entrega guiado por la spec: `prd-to-github-backlog` convierte un PRD en Epics, Stories fullstack y Tasks en un GitHub Project; `spec-apply` implementa una Story en db, backend y frontend; `spec-verify` revisa cada criterio Given/When/Then con evidencia `file:line`
+- **Bloqueé** que el implementador consiga tests en verde con trampa: nunca edita un test, y la verificación falla si el diff toca uno
+- **Agregué** guardrails que Claude Code aplica antes de correr una herramienta: reglas deny para `.env`, llaves SSH y force-push, y reglas ask para comandos que borran trabajo sin commit o agregan una dependencia
+- **Automaticé** el aislamiento por worktree: un git hook le da a cada worktree de Story sus propios puertos y su contenedor de Postgres, así 2-3 Stories se verifican en paralelo en una sola máquina
+- **Llevé** el setup a las sesiones en la nube de claude.ai/code con un setup script generado, porque esas VMs no cargan nada de `~/.claude`
+
+## Del PRD al slice mergeado
+
+El trabajo se corta en slices verticales: una Story es un comportamiento que el usuario puede usar, construido en todas las capas a la vez. Una Story más grande que L se parte por comportamiento, nunca por capa, porque el tamaño de la Story es el tamaño del diff que el revisor tiene que leer.
+
+```
+PRD
+  -> prd-to-github-backlog   Epics -> Stories fullstack -> Tasks
+  -> spec-apply <STORY>      un worktree, un ciclo en todas las capas
+  -> spec-verify             AC, calidad de código, suite existente, revisión en navegador
+  -> un PR por Story
+```
+
+## Herramientas alrededor
+
+El harness convive con herramientas que resuelven un problema cada una: `rtk` recorta la salida de los comandos antes de que llegue al contexto, `engram` guarda memoria por proyecto que los revisores consultan antes de trabajar, y `graphify` responde preguntas sobre la estructura del código para que los archivos de contexto no tengan que hacerlo.
