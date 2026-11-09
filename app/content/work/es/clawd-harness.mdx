@@ -1,7 +1,7 @@
 ---
 title: "clawd-harness – AI Engineering Stack"
 publishedAt: "2026-11-04"
-summary: "Harness personal de Claude Code: un equipo de 6 agentes, 21 skills y un script de instalación que llevan las mismas reglas, revisores y flujo de entrega a cualquier proyecto. Las Stories van del PRD a un PR revisado en un solo ciclo guiado por la spec."
+summary: "Un harness de Claude Code que pone un mismo piso de calidad al código que escribe la IA: cada cambio se revisa contra sus criterios de aceptación y un spec de calidad fijo, con un reviewer que no puede editarlo, en cualquier repo y en cualquier sesión. Cada error que encuentra la review se vuelve una regla, así que el piso solo sube."
 images:
   - "/images/projects/clawd-harness.jpg"
 team:
@@ -19,25 +19,21 @@ stack:
   - "GitHub Projects"
 ---
 
-## Descripción general
+## Problema
 
-Cada sesión de Claude Code empezaba de cero: reglas distintas en cada repo, sin revisores compartidos y sin un camino fijo de un ticket a un cambio mergeado. clawd-harness resuelve eso. Es markdown y bash, sin aplicación: lo clonas una vez, corres un script por máquina y otro por proyecto, y todas las sesiones trabajan igual.
+El mismo modelo escribe código muy distinto según la sesión. En un repo con buen contexto y un spec claro, el resultado sale limpio. En un repo sin contexto, con un prompt vago o en una sesión larga que ya perdió las reglas, el mismo modelo duplica helpers, agrega capas que nadie pidió y reporta los tests en verde después de editarlos. La calidad dependía de la suerte.
 
-La sesión principal corre como el agente `software-architect`. Escribe el código de la feature y manda el resto del trabajo a subagentes, un prompt de entrada y un reporte de salida: un business analyst para los criterios de aceptación, un code reviewer, un security auditor y un debugger. El trabajo visual corre en una sesión aparte de `ui-designer`.
+clawd-harness fija el piso de calidad para que no dependa de la sesión, el repo ni el prompt. Es markdown y bash, sin aplicación: lo clonas una vez, corres un script por máquina y otro por proyecto, y todas las sesiones de Claude Code trabajan con las mismas reglas, los mismos reviewers y la misma definición de terminado.
 
-## Características principales
+<div className="mdx-links">
+  <a href="https://github.com/orrrrli/clawd-harness" className="mdx-link">Código en GitHub</a>
+</div>
 
-- **Armé** un equipo de 6 agentes con roles separados: los revisores son de solo lectura y reportan hallazgos con `file:line`, así que el agente que escribe el código nunca es el que lo aprueba
-- **Escribí** 21 skills de ingeniería, UI y productividad, que se instalan por proyecto según el stack (`web`, `dotnet`, `android`, `ios`) para que cada proyecto cargue solo lo que usa
-- **Diseñé** un flujo de entrega guiado por la spec: `prd-to-github-backlog` convierte un PRD en Epics, Stories fullstack y Tasks en un GitHub Project; `spec-apply` implementa una Story en db, backend y frontend; `spec-verify` revisa cada criterio Given/When/Then con evidencia `file:line`
-- **Bloqueé** que el implementador consiga tests en verde con trampa: nunca edita un test, y la verificación falla si el diff toca uno
-- **Agregué** guardrails que Claude Code aplica antes de correr una herramienta: reglas deny para `.env`, llaves SSH y force-push, y reglas ask para comandos que borran trabajo sin commit o agregan una dependencia
-- **Automaticé** el aislamiento por worktree: un git hook le da a cada worktree de Story sus propios puertos y su contenedor de Postgres, así 2-3 Stories se verifican en paralelo en una sola máquina
-- **Llevé** el setup a las sesiones en la nube de claude.ai/code con un setup script generado, porque esas VMs no cargan nada de `~/.claude`
+## Cómo se fija el piso
 
-## Del PRD al slice mergeado
+Cada parte del harness responde una pregunta sobre calidad.
 
-El trabajo se corta en slices verticales: una Story es un comportamiento que el usuario puede usar, construido en todas las capas a la vez. Una Story más grande que L se parte por comportamiento, nunca por capa, porque el tamaño de la Story es el tamaño del diff que el revisor tiene que leer.
+**¿Qué cuenta como correcto?** Los criterios de aceptación Given/When/Then de la Story, escritos antes del código. `prd-to-github-backlog` convierte un PRD en un GitHub Project con Epics, Stories fullstack y Tasks. `spec-apply` construye una Story en db, backend y frontend, y `spec-verify` revisa cada criterio con evidencia `file:line`. Un criterio sin evidencia falla, aunque el código se vea bien.
 
 ```
 PRD
@@ -47,6 +43,33 @@ PRD
   -> un PR por Story
 ```
 
-## Herramientas alrededor
+**¿Quién lo aprueba?** Nunca el agente que lo escribió. La sesión principal corre como `software-architect`: implementa y manda el resto del trabajo a un equipo de 6 agentes. El `code-reviewer` y el `security-auditor` no tienen Write ni Edit. Reportan hallazgos con `file:line` y la evidencia citada, y vuelven a correr el build y los tests del proyecto en vez de creer un "los tests pasan".
 
-El harness convive con herramientas que resuelven un problema cada una: `rtk` recorta la salida de los comandos antes de que llegue al contexto, `engram` guarda memoria por proyecto que los revisores consultan antes de trabajar, y `graphify` responde preguntas sobre la estructura del código para que los archivos de contexto no tengan que hacerlo.
+**¿Se puede hacer trampa?** No. El implementer nunca edita un test, y la verificación falla si `git diff` muestra un archivo de test cambiado. Si un test se ve mal, el run se detiene y me llega a mí, porque casi siempre significa que el criterio de aceptación era ambiguo.
+
+**¿Qué cuenta como mal código?** Un spec de calidad fijo: duplicación, nombres, límites entre capas, manejo de errores, código muerto, y si el test ejercita el código de verdad o un mock. Las reglas de anti-patterns por stack (`web`, `dotnet`, `ios`, `kotlin-spring`) cargan solo cuando el agente abre un archivo de ese stack, con un máximo de 10 líneas cada una para no llenar el contexto. Los catálogos completos, de unos 20 KB por stack, solo los lee el reviewer al momento de revisar.
+
+**¿Qué tan simple?** Cada cambio pasa por el ladder de ponytail antes de escribir código: ¿esto tiene que existir?, ¿el codebase ya lo tiene?, ¿lo cubre la librería estándar o la plataforma? Solo después va el mínimo código que funciona.
+
+**¿Cómo se mantiene igual entre repos?** Con un solo instalador, `harness.sh`. Un repo de cliente, uno del trabajo y un proyecto personal reciben los mismos agentes, reglas y hooks, filtrados por stack para que una app de iOS no cargue skills de .NET. Los guardrails van en las reglas de permisos de Claude Code en vez de hooks, así que no cuestan nada por llamada y se aplican decida lo que decida el modelo: no leer archivos `.env` ni llaves SSH, no hacer force-push, y pedir confirmación antes de borrar trabajo sin commit o agregar una dependencia.
+
+## El piso solo sube
+
+Un piso fijo no basta si el mismo error vuelve a aparecer. `context-sync audit 4w` lee el código de los commits de las últimas cuatro semanas, encuentra las formas que se repiten (un helper reescrito en tres lugares, una guard clause copiada en cada caller) y propone cada una como regla del proyecto, junto con el ejemplo a copiar en su lugar. Cuando la apruebo, el reviewer revisa cada diff futuro contra esa regla.
+
+Lo mismo pasa con la memoria del proyecto. Los reviewers guardan en engram los hallazgos confirmados, y `context-sync` los pasa a los archivos de contexto del proyecto, que siguen siendo la fuente de verdad. Un error que la review encuentra una vez se vuelve algo que cada sesión siguiente conoce y que cada review siguiente revisa.
+
+## Lo que quité
+
+Casi todo el trabajo en el harness fue quitar lo que no subía el piso:
+
+- **22 skills**, en dos pasadas, porque nada las usaba o hacían lo mismo que otra
+- **Un agente `test-writer`**, porque generaba tests que ningún criterio de aceptación pedía. Ahora `spec-apply` no escribe tests nuevos: mantiene en verde la suite existente, y cada criterio se demuestra con un test que pasa, un code path con `file:line` o una revisión en navegador
+- **Un agente `design-auditor` y su design loop**. El trabajo de diseño ahora corre en su propia sesión de `ui-designer`
+- **El soporte para Windsurf y OpenCode**. El harness solo apunta a Claude Code y sigue sus convenciones
+- **Tres instaladores**, que junté en un solo `harness.sh` con un modo `--update` que solo vuelve a crear los links
+
+## Pendientes conocidos
+
+- **Todavía no hay evals.** El piso se aplica pero no se mide. El siguiente paso es un repo de prueba con bugs sembrados, revisado tres veces en modo headless por `code-reviewer` y por el modelo solo, para medir qué atrapa realmente el harness.
+- **Solo macOS.** `harness.sh`, el statusline y los hooks asumen macOS. El soporte para Linux y Windows está en un issue abierto.

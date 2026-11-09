@@ -1,7 +1,7 @@
 ---
 title: "clawd-harness – AI Engineering Stack"
 publishedAt: "2026-11-04"
-summary: "Personal Claude Code harness: a 6-agent team, 21 skills and one install script that wire the same rules, reviewers and delivery loop into any project. Stories go from PRD to a reviewed PR in one spec-driven cycle."
+summary: "A Claude Code harness that sets one quality bar for AI-written code: every change is checked against its acceptance criteria and a fixed code-quality spec by a reviewer that cannot edit it, in every repo, whatever the session. Each mistake found in review becomes a rule, so the bar only moves up."
 images:
   - "/images/projects/clawd-harness.jpg"
 team:
@@ -19,25 +19,21 @@ stack:
   - "GitHub Projects"
 ---
 
-## Overview
+## Problem
 
-Every Claude Code session used to start from zero: different rules per repo, no shared reviewers, and no fixed way to go from a ticket to a merged change. clawd-harness fixes that. It is markdown and bash, no application: clone it once, run one script per machine and one per project, and every session works the same way.
+The same model writes very different code depending on the session. In a repo with good context and a clear spec, the result is clean. In a repo with no context, a vague prompt, or a long session that lost track of the rules, the same model duplicates helpers, adds layers nobody asked for, and reports tests as passing after editing them. The quality of the output depended on luck.
 
-The main session runs as a `software-architect` agent. It writes the feature code and dispatches the rest of the team as subagents, one prompt in and one report back: a business analyst for acceptance criteria, a code reviewer, a security auditor and a debugger. Visual work runs in a separate `ui-designer` session.
+clawd-harness fixes the quality bar so it no longer depends on the session, the repo or the prompt. It is markdown and bash, no application: clone it once, run one script per machine and one per project, and every Claude Code session works under the same rules, with the same reviewers and the same definition of done.
 
-## Key Features
+<div className="mdx-links">
+  <a href="https://github.com/orrrrli/clawd-harness" className="mdx-link">Source on GitHub</a>
+</div>
 
-- **Built** a 6-agent team with split roles: reviewers are read-only and report `file:line` findings, so the agent that writes the code is never the one that approves it
-- **Wrote** 21 skills across engineering, UI and productivity, each installed per project by stack (`web`, `dotnet`, `android`, `ios`) so a project only loads what it uses
-- **Designed** a spec-driven delivery loop: `prd-to-github-backlog` turns a PRD into Epics, fullstack Stories and Tasks on a GitHub Project; `spec-apply` implements one Story across db, backend and frontend; `spec-verify` checks every Given/When/Then criterion with `file:line` evidence
-- **Enforced** that the implementer can't buy a green run: it never edits a test, and verification fails if the diff touches one
-- **Added** guardrails Claude Code enforces before a tool runs: deny rules for `.env` and SSH keys and for force-push, ask rules for commands that destroy uncommitted work or add a dependency
-- **Scripted** worktree isolation: a git hook gives each Story worktree its own ports and Postgres container, so 2-3 Stories verify in parallel on one machine
-- **Ported** the setup to claude.ai/code cloud sessions with a generated setup script, since cloud VMs load nothing from `~/.claude`
+## How the bar is fixed
 
-## From PRD to merged slice
+Each part of the harness answers one question about quality.
 
-Work is cut in vertical slices: one Story is one behavior the user can use, built across every layer together. A Story bigger than L is split by behavior, never by layer, because the Story's size is the size of the diff the reviewer has to read.
+**What counts as correct?** The Story's Given/When/Then acceptance criteria, written before any code. `prd-to-github-backlog` turns a PRD into a GitHub Project of Epics, fullstack Stories and Tasks. `spec-apply` builds one Story across db, backend and frontend, and `spec-verify` checks every criterion with `file:line` evidence. A criterion with no evidence fails, even when the code looks right.
 
 ```
 PRD
@@ -47,6 +43,33 @@ PRD
   -> one PR per Story
 ```
 
-## Tooling around it
+**Who approves it?** Never the agent that wrote it. The main session runs as a `software-architect` that implements and dispatches the rest of a 6-agent team. The `code-reviewer` and `security-auditor` have no Write or Edit tools: they report findings with `file:line` and quoted evidence, and re-run the project's own build and tests instead of trusting a "tests pass" claim.
 
-The harness sits next to tools that each solve one problem: `rtk` trims command output before it reaches the context, `engram` keeps per-project memory that reviewers search before working, and `graphify` answers structural questions about a codebase so the context files don't have to.
+**Can the implementer cheat?** No. It never edits a test, and verification fails if `git diff` shows a test file changed. A test that looks wrong stops the run and goes to me, because it usually means the acceptance criterion was ambiguous.
+
+**What counts as bad code?** A fixed code-quality spec: duplication, naming, architecture boundaries, error handling, dead code, and whether a test exercises the real path or a mock. Per-stack anti-pattern rules (`web`, `dotnet`, `ios`, `kotlin-spring`) load only when the agent opens a matching file, with a 10-line budget each so they never crowd the context. The full catalogs, around 20 KB per stack, are read only by the reviewer, at review time.
+
+**How simple?** Every change runs through the ponytail ladder before code is written: does this need to exist, does the codebase already have it, does the standard library or the platform cover it. Only then the minimum code that works.
+
+**How does it stay the same across repos?** One installer, `harness.sh`. A client repo, a work repo and a side project get the same agents, rules and hooks, filtered by stack so an iOS app does not load .NET skills. Guardrails go in Claude Code's permission rules instead of hooks, so they cost nothing per call and hold whatever the model decides: no reading `.env` files or SSH keys, no force-push, and a confirmation before anything that destroys uncommitted work or adds a dependency.
+
+## The bar only moves up
+
+A fixed bar is not enough if the same mistake keeps coming back. `context-sync audit 4w` reads the code committed in the last four weeks, finds the shapes that repeat (a helper rewritten in three places, a guard clause copied into every caller) and proposes each one as a project rule, with the exemplar to copy instead. After I approve it, the reviewer checks every future diff against that rule.
+
+The same loop runs on project memory. Reviewers save confirmed findings to engram, and `context-sync` promotes them into the project's context files, which stay the source of truth. A mistake caught once in review becomes something every later session is told about and every later review checks.
+
+## What I cut
+
+Most of the work on the harness was removing things that did not raise the bar:
+
+- **22 skills** dropped across two passes, because nothing triggered them or they overlapped with another skill
+- **A `test-writer` agent**, because it produced tests that no acceptance criterion asked for. `spec-apply` now writes no new tests: it keeps the existing suite green, and each criterion is proven by a passing test, a traced code path or a browser check
+- **A `design-auditor` agent and its design loop**. Design work now runs in its own `ui-designer` session
+- **Windsurf and OpenCode support**. The harness targets Claude Code only and follows its conventions
+- **Three installers**, merged into one `harness.sh` with an `--update` mode that only relinks
+
+## Known gaps
+
+- **No evals yet.** The bar is enforced but not measured. The next step is a fixture repo with seeded bugs, reviewed headless three times by `code-reviewer` and by the bare model, to score what the harness actually catches.
+- **macOS only.** `harness.sh`, the statusline and the hooks assume macOS. Linux and Windows support is tracked in an open issue.
