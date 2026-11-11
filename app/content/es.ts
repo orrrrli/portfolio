@@ -91,6 +91,7 @@ export const es: Content = {
             {
               title: "Producto (iOS + API en Kotlin)",
               achievements: [
+                "API REST: participé en la construcción de más de 250 endpoints REST en la API de Kotlin/Spring Boot.",
                 "Flujos de juegos con dinero real: construí el ciclo de vida de las invitaciones, con expiraciones y recordatorios programados, y un check-in en el lugar que decide el servidor a partir de la ubicación del teléfono (API en Kotlin/Spring Boot + SwiftUI). Protegí los movimientos de dinero con validación de estado en el servidor y optimistic locking contra escrituras concurrentes, para que una escritura vieja o una cancelación mal puesta nunca deje atorada la cuota de entrada de un jugador.",
               ],
             },
