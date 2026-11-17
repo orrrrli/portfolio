@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import { LoadingStrategies } from "../components/LoadingStrategies";
+import { SlideDeck } from "../components/SlideDeck";
 import { getContent, langFromPath, useContent } from "../content";
 import { findEntry, type Kind } from "../content/mdx";
 import { seoMeta } from "../content/seo";
@@ -91,7 +92,7 @@ export default function EntryPage() {
       )}
 
       <article className="prose">
-        <Content components={{ LoadingStrategies }} />
+        <Content components={{ LoadingStrategies, SlideDeck }} />
       </article>
     </main>
   );
