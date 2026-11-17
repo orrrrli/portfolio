@@ -21,43 +21,234 @@ stack:
 
 ## Problema
 
-El mismo modelo escribe código muy distinto según la sesión. En un repo con buen contexto y un spec claro, el resultado sale limpio. En un repo sin contexto, con un prompt vago o en una sesión larga que ya perdió las reglas, el mismo modelo duplica helpers, agrega capas que nadie pidió y reporta los tests en verde después de editarlos. La calidad dependía de la suerte.
+El mismo modelo escribe código muy distinto según la sesión. En un repo con buen contexto y un spec claro, el resultado sale limpio. En un repo sin contexto, con un prompt vago o en una sesión larga que ya perdió las reglas, el mismo modelo duplica helpers, agrega capas que nadie pidió, inventa una tabla que no existe y reporta los tests en verde después de editarlos. La calidad dependía de la suerte.
 
-clawd-harness fija el piso de calidad para que no dependa de la sesión, el repo ni el prompt. Es markdown y bash, sin aplicación: lo clonas una vez, corres un script por máquina y otro por proyecto, y todas las sesiones de Claude Code trabajan con las mismas reglas, los mismos reviewers y la misma definición de terminado.
+## Qué es
+
+clawd-harness es la configuración con la que trabajo con Claude Code en todos mis repos: un equipo de 6 agentes, 21 skills, reglas de comportamiento, reglas de permisos y los scripts que conectan todo eso a cualquier proyecto. Es markdown y bash, sin aplicación.
+
+Lo clonas una vez y corres un solo instalador, `harness.sh`, en dos niveles:
+
+```
+~/.claude/  (una vez por máquina)         tu-proyecto/  (una vez por proyecto)
+  agents/     -> los 6 agentes              .claude/skills/  -> skills filtradas por stack
+  rules/      -> anti-patterns por stack    CLAUDE.md + árbol .claude/ de contexto
+  reference/  -> catálogos completos        core.hooksPath -> githooks/
+  skills/     -> 9 skills de uso diario
+  behavior.md, settings.json, statusline
+```
+
+Todo es symlink al repo, así que un `git pull` actualiza cada máquina y cada proyecto a la vez. Desde ahí, todas las sesiones de Claude Code trabajan con las mismas reglas, los mismos reviewers y la misma definición de terminado.
 
 <div className="mdx-links">
   <a href="https://github.com/orrrrli/clawd-harness" className="mdx-link">Código en GitHub</a>
 </div>
 
-## Cómo se fija el piso
+## Cómo se maneja el comportamiento global
 
-Cada parte del harness responde una pregunta sobre calidad.
+El comportamiento vive en archivos que Claude Code carga al iniciar cada sesión, sin importar el repo:
 
-**¿Qué cuenta como correcto?** Los criterios de aceptación Given/When/Then de la Story, escritos antes del código. `prd-to-github-backlog` convierte un PRD en un GitHub Project con Epics, Stories fullstack y Tasks. `spec-apply` construye una Story en db, backend y frontend, y `spec-verify` revisa cada criterio con evidencia `file:line`. Un criterio sin evidencia falla, aunque el código se vea bien.
+- **`CLAUDE.md` de usuario** es solo un índice que importa los demás con `@`: quién soy, cómo trabajo y las reglas de abajo.
+- **`behavior.md`** define cómo escribe y cómo actúa el agente. Idioma (código, commits y PRs siempre en inglés; la conversación en el idioma en que le hablo), tono, formato de commits, qué comandos usar en la terminal, y las reglas de STOP: localizar el código y mostrarme `file:line` antes de tocar un archivo, preguntar una sola cosa cuando algo es ambiguo, nunca decidir arquitectura ni instalar dependencias sin preguntar.
+- **`settings.json`** fija que cada sesión arranque como `software-architect` y carga las reglas de permisos.
+- **`rules/`** guarda los anti-patterns por stack. Cada archivo declara un glob `paths:` y Claude Code solo lo carga cuando el agente abre un archivo que coincide. Una regla de iOS nunca entra en una sesión de .NET.
+
+Cada proyecto agrega lo suyo encima: su `CLAUDE.md` raíz como índice y un árbol `.claude/` con negocio, arquitectura, dominios e ingeniería. El instalador filtra por stack (`--stack=web,dotnet`), así que un proyecto de Android no carga skills de web.
+
+Las sesiones en la nube (claude.ai/code) no leen nada de `~/.claude`. Para ellas, un script genera el setup del ambiente: clona el harness, corre el instalador y escribe el `CLAUDE.md` de usuario antes de que Claude arranque. Lo que no llega a la nube (plugins, rtk, memoria entre sesiones) está documentado como límite.
+
+## Por qué hay un software-architect y un ui-designer
+
+Una sesión de Claude Code tiene un solo system prompt. El harness lo reemplaza con uno de dos agentes, según el tipo de trabajo, porque piden posturas opuestas.
+
+**`software-architect`** es la sesión por defecto para código. Implementa lo trivial y reparte el resto. Su regla de reparto es simple: si la tarea cabe en un archivo y se responde con lo que ya tiene en contexto, la hace él; si necesita otra ventana de contexto o una postura que él no puede sostener (revisar su propio código, por ejemplo), la manda a un subagente:
+
+```
+pedido vago, sin criterios        -> business-analyst
+"dónde vive X"                     -> Explore
+Story o Task a implementar         -> spec-apply
+código escrito, antes del merge    -> code-reviewer (+ security-auditor si hay auth o input externo)
+test fallando sin causa clara      -> debugger
+```
+
+Un subagente recibe un prompt y devuelve un reporte. No puede hacer preguntas ni ver la conversación. Por eso el architect escribe cada prompt completo a la primera, con los supuestos escritos, y lanza los subagentes independientes en el mismo mensaje para que corran en paralelo.
+
+**`ui-designer`** es la sesión para trabajo visual: pantallas en Figma o pen.dev y frontend visual. Arranca con un alias, `claude-design`, que además apaga ponytail solo en esa sesión. El diseño necesita lo contrario que el código: espacio, jerarquía, estados y motion son el trabajo, y el "diff más corto" lo arruina. Tampoco puede delegar, porque diseñar es ir y venir conmigo con screenshots, y un subagente no puede hablar con el usuario. Si una pantalla necesita un campo o un estado que el spec no tiene, no lo inventa: deja una nota en el diseño y una línea en su reporte para la sesión de código.
+
+Las dos sesiones pueden hablar entre sí. Los subagentes no hablan con nadie.
+
+El resto del equipo son subagentes con un solo trabajo cada uno:
+
+- **business-analyst** convierte un pedido vago en criterios de aceptación Given/When/Then.
+- **code-reviewer** revisa un diff contra los criterios y el spec de calidad. No tiene Write ni Edit.
+- **security-auditor** busca problemas críticos en auth e input externo. Tampoco puede editar.
+- **debugger** encuentra la causa raíz de un fallo y aplica el fix mínimo donde pasan todos los callers.
+
+## El flujo de una tarea
+
+El trabajo se corta en vertical slices. Una Story es un comportamiento que el usuario puede usar, construido en db, backend y frontend juntos, nunca una Story de backend más otra de frontend.
 
 ```
 PRD
-  -> prd-to-github-backlog   Epics -> Stories fullstack -> Tasks
-  -> spec-apply <STORY>      un worktree, un ciclo en todas las capas
-  -> spec-verify             AC, calidad de código, suite existente, revisión en navegador
+  -> prd-to-github-backlog   Epics -> Stories fullstack -> Tasks, en un GitHub Project
+  -> spec-apply <STORY>      un worktree, un ciclo en todas las capas, un commit
+  -> spec-verify             criterios, calidad de código, suite existente, revisión en navegador
   -> un PR por Story
 ```
 
-**¿Quién lo aprueba?** Nunca el agente que lo escribió. La sesión principal corre como `software-architect`: implementa y manda el resto del trabajo a un equipo de 6 agentes. El `code-reviewer` y el `security-auditor` no tienen Write ni Edit. Reportan hallazgos con `file:line` y la evidencia citada, y vuelven a correr el build y los tests del proyecto en vez de creer un "los tests pasan".
+Dentro de `spec-apply`, cada fase tiene una salida clara:
 
-**¿Se puede hacer trampa?** No. El implementer nunca edita un test, y la verificación falla si `git diff` muestra un archivo de test cambiado. Si un test se ve mal, el run se detiene y me llega a mí, porque casi siempre significa que el criterio de aceptación era ambiguo.
+1. **Resolve.** Lee la Story y sus Tasks. Si la Story es XL, se detiene antes de escribir código y propone partirla por comportamiento (primero login con email, luego OAuth), nunca por capa. Si faltan criterios, el business-analyst los redacta y yo los apruebo.
+2. **Explore.** Lee el código que la Story va a tocar y reporta lo que encontró.
+3. **Propose.** Un plan para todas las capas, el contrato entre ellas y una línea de comportamiento por criterio. Cada responsabilidad (regla de negocio, persistencia, seguridad, llamada externa, presentación) recibe un lugar: un componente existente, uno nuevo con su razón, o una capacidad del framework. Aquí se detiene hasta que yo apruebe.
+4. **Apply.** Escribe el código con el ladder de ponytail y sin tocar un solo test.
+5. **Verify.** `spec-verify` corre en un code-reviewer nuevo, con la suite del proyecto y cada criterio con evidencia.
+6. **Commit y PR.** Un commit y un PR por Story. Las Tasks se cierran juntas al final.
 
-**¿Qué cuenta como mal código?** Un spec de calidad fijo: duplicación, nombres, límites entre capas, manejo de errores, código muerto, y si el test ejercita el código de verdad o un mock. Las reglas de anti-patterns por stack (`web`, `dotnet`, `ios`, `kotlin-spring`) cargan solo cuando el agente abre un archivo de ese stack, con un máximo de 10 líneas cada una para no llenar el contexto. Los catálogos completos, de unos 20 KB por stack, solo los lee el reviewer al momento de revisar.
+Cada Story corre en su propio git worktree con su propio stack: un hook de git le asigna su Postgres y sus puertos libres, así que 2 o 3 Stories se verifican en paralelo sin chocar. Cuando la máquina está ocupada con otra cosa (un simulador, un backend en la JVM), el modo `light` corre tests y review sin levantar el stack, y abre el PR como draft con la etiqueta `deferred-checks` hasta que una corrida completa lo marque listo.
 
-**¿Qué tan simple?** Cada cambio pasa por el ladder de ponytail antes de escribir código: ¿esto tiene que existir?, ¿el codebase ya lo tiene?, ¿lo cubre la librería estándar o la plataforma? Solo después va el mínimo código que funciona.
+## El rol del humano
 
-**¿Cómo se mantiene igual entre repos?** Con un solo instalador, `harness.sh`. Un repo de cliente, uno del trabajo y un proyecto personal reciben los mismos agentes, reglas y hooks, filtrados por stack para que una app de iOS no cargue skills de .NET. Los guardrails van en las reglas de permisos de Claude Code en vez de hooks, así que no cuestan nada por llamada y se aplican decida lo que decida el modelo: no leer archivos `.env` ni llaves SSH, no hacer force-push, y pedir confirmación antes de borrar trabajo sin commit o agregar una dependencia.
+El agente escribe el código. Yo decido lo que el código no puede decidir:
+
+- **Qué se construye.** Escribo o apruebo el PRD y los criterios de aceptación. Si el business-analyst los redacta, no avanzan sin mi aprobación.
+- **Cómo se construye.** Apruebo el plan de la fase Propose antes de que exista una línea de código. Un cambio al contrato a mitad de la implementación vuelve a pasar por mí.
+- **Decisiones difíciles de revertir.** Arquitectura, una tabla nueva o una dependencia nueva siempre me llegan como pregunta. Para las grandes uso `blind-pick`: un agente defiende cada opción y ataca las otras, y tres jueces que no saben cuál recomendé las califican.
+- **Tests que se ven mal.** El agente nunca los arregla. Me los trae, porque casi siempre significan que un criterio era ambiguo.
+- **Lo que se vuelve regla.** Apruebo cada diff de `context-sync` y cada anti-pattern nuevo antes de que el reviewer empiece a revisarlo.
+- **Producción.** Cada comando contra el servidor pasa por mi aprobación, y el merge del PR lo hago yo.
+- **Diseño.** En una sesión de `ui-designer` itero con el agente pasada por pasada.
+
+Lo que no hago: escribir el código de la Story, correr la review a mano ni creerle a un "los tests pasan".
+
+## Cómo se maneja la calidad del código
+
+Cada parte del harness responde una pregunta sobre calidad.
+
+**¿Qué cuenta como correcto?** Los criterios de aceptación de la Story, escritos antes del código. `spec-verify` revisa cada criterio con evidencia: un test que pasa, un code path con `file:line` o una revisión en navegador con ego-browser. Un criterio sin evidencia falla, aunque el código se vea bien. Un criterio visible en la UI que no se pudo revisar en navegador queda como `~ PARTIAL`, nunca como aprobado.
+
+**¿Quién lo aprueba?** Nunca el agente que lo escribió. El `code-reviewer` y el `security-auditor` no tienen Write ni Edit. Reportan hallazgos con `file:line` y la evidencia citada, escriben el razonamiento antes del veredicto, y vuelven a correr el build y los tests del proyecto en vez de creer un "los tests pasan". Si no pudieron correrlos, lo dicen y explican por qué.
+
+**¿Se puede hacer trampa?** No. El implementer nunca edita un test, y la verificación falla si `git diff` muestra un archivo de test cambiado.
+
+**¿Qué cuenta como mal código?** Un spec de calidad fijo: duplicación, nombres que no dicen la intención, límites entre capas, manejo de errores (sin catch vacío ni null de retorno), tamaño de funciones, código muerto, comentarios que repiten la línea de abajo, y si el test ejercita el código de verdad o un mock. Para cada unidad cambiada, el reviewer pregunta si el mismo comportamiento se podía lograr con menos código: una capa que solo reenvía, un check para un caso imposible, una abstracción con un solo caller.
+
+**¿Qué tan simple?** Cada cambio pasa por el ladder de ponytail antes de escribir código: ¿esto tiene que existir?, ¿el codebase ya lo tiene?, ¿lo cubre la librería estándar o la plataforma?, ¿lo resuelve una dependencia que ya está instalada? Solo después va el mínimo código que funciona. Un bug se arregla en la función compartida, no en el caller que nombra el ticket.
+
+## Cómo evita que los agentes inventen
+
+Un agente alucina cuando llena un hueco con lo que suena probable. El harness cierra los huecos de cuatro formas.
+
+**Leer antes de escribir.** Antes de modificar un archivo, la sesión principal localiza el código, me dice `file:line` y lo que ve, y espera. Una afirmación mía tampoco se acepta sin revisar: el agente dice "lo verifico" y busca en el código o la documentación antes de darme la razón.
+
+**Preguntar en vez de suponer.** Si algo es ambiguo o tiene varias soluciones válidas, el agente se detiene y hace una sola pregunta. Los subagentes no pueden preguntar, así que escriben sus supuestos en el reporte, donde yo los veo.
+
+**Prohibido inventar entidades.** El architect nunca crea una entidad, tabla o integración que no esté en el codebase o que yo no haya mencionado. El ui-designer tampoco inventa un campo o un estado: deja una nota pendiente.
+
+**Toda afirmación con su fuente.**
+
+- La documentación de librerías sale de context7, la versión actual, no de lo que el modelo recuerda.
+- Un criterio aprobado necesita `file:line`, un test que pasa o una revisión en navegador.
+- Lo que la memoria del proyecto (engram) devuelve se trata como pista a verificar contra el código actual, porque puede estar vieja. Para sobrescribir una nota, el agente primero lee la nota completa y conserva cada dato que no haya vuelto a verificar como falso.
+- Un `/handoff` se arma desde git, los archivos y engram, nunca desde lo que el agente cree recordar.
+- graphify marca cada relación del grafo del código como `EXTRACTED` (está explícita en el código) o `INFERRED` (la dedujo), así que lo deducido no se confunde con lo que existe.
+
+## Cómo respeta la arquitectura existente
+
+Claude no puede respetar una arquitectura que no conoce, y adivinarla desde unos cuantos archivos es la forma más rápida de romperla.
+
+**`/fill-context`** arma el contexto de cada proyecto. Primero escanea el codebase y saca todo lo que puede: stack, capas, comandos de test, convenciones. Después me pregunta solo lo que el código no dice: por qué una decisión se tomó así, qué partes son legacy, qué no se toca. El resultado es el árbol `.claude/` con el `CLAUDE.md` raíz como índice. Los archivos del árbol se leen cuando una tarea lleva al agente a ellos, no en cada sesión.
+
+**Reglas por ruta.** `fill-context` también genera reglas con `paths:` para cada área del proyecto. Cada una incluye una sección `Copy these` con el archivo ejemplar de cada tipo (un handler, un endpoint, un componente). El reviewer compara cada archivo nuevo contra ese ejemplar y reporta dónde se aleja.
+
+**El proyecto gana.** Cuando un catálogo global de anti-patterns contradice el `CLAUDE.md` del proyecto o su skill de stack, gana el proyecto. Un repo de cliente con convenciones propias no se "corrige" hacia mis gustos.
+
+**Nombrar el lugar de cada responsabilidad.** La fase Propose obliga a decir dónde vive cada parte antes de escribirla. Ahí es donde se detecta un check de credenciales escrito como un `if` suelto en vez de usar el mecanismo de seguridad del framework.
+
+**Skills de arquitectura por stack.** `dotnet-clean-architecture` revisa que un slice respete las capas Domain, Contracts, Application, Infrastructure y API. `audit-layer-boundaries` busca las tres violaciones que rompen el contrato de capas en web. `android-clean-architecture` hace lo mismo en Android.
+
+**Migraciones.** `migrate-module` porta un código legacy módulo por módulo usando el código viejo como spec: un inventario con chequeo de cobertura, una sola aprobación y casos de prueba sacados de las funciones legacy.
+
+## Custom commands, skills y workflows
+
+En Claude Code, una skill es un archivo markdown con instrucciones para un trabajo específico, y se llama como comando (`/spec-apply 475`). El harness tiene 21, en tres categorías:
+
+- **Ingeniería:** `spec-apply`, `spec-verify`, `prd-to-github-backlog`, `fill-context`, `context-sync`, `migrate-module`, `pr-body`, `prompt-rewrite`, `tdd`, `diagnose`, `improve-codebase-architecture` y las skills de arquitectura por stack.
+- **UI:** `apple-design`, `swiftui-motion`, `write-swift`.
+- **Productividad:** `grill-me` (me interroga sobre un plan hasta resolver cada rama), `handoff`, `blind-pick`.
+
+La mayoría son propias. Las que vienen de otros repos conservan su estructura y su licencia; las adaptadas dicen en su propio archivo qué cambió y por qué.
+
+Cada skill sigue el mismo formato: un solo trabajo, una descripción que empieza por cuándo usarla, y pasos cortos en imperativo. `prompt-rewrite` revisa cualquier skill o agente contra la guía de prompting de Anthropic antes de que entre al repo.
+
+Los workflows encadenan skills y agentes. El principal es el que va del PRD al PR (sección "El flujo de una tarea"). Los otros dos son `context-sync`, que pasa lo aprendido a los archivos de contexto, y la cadena de review: el architect lanza `code-reviewer` y `security-auditor` en paralelo y decide qué hacer con sus hallazgos.
+
+Alrededor hay dos plugins que no viven en el repo para que se actualicen solos: **ponytail**, que fuerza la solución más simple que funciona, e **i-have-adhd**, que da forma a las respuestas (la siguiente acción primero, pasos numerados, el estado repetido en cada turno).
+
+## La ventana de contexto
+
+Mientras más se llena la ventana, peor trabaja el modelo: olvida reglas del inicio, repite pasos y confunde archivos. En mi experiencia, pasando la mitad es cuando empieza esa fase. El harness la evita de cuatro formas.
+
+**El statusline lo hace visible.** La barra de contexto está verde, se pone naranja al 50% y roja al 80%. Sin la barra, la degradación solo se nota cuando ya pasó.
+
+**Al 50%, sesión nueva.** Corro `/handoff`, que arma un documento con lo hecho, el estado actual, lo pendiente y los bloqueos, todo verificado desde git, los archivos y engram, y lo copia al clipboard. Lo pego en una sesión nueva y sigo con la ventana limpia.
+
+**Una tarea por sesión.** Al terminar una tarea, `/clear`. Lo que vale la pena recordar ya quedó guardado en engram, y la siguiente sesión lo recupera con `mem_context`.
+
+**Los subagentes cargan el peso.** Explorar un codebase, revisar un diff o depurar un test llena una ventana de archivos. Esa ventana es del subagente. A la sesión principal solo regresa el reporte. Por eso el architect delega todo lo que necesita "otra ventana de contexto".
+
+Además, el harness carga poco por defecto. Las reglas de anti-patterns tienen máximo 10 líneas y solo cargan con su stack. Los catálogos completos, de unos 20 KB por stack, solo los lee el reviewer en su propia ventana. El árbol de contexto del proyecto se lee por archivo, cuando la tarea lo pide.
+
+## Ahorro de tokens
+
+**rtk** es un proxy de CLI: un hook reescribe `git`, `rg`, `ls`, `docker`, `dotnet`, `pnpm` y otros para que su output llegue filtrado y resumido al contexto. El ahorro depende del comando. En una de las primeras mediciones, con 518 comandos, `vitest run` ahorraba 99.7% de los tokens y `dotnet build` 79.1%, mientras que un `read` apenas 6%. El global de esa medición era 10.5%.
+
+Hoy, con 79,826 comandos medidos, rtk lleva **5.9M tokens ahorrados, 23.9% del total**. `behavior.md` le dice al agente qué comandos usar: los que rtk sabe comprimir, nunca `bat`, `fd` o `eza`, cuyo output llega completo.
+
+Lo demás que ahorra tokens viene del diseño, no de un plugin:
+
+- **`--stack`** instala solo las skills del proyecto, y cada skill que no se instala es una descripción menos en el contexto.
+- **Las reglas por ruta** y los catálogos solo para el reviewer (sección anterior).
+- **graphify** convierte el codebase en un grafo que se consulta (`graphify query`, `path A B`, `affected X`) en vez de leer archivo por archivo, así que el árbol de contexto no tiene que repetir lo que el código ya dice.
+- **engram** guarda solo lo que el código no dice. Una regla prohíbe guardar lo que ya está en `CLAUDE.md`, una regla o el código.
+
+## Permisos y acceso restringido
+
+Los guardrails van en las reglas de permisos de Claude Code, no en hooks. Claude Code las aplica antes de que corra la herramienta, decida lo que decida el modelo, y no cuestan nada por llamada.
+
+**Prohibido siempre (`deny`):**
+
+- Leer o editar archivos `.env` en cualquier ruta, y cualquier cosa en `~/.ssh`.
+- `git push --force` y `-f`.
+- `rm -rf /*` y `rm -rf ~*`.
+
+**Pide confirmación (`ask`):**
+
+- Lo que destruye trabajo sin commit: `git reset --hard`, `clean -f`, `branch -D`, `checkout .`, `restore .`.
+- Agregar una dependencia: `npm install`, `pnpm add`, `dotnet add package`, `brew install`.
+
+Las reglas de Bash comparan el inicio del comando, y el agente usa `git -C <dir>` en vez de `cd`, así que cada regla de git tiene su variante `git -C`. Hay un hueco conocido y aceptado: las reglas de `.env` cubren Read y Edit, pero un `cat .env` desde Bash no se bloquea.
+
+Hay dos hooks opcionales para quien quiera un bloqueo duro: uno que bloquea todo `git push` y operaciones destructivas, incluso dentro de `bash -c` o `$(...)`, y un merge gate que solo deja hacer `gh pr merge` si todos los checks del PR están en verde. Los commits pasan por un hook de git que rechaza cualquier mensaje que no sea conventional o ticket-first.
+
+### Acceso al VPS
+
+Varios de mis proyectos corren en un VPS compartido con nginx, Docker y Cloudflare. Claude lo opera con una skill aparte, que no está en el repo público porque describe el servidor. Las reglas están pensadas para que cada acción del agente se pueda rastrear y revertir:
+
+- **Su propia identidad.** Claude entra con su propia llave SSH y su propio usuario, distintos a los míos y a los de CI. Así, en los logs, una acción de Claude nunca se confunde con una mía.
+- **Cada comando con aprobación.** Ningún comando `ssh` va en la allowlist. Una regla de permisos compara el inicio del comando y no ve lo que va dentro del string remoto, así que permitir `ssh servidor` sería permitir cualquier cosa.
+- **Todo queda registrado.** Cada `sudo` queda en log, y cada cambio en `/etc` se commitea al momento con etckeeper para que tenga autor y se pueda revertir.
+- **Primero el estado real.** Antes de cualquier cambio, un script de solo lectura actualiza el inventario del servidor (contenedores, puertos, sitios de nginx, certificados), y el agente revisa de quién es el proyecto que va a tocar. Solo modifica los míos.
+- **Cambios globales con explicación.** Tocar `nginx.conf`, `sshd_config`, el firewall o el daemon de Docker afecta a todos, así que el agente explica el impacto y espera. Antes de cambiar el firewall arma un timer que lo desactiva en 5 minutos, por si el cambio corta el SSH.
+- **Secretos fuera de la conversación.** El agente nunca imprime archivos `.env`, llaves privadas ni la sección de variables de un `docker inspect`.
 
 ## El piso solo sube
 
 Un piso fijo no basta si el mismo error vuelve a aparecer. `context-sync audit 4w` lee el código de los commits de las últimas cuatro semanas, encuentra las formas que se repiten (un helper reescrito en tres lugares, una guard clause copiada en cada caller) y propone cada una como regla del proyecto, junto con el ejemplo a copiar en su lugar. Cuando la apruebo, el reviewer revisa cada diff futuro contra esa regla.
 
-Lo mismo pasa con la memoria del proyecto. Los reviewers guardan en engram los hallazgos confirmados, y `context-sync` los pasa a los archivos de contexto del proyecto, que siguen siendo la fuente de verdad. Un error que la review encuentra una vez se vuelve algo que cada sesión siguiente conoce y que cada review siguiente revisa.
+Lo mismo pasa cuando corrijo al agente. Si le digo que una forma de código está mal, la guarda en engram como anti-pattern con lo que escribió, lo que yo quería y `file:line`. Si la corrección aplica a todos mis repos, propone la línea para la regla global de ese stack.
+
+Y con la memoria del proyecto: los reviewers buscan en engram antes de revisar, guardan los hallazgos confirmados que seguirán importando después del merge, y `context-sync` los pasa a los archivos de contexto, que siguen siendo la fuente de verdad. Un error que la review encuentra una vez se vuelve algo que cada sesión siguiente conoce y que cada review siguiente revisa.
 
 ## Lo que quité
 
@@ -66,10 +257,12 @@ Casi todo el trabajo en el harness fue quitar lo que no subía el piso:
 - **22 skills**, en dos pasadas, porque nada las usaba o hacían lo mismo que otra
 - **Un agente `test-writer`**, porque generaba tests que ningún criterio de aceptación pedía. Ahora `spec-apply` no escribe tests nuevos: mantiene en verde la suite existente, y cada criterio se demuestra con un test que pasa, un code path con `file:line` o una revisión en navegador
 - **Un agente `design-auditor` y su design loop**. El trabajo de diseño ahora corre en su propia sesión de `ui-designer`
+- **El sandbox de Bash**, porque rompía `pbcopy` (y con él `/handoff`) y otros proyectos. Las reglas de permisos son la barrera
 - **El soporte para Windsurf y OpenCode**. El harness solo apunta a Claude Code y sigue sus convenciones
 - **Tres instaladores**, que junté en un solo `harness.sh` con un modo `--update` que solo vuelve a crear los links
 
 ## Pendientes conocidos
 
 - **Todavía no hay evals.** El piso se aplica pero no se mide. El siguiente paso es un repo de prueba con bugs sembrados, revisado tres veces en modo headless por `code-reviewer` y por el modelo solo, para medir qué atrapa realmente el harness.
+- **Telemetría.** Un script que lea los logs de sesión de Claude Code para saber qué skills se usan y cuáles nunca, qué agentes se lanzan y cuántos tokens gasta cada proyecto. Su output decide qué se poda después.
 - **Solo macOS.** `harness.sh`, el statusline y los hooks asumen macOS. El soporte para Linux y Windows está en un issue abierto.
