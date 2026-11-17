@@ -732,12 +732,12 @@ export const en: Content = {
     },
   },
   blog: {
-    path: "/build-learn",
-    label: "Build & Learn",
-    title: "Build & Learn",
-    description: "Things I'm building, exploring, and learning as an AI-focused Software Engineer.",
-    intro: "Things I build to actually understand how each piece works.",
-    labels: { backLink: "Build & Learn", recentPosts: "Recent posts" },
+    path: "/worth-your-time",
+    label: "Worth Your Time",
+    title: "Worth Your Time",
+    description: "Things I read that are worth your time, with what I'd add.",
+    intro: "Things I read that are worth your time, with what I'd add.",
+    labels: { backLink: "Worth Your Time", recentPosts: "Recent posts" },
   },
   work: {
     labels: {

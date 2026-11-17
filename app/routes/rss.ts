@@ -7,11 +7,11 @@ import type { Route } from "./+types/rss";
 export function loader({ request }: Route.LoaderArgs) {
   const lang = langFromPath(new URL(request.url).pathname);
   const { blog, person } = getContent(lang);
-  const posts = listEntries("build-learn", lang);
+  const posts = listEntries("worth-your-time", lang);
 
   const items = posts
     .map(({ slug, frontmatter: f }) => {
-      const url = localizedUrl(lang, `/build-learn/${slug}`);
+      const url = localizedUrl(lang, `/worth-your-time/${slug}`);
       return `
     <item>
       <title>${escapeXml(f.title)}</title>

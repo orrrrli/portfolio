@@ -707,12 +707,12 @@ export const es: Content = {
     },
   },
   blog: {
-    path: "/build-learn",
-    label: "Aprende & Construye",
-    title: "Aprende & Construye",
-    description: "Cosas que estoy construyendo, explorando y aprendiendo como Software Engineer enfocado en IA.",
-    intro: "Cosas que construyo para entender de verdad cómo funciona cada pieza.",
-    labels: { backLink: "Aprende & Construye", recentPosts: "Publicaciones recientes" },
+    path: "/worth-your-time",
+    label: "Worth Your Time",
+    title: "Worth Your Time",
+    description: "Cosas que leo y valen tu tiempo, con lo que yo les agrego.",
+    intro: "Cosas que leo y valen tu tiempo, con lo que yo les agrego.",
+    labels: { backLink: "Worth Your Time", recentPosts: "Publicaciones recientes" },
   },
   work: {
     labels: {

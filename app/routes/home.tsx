@@ -154,7 +154,7 @@ export default function Home() {
   const { lang, prefix, person, social, home, about, work, blog } = useContent();
   const [skillView, setSkillView] = useState<SkillView>({ skill: 0, filter: null });
   const projects = listEntries("work", lang);
-  const posts = listEntries("build-learn", lang);
+  const posts = listEntries("worth-your-time", lang);
   const timelineRef = useTimelineProgress();
 
   return (
@@ -320,7 +320,7 @@ export default function Home() {
                 {frontmatter.tag && ` · ${frontmatter.tag}`}
               </p>
               <h3>
-                <Link to={`${prefix}/build-learn/${slug}`}>{frontmatter.title}</Link>
+                <Link to={`${prefix}/worth-your-time/${slug}`}>{frontmatter.title}</Link>
               </h3>
               <p className="muted">{frontmatter.summary}</p>
             </li>

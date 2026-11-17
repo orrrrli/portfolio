@@ -1,7 +1,7 @@
 import type { Config } from "@react-router/dev/config";
 import { existsSync, readdirSync } from "node:fs";
 
-const KINDS = ["work", "build-learn"];
+const KINDS = ["work", "worth-your-time"];
 const LANGS = [
   { dir: "en", prefix: "" },
   { dir: "es", prefix: "/es" },

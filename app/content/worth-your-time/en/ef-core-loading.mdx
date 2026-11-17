@@ -1,0 +1,85 @@
+---
+title: "Eager, lazy and explicit loading in EF Core"
+publishedAt: "2026-11-16"
+summary: "EF Core has three ways to load an entity's related data, and each one sends different SQL to the database. Here I compare them with a simulator of the queries each one generates, and add what I change when the code is an API."
+tag: "EF Core"
+---
+
+## Where this comes from
+
+Iván Abad explains this very well on NetMentor, as part of his Entity Framework Core course. If you work with .NET, the original is worth reading. This post is my summary, a simulator to see the SQL behind each strategy, and what I add after using EF Core in APIs.
+
+<div className="mdx-links">
+  <a href="https://www.netmentor.es/entrada/en/diferencias-eager-lazy-explicit-loading" className="mdx-link">Original article on NetMentor</a>
+</div>
+
+## The problem
+
+You have a `Blog` with a list of `Posts`. When you query the blogs, EF Core does not bring the posts unless you tell it to. The question is when and how those posts arrive, and the answer decides how many times your app goes to the database.
+
+```csharp
+public class Blog
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public virtual List<Post> Posts { get; set; } = [];
+}
+```
+
+## The three strategies
+
+**Eager loading.** You ask for the posts together with the blogs, with `.Include()`. EF Core turns it into a single query with a `JOIN`. One trip to the database, but it brings every post even if you don't use them all.
+
+**Lazy loading.** The posts load on their own the first time you touch `blog.Posts`. To turn it on you need the `Microsoft.EntityFrameworkCore.Proxies` package, a call to `UseLazyLoadingProxies()` when configuring the `DbContext`, and the property marked `virtual`. It is convenient, but every access is a query, and a loop over N blogs makes N+1 trips.
+
+**Explicit loading.** You load the posts when you decide to, with `db.Entry(blog).Collection(b => b.Posts).LoadAsync()`. It works even with lazy loading off, and it only loads what you ask for.
+
+## Try it
+
+Switch strategies and move the number of blogs. Watch how many queries reach the database in each case. In explicit, click the blogs you want to load.
+
+<LoadingStrategies />
+
+With 10 blogs, eager makes 1 trip, lazy makes 11, and explicit makes 1 plus one per blog you picked.
+
+## When to use each
+
+- **Eager** when you know from the start you will use the related data. That is the usual case for an endpoint that returns a blog with its posts.
+- **Explicit** when only some records need their relations and you decide at runtime: for example, loading posts only for featured blogs.
+- **Lazy** almost never in an API. It makes sense in desktop apps or scripts where the `DbContext` lives a long time and database latency is low.
+
+The original article sums it up well: one query with a `JOIN` almost always beats many small queries, because every trip to the database has a cost.
+
+## What I'd add
+
+**Turn lazy loading off in an API.** The JSON serializer walks every property of the object you return. With lazy loading, every navigation it touches fires a query, and an entity with relations in both directions can end up loading half the database or looping. On top of that, the N+1 is invisible in the code: the loop looks harmless and the problem only shows up in the SQL logs.
+
+**Many `Include`s have a cost too.** If you include two collections (`.Include(b => b.Posts).Include(b => b.Tags)`), the `JOIN` multiplies the rows: 10 posts times 10 tags is 100 rows per blog. `AsSplitQuery()` splits it into one query per collection. More trips, but no repeated rows.
+
+```csharp
+var blogs = await db.Blogs
+    .Include(b => b.Posts)
+    .Include(b => b.Tags)
+    .AsSplitQuery()
+    .ToListAsync();
+```
+
+**Explicit loading can filter.** With `.Query()` before loading, you bring only what you need instead of the whole collection:
+
+```csharp
+await db.Entry(blog)
+    .Collection(b => b.Posts)
+    .Query()
+    .Where(p => p.Published)
+    .LoadAsync();
+```
+
+**For reads, the best option is often none of the three.** If the endpoint only displays data, a `Select` projection brings exactly the columns you use, in one query, without loading full entities or tracking them:
+
+```csharp
+var blogs = await db.Blogs
+    .Select(b => new { b.Name, PostCount = b.Posts.Count })
+    .ToListAsync();
+```
+
+**Look at the SQL.** Turn on EF Core logging in development (`LogTo(Console.WriteLine)` or the `Information` level of `Microsoft.EntityFrameworkCore.Database.Command`). An N+1 is invisible in the code. In the log it is not.

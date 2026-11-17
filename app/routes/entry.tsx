@@ -1,12 +1,12 @@
 import { useParams } from "react-router";
-import { APIPlayground } from "../components/APIPlayground";
+import { LoadingStrategies } from "../components/LoadingStrategies";
 import { getContent, langFromPath, useContent } from "../content";
 import { findEntry, type Kind } from "../content/mdx";
 import { seoMeta } from "../content/seo";
 import "../styles/entry.css";
 import type { Route } from "./+types/entry";
 
-const kindFromPath = (pathname: string): Kind => (pathname.includes("/build-learn/") ? "build-learn" : "work");
+const kindFromPath = (pathname: string): Kind => (pathname.includes("/worth-your-time/") ? "worth-your-time" : "work");
 
 export const meta: Route.MetaFunction = ({ location, params }) => {
   const lang = langFromPath(location.pathname);
@@ -91,7 +91,7 @@ export default function EntryPage() {
       )}
 
       <article className="prose">
-        <Content components={{ APIPlayground }} />
+        <Content components={{ LoadingStrategies }} />
       </article>
     </main>
   );

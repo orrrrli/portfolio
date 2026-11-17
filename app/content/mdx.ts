@@ -1,7 +1,7 @@
 import type { MDXContent } from "mdx/types";
 import type { Lang } from "./types";
 
-export type Kind = "work" | "build-learn";
+export type Kind = "work" | "worth-your-time";
 
 /** YAML frontmatter of the MDX files. Projects carry images/link/stack, posts carry tag. */
 export type Frontmatter = {
@@ -27,7 +27,7 @@ export type Entry = {
 // ponytail: eager glob bundles every MDX body into each importer; fine for 10 files,
 // switch the listing to `import: "frontmatter"` if the home bundle grows.
 const modules = import.meta.glob<{ default: MDXContent; frontmatter: Frontmatter }>(
-  "./{work,build-learn}/*/*.mdx",
+  "./{work,worth-your-time}/*/*.mdx",
   { eager: true },
 );
 
