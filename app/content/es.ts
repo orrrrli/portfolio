@@ -32,7 +32,7 @@ export const es: Content = {
     profile: {
       title: "Construyo software en producción, desde el API hasta el LLM que lo llama.",
       description:
-        "Software Engineer con alrededor de 4 años en producción en backend, mobile y web. Últimamente llevo features de LLM a producción: tool calling, evals y modelos de visión sobre backends en Kotlin y .NET.",
+        "Software Engineer con alrededor de 5 años en producción en backend, mobile y web. Últimamente llevo features de LLM a producción: tool calling, evals y modelos de visión sobre backends en Kotlin y .NET.",
       terminal: {
         host: "orlando@ensenada:~/career",
         lines: [
@@ -144,14 +144,14 @@ export const es: Content = {
           logo: "/images/companies/leyes-de-reforma.png",
           timeframe: "feb. 2023 – ene. 2024",
           role: "Backend Developer",
-          summary: "Backend de la operación de procesamiento y exportación de abulón de la cooperativa, su e-commerce y la automatización de pedidos.",
+          summary: "Backend de la operación de procesamiento y exportación de productos de la cooperativa, su e-commerce y la automatización de pedidos.",
           sections: [
             {
               title: "Backend (.NET)",
               achievements: [
                 "Migré un sistema monolítico en PHP a microservicios en .NET, empaquetados en imágenes Docker multi-stage.",
                 "Protegí las APIs con seis capas de seguridad, entre ellas API keys, JWT, rate limiting y control de dispositivos.",
-                "Construí el sistema web que opera el procesamiento de abulón y los packing lists de exportación: 53+ tablas y 100+ endpoints.",
+                "Construí el sistema web que opera el procesamiento de productos y los packing lists de exportación: 53+ tablas y 100+ endpoints.",
                 "Construí una plataforma de e-commerce que maneja de 1,000 a 5,000+ pedidos al mes, con pagos, envíos y facturación automática.",
                 "Construí un sistema de gestión que centraliza operaciones de almacén, inventario, personal y nómina en 10+ almacenes.",
               ],

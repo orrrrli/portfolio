@@ -50,7 +50,7 @@ export const en: Content = {
     profile: {
       title: "Building production software, from the API to the LLM that calls it.",
       description:
-        "Software Engineer with around 4 years in production across backend, mobile and web. Lately I put LLM features into production: tool calling, evals and vision models on Kotlin and .NET backends.",
+        "Software Engineer with around 5 years in production across backend, mobile and web. Lately I put LLM features into production: tool calling, evals and vision models on Kotlin and .NET backends.",
       terminal: {
         host: "orlando@ensenada:~/career",
         lines: [
@@ -162,14 +162,14 @@ export const en: Content = {
           logo: "/images/companies/leyes-de-reforma.png",
           timeframe: "Feb 2023 – Jan 2024",
           role: "Backend Developer",
-          summary: "Backend for the cooperative's abalone processing and export operation, its e-commerce and its order automation.",
+          summary: "Backend for the cooperative's product processing and export operation, its e-commerce and its order automation.",
           sections: [
             {
               title: "Backend (.NET)",
               achievements: [
                 "Migrated a monolithic PHP system to .NET microservices, shipped as multi-stage Docker images.",
                 "Secured the APIs with six security layers, including API keys, JWT, rate limiting and device control.",
-                "Built the web system that runs abalone processing and export packing lists: 53+ tables and 100+ endpoints.",
+                "Built the web system that runs product processing and export packing lists: 53+ tables and 100+ endpoints.",
                 "Built an e-commerce platform handling 1,000 to 5,000+ monthly orders, integrating payments, shipping and automated invoicing.",
                 "Built a management system centralizing warehouse operations, inventory, workforce and payroll across 10+ warehouses.",
               ],
