@@ -109,8 +109,8 @@ export const es: Content = {
           company: "Sistemas de Información Mozart",
           logo: "/images/companies/mozart.jpg",
           timeframe: "ene. 2024 – feb. 2026",
-          role: "Software Engineer",
-          summary: "Ingresé como Trainee en ene. 2024 y fui Software Engineer desde jun. 2024. Backend y app Android del ERP.",
+          role: "Full-Stack Engineer",
+          summary: "Ingresé como Trainee en ene. 2024 y fui Full-Stack Engineer desde jun. 2024. Backend y app Android del ERP.",
           sections: [
             {
               title: "Backend (.NET)",
@@ -140,9 +140,34 @@ export const es: Content = {
           ],
         },
         {
+          company: "Sociedad Cooperativa Leyes de Reforma",
+          logo: "/images/companies/leyes-de-reforma.png",
+          timeframe: "feb. 2023 – ene. 2024",
+          role: "Backend Developer",
+          summary: "Backend de la operación de procesamiento y exportación de abulón de la cooperativa, su e-commerce y la automatización de pedidos.",
+          sections: [
+            {
+              title: "Backend (.NET)",
+              achievements: [
+                "Migré un sistema monolítico en PHP a microservicios en .NET, empaquetados en imágenes Docker multi-stage.",
+                "Protegí las APIs con seis capas de seguridad, entre ellas API keys, JWT, rate limiting y control de dispositivos.",
+                "Construí el sistema web que opera el procesamiento de abulón y los packing lists de exportación: 53+ tablas y 100+ endpoints.",
+                "Construí una plataforma de e-commerce que maneja de 1,000 a 5,000+ pedidos al mes, con pagos, envíos y facturación automática.",
+                "Construí un sistema de gestión que centraliza operaciones de almacén, inventario, personal y nómina en 10+ almacenes.",
+              ],
+            },
+            {
+              title: "Automatización con IA",
+              achievements: [
+                "Construí un asistente de IA que automatiza el procesamiento de pedidos con LLMs self-hosted (Ollama) detrás de una API en Express, con 97%+ de precisión de extracción en 500+ mensajes evaluados.",
+              ],
+            },
+          ],
+        },
+        {
           company: "OmniTEK Dev",
           logo: "/images/companies/omnitek.jpg",
-          timeframe: "feb. 2023 – dic. 2023",
+          timeframe: "feb. 2021 – dic. 2021",
           role: "Desarrollador Web",
           sections: [
             {

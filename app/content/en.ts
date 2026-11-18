@@ -127,8 +127,8 @@ export const en: Content = {
           company: "Sistemas de Información Mozart",
           logo: "/images/companies/mozart.jpg",
           timeframe: "Jan 2024 – Feb 2026",
-          role: "Software Engineer",
-          summary: "Joined as a Trainee in Jan 2024 and became Software Engineer in Jun 2024. Backend and Android app of the ERP.",
+          role: "Full-Stack Engineer",
+          summary: "Joined as a Trainee in Jan 2024 and became Full-Stack Engineer in Jun 2024. Backend and Android app of the ERP.",
           sections: [
             {
               title: "Backend (.NET)",
@@ -158,9 +158,34 @@ export const en: Content = {
           ],
         },
         {
+          company: "Sociedad Cooperativa Leyes de Reforma",
+          logo: "/images/companies/leyes-de-reforma.png",
+          timeframe: "Feb 2023 – Jan 2024",
+          role: "Backend Developer",
+          summary: "Backend for the cooperative's abalone processing and export operation, its e-commerce and its order automation.",
+          sections: [
+            {
+              title: "Backend (.NET)",
+              achievements: [
+                "Migrated a monolithic PHP system to .NET microservices, shipped as multi-stage Docker images.",
+                "Secured the APIs with six security layers, including API keys, JWT, rate limiting and device control.",
+                "Built the web system that runs abalone processing and export packing lists: 53+ tables and 100+ endpoints.",
+                "Built an e-commerce platform handling 1,000 to 5,000+ monthly orders, integrating payments, shipping and automated invoicing.",
+                "Built a management system centralizing warehouse operations, inventory, workforce and payroll across 10+ warehouses.",
+              ],
+            },
+            {
+              title: "AI Automation",
+              achievements: [
+                "Built an AI assistant that automates order processing with self-hosted LLMs (Ollama) behind an Express API, reaching 97%+ extraction accuracy across 500+ evaluated messages.",
+              ],
+            },
+          ],
+        },
+        {
           company: "OmniTEK Dev",
           logo: "/images/companies/omnitek.jpg",
-          timeframe: "Feb 2023 – Dec 2023",
+          timeframe: "Feb 2021 – Dec 2021",
           role: "Web Developer",
           sections: [
             {
